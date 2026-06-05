@@ -3,7 +3,7 @@ namespace Core
 {
     public class Health : IDamageable
     {
-        private int _maxHealth;
+        private readonly int _maxHealth;
         private int _currentHealth;
 
         public event Action OnDead;
