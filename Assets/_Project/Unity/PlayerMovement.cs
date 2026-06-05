@@ -2,6 +2,7 @@ using UnityEngine;
 
 namespace Game
 {
+    [RequireComponent(typeof(Rigidbody))]
     public class PlayerMovement : MonoBehaviour
     {
         [SerializeField] private float _speed = 5f;
