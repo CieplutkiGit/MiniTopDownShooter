@@ -1,7 +1,7 @@
 using System;
 namespace Core
 {
-    public class Health
+    public class Health : IDamageable
     {
         private int _maxHealth;
         private int _currentHealth;
