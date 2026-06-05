@@ -1,6 +1,5 @@
 using System;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 namespace Game
 {
@@ -8,18 +7,10 @@ namespace Game
     {
         private readonly GameInput _input;
 
-        public event Action OnShoot;
-
         public InputReader()
         {
             _input = new GameInput();
-            _input.Player.Shoot.performed += OnShootPerformed;
             _input.Enable();
-        }
-
-        private void OnShootPerformed(InputAction.CallbackContext context)
-        {
-            OnShoot?.Invoke();
         }
 
         public Vector2 MoveDirection
@@ -27,9 +18,13 @@ namespace Game
             get { return _input.Player.Move.ReadValue<Vector2>(); }
         }
 
+        public Vector2 LookDirection
+        {
+            get { return _input.Player.Look.ReadValue<Vector2>(); }
+        }
+
         public void Dispose()
         {
-            _input.Player.Shoot.performed -= OnShootPerformed;
             _input.Disable();
             _input.Dispose();
         }
