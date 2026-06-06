@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -14,6 +15,8 @@ namespace Game
 
         private ObjectPool<Projectile> _pool;
         private float _lastShootTime;
+
+        public event Action Fired;
 
         private void Awake()
         {
@@ -37,6 +40,8 @@ namespace Game
             Projectile projectile = _pool.Get();
             projectile.transform.position = _spawnPoint.position;
             projectile.Initialize(direction, _pool.Release, _damage);
+
+            Fired?.Invoke();
         }
 
         private void PrewarmPool()
