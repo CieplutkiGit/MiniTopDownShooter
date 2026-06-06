@@ -73,12 +73,19 @@ namespace Game
             _tracker.Add(_pointsPerKill);
         }
 
-        private void HandleStateChanged(GameState newState)
+        private void HandleStateChanged(GameState oldState, GameState newState)
         {
-            if (newState == GameState.Playing)
+            if (newState != GameState.Playing)
             {
-                _tracker.Reset();
+                return;
             }
+
+            if (oldState == GameState.Paused)
+            {
+                return;
+            }
+
+            _tracker.Reset();
         }
 
         private void HandleScoreChanged(int newScore)

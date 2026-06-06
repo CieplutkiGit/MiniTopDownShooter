@@ -5,6 +5,6 @@ namespace Application
     public interface IGameStateProvider
     {
         GameState CurrentState { get; }
-        event Action<GameState> OnStateChanged;
+        event Action<GameState, GameState> OnStateChanged;
     }
 }

@@ -113,11 +113,18 @@ namespace Game
             return result;
         }
 
-        private void HandleStateChanged(GameState newState)
+        private void HandleStateChanged(GameState oldState, GameState newState)
         {
             if (newState == GameState.Playing)
             {
-                _runner.StartWaves();
+                if (oldState == GameState.Paused)
+                {
+                    _runner.Resume();
+                }
+                else
+                {
+                    _runner.StartWaves();
+                }
             }
             else
             {

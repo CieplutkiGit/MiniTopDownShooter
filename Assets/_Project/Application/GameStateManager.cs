@@ -6,7 +6,7 @@ namespace Application
     {
         private GameState _currentState;
 
-        public event Action<GameState> OnStateChanged;
+        public event Action<GameState, GameState> OnStateChanged;
 
         public GameState CurrentState
         {
@@ -65,8 +65,9 @@ namespace Application
                 return;
             }
 
+            GameState oldState = _currentState;
             _currentState = newState;
-            OnStateChanged?.Invoke(newState);
+            OnStateChanged?.Invoke(oldState, newState);
         }
     }
 }

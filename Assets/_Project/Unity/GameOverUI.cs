@@ -42,7 +42,7 @@ namespace Game
             }
         }
 
-        private void HandleStateChanged(GameState newState)
+        private void HandleStateChanged(GameState oldState, GameState newState)
         {
             if (_panel == null)
             {

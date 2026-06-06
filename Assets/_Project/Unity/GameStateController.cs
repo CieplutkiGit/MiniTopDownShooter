@@ -12,7 +12,7 @@ namespace Game
 
         private GameStateManager _manager;
 
-        public event Action<GameState> OnStateChanged;
+        public event Action<GameState, GameState> OnStateChanged;
 
         public GameState CurrentState
         {
@@ -82,14 +82,14 @@ namespace Game
             _manager.EndGame();
         }
 
-        private void HandleStateChanged(GameState newState)
+        private void HandleStateChanged(GameState oldState, GameState newState)
         {
             if (_debugLog)
             {
-                Debug.Log($"GameState -> {newState}");
+                Debug.Log($"GameState {oldState} -> {newState}");
             }
 
-            OnStateChanged?.Invoke(newState);
+            OnStateChanged?.Invoke(oldState, newState);
         }
     }
 }
