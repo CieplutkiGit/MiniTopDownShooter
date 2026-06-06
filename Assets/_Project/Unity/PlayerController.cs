@@ -8,7 +8,7 @@ namespace Game
     [RequireComponent(typeof(PlayerRotation))]
     [RequireComponent(typeof(PlayerShoot))]
     [RequireComponent(typeof(HealthComponent))]
-    public class PlayerController : MonoBehaviour
+    public class PlayerController : MonoBehaviour, IPlayerEvents
     {
         [SerializeField] private float _shootThreshold = 0.1f;
 

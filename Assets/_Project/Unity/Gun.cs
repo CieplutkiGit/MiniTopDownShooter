@@ -1,10 +1,11 @@
 using System;
+using Application;
 using UnityEngine;
 using UnityEngine.Pool;
 
 namespace Game
 {
-    public class Gun : MonoBehaviour
+    public class Gun : MonoBehaviour, IGunEvents
     {
         [SerializeField] private Projectile _prefab;
         [SerializeField] private Transform _spawnPoint;
