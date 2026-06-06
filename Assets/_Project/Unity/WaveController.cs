@@ -181,5 +181,13 @@ namespace Game
 
             AllWavesCompleted?.Invoke();
         }
+
+        private void OnValidate()
+        {
+            if (_waves == null || _waves.Count == 0)
+            {
+                Debug.LogWarning("WaveController has no waves configured. No enemies will spawn.", this);
+            }
+        }
     }
 }
