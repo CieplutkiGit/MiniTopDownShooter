@@ -10,7 +10,7 @@ namespace Game
         [SerializeField] private bool _autoStart = false;
         [SerializeField] private bool _debugLog = false;
 
-        private GameStateManager _manager;
+        private readonly GameStateManager _manager = new GameStateManager();
         private IPlayerEvents _player;
 
         public event Action<GameState, GameState> OnStateChanged;
@@ -22,7 +22,6 @@ namespace Game
 
         private void Awake()
         {
-            _manager = new GameStateManager();
             _manager.OnStateChanged += HandleStateChanged;
             _player = _playerRef;
         }
