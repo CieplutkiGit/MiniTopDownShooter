@@ -1,3 +1,4 @@
+using Application;
 using UnityEngine;
 
 namespace Game
@@ -11,15 +12,23 @@ namespace Game
 
         public void Restart()
         {
+            if (_gameState == null)
+            {
+                return;
+            }
+
+            GameState state = _gameState.CurrentState;
+            if (state != GameState.Menu && state != GameState.GameOver)
+            {
+                return;
+            }
+
             if (_spawner != null)
             {
                 _spawner.ClearAllAlive();
             }
 
-            if (_gameState != null)
-            {
-                _gameState.StartGame();
-            }
+            _gameState.StartGame();
 
             if (_player != null && _spawnPoint != null)
             {
