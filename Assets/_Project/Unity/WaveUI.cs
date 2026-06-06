@@ -1,13 +1,13 @@
 using Application;
+using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace Game
 {
     public class WaveUI : MonoBehaviour
     {
         [SerializeField] private WaveController _waveRef;
-        [SerializeField] private Text _label;
+        [SerializeField] private TMP_Text _label;
 
         private IWaveProvider _waves;
 

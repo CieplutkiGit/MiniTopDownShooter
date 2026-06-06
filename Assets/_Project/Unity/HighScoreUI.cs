@@ -1,13 +1,13 @@
 using Application;
+using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace Game
 {
     public class HighScoreUI : MonoBehaviour
     {
         [SerializeField] private HighScoreController _highScoreRef;
-        [SerializeField] private Text _label;
+        [SerializeField] private TMP_Text _label;
 
         private IHighScoreProvider _highScore;
 

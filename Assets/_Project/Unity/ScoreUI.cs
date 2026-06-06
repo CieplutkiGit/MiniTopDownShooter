@@ -1,13 +1,13 @@
 using Application;
+using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace Game
 {
     public class ScoreUI : MonoBehaviour
     {
         [SerializeField] private ScoreController _scoreRef;
-        [SerializeField] private Text _label;
+        [SerializeField] private TMP_Text _label;
 
         private IScoreProvider _score;
 
