@@ -12,7 +12,6 @@ namespace Game
         [SerializeField] private EnemyController _enemyPrefab;
         [SerializeField] private Transform _player;
         [SerializeField] private GameStateController _gameStateRef;
-        [SerializeField] private float _spawnInterval = 1f;
         [SerializeField] private int _maxAlive = 100;
         [SerializeField] private float _spawnRadius = 15f;
         [SerializeField] private int _defaultPoolSize = 50;
@@ -30,11 +29,6 @@ namespace Game
             _pool = new ObjectPool<EnemyController>(CreateEnemy, OnGetEnemy, OnReleaseEnemy, OnDestroyEnemy, true, _defaultPoolSize, _maxPoolSize);
             _gameState = _gameStateRef;
             _alive = new List<EnemyController>();
-        }
-
-        private void Start()
-        {
-            InvokeRepeating(nameof(SpawnEnemy), _spawnInterval, _spawnInterval);
         }
 
         public void SpawnOne()
