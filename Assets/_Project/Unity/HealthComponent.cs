@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Game
 {
-    public class HealthComponent : MonoBehaviour, IDamageable
+    public class HealthComponent : MonoBehaviour, IDamageable, IHealthReadable
     {
         [SerializeField] private int _maxHealth = 100;
         [SerializeField] private bool _debugLog = false;
@@ -13,6 +13,30 @@ namespace Game
 
         public event Action OnDead;
         public event Action<int, int> OnHealthChanged;
+
+        public int Current
+        {
+            get
+            {
+                if (_health == null)
+                {
+                    return _maxHealth;
+                }
+                return _health.Current;
+            }
+        }
+
+        public int Max
+        {
+            get
+            {
+                if (_health == null)
+                {
+                    return _maxHealth;
+                }
+                return _health.Max;
+            }
+        }
 
         private void Awake()
         {

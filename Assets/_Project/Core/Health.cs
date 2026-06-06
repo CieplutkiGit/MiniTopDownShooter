@@ -2,7 +2,7 @@ using System;
 
 namespace Core
 {
-    public class Health : IDamageable
+    public class Health : IDamageable, IHealthReadable
     {
         private readonly int _maxHealth;
         private int _currentHealth;
@@ -14,6 +14,16 @@ namespace Core
         public bool IsDead
         {
             get { return _isDead; }
+        }
+
+        public int Current
+        {
+            get { return _currentHealth; }
+        }
+
+        public int Max
+        {
+            get { return _maxHealth; }
         }
 
         public Health(int maxHealth)
