@@ -10,6 +10,7 @@ namespace Game
         [SerializeField] private WorldResetManager _resetManager;
         [SerializeField] private GameObject _panel;
         [SerializeField] private Button _restartButton;
+        [SerializeField] private Button _menuButton;
 
         private void OnEnable()
         {
@@ -21,6 +22,11 @@ namespace Game
             if (_restartButton != null)
             {
                 _restartButton.onClick.AddListener(HandleRestartClicked);
+            }
+
+            if (_menuButton != null)
+            {
+                _menuButton.onClick.AddListener(HandleMenuClicked);
             }
 
             if (_panel != null)
@@ -39,6 +45,11 @@ namespace Game
             if (_restartButton != null)
             {
                 _restartButton.onClick.RemoveListener(HandleRestartClicked);
+            }
+
+            if (_menuButton != null)
+            {
+                _menuButton.onClick.RemoveListener(HandleMenuClicked);
             }
         }
 
@@ -61,6 +72,16 @@ namespace Game
             }
 
             _resetManager.Restart();
+        }
+
+        private void HandleMenuClicked()
+        {
+            if (_gameState == null)
+            {
+                return;
+            }
+
+            _gameState.ReturnToMenu();
         }
     }
 }
