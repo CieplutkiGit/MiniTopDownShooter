@@ -1,6 +1,5 @@
 ﻿<Solution>
+  <Project Path="Application.csproj" />
   <Project Path="Unity.csproj" />
-  <Project Path="Assembly-CSharp-Editor.csproj" />
   <Project Path="Core.csproj" />
-  <Project Path="Assembly-CSharp.csproj" />
 </Solution>

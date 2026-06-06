@@ -1,4 +1,5 @@
 using System;
+
 namespace Core
 {
     public class Health : IDamageable
@@ -7,6 +8,7 @@ namespace Core
         private int _currentHealth;
 
         public event Action OnDead;
+        public event Action<int, int> OnHealthChanged;
 
         public Health(int maxHealth)
         {
@@ -17,10 +19,18 @@ namespace Core
         public void TakeDamage(DamageData data)
         {
             _currentHealth -= data.Damage;
+            OnHealthChanged?.Invoke(_currentHealth, _maxHealth);
 
-            if(_currentHealth <= 0)
-            OnDead?.Invoke();
+            if (_currentHealth <= 0)
+            {
+                OnDead?.Invoke();
+            }
+        }
 
+        public void Reset()
+        {
+            _currentHealth = _maxHealth;
+            OnHealthChanged?.Invoke(_currentHealth, _maxHealth);
         }
     }
 }
