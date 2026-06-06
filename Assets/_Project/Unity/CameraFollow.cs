@@ -10,18 +10,29 @@ namespace Game
         [SerializeField] private ScreenShake _shake;
 
         private Vector3 _velocity = Vector3.zero;
+        private Vector3 _basePosition;
+
+        private void OnEnable()
+        {
+            if (_target != null)
+            {
+                _basePosition = _target.position + _offset;
+                transform.position = _basePosition;
+            }
+        }
 
         private void LateUpdate()
         {
             Vector3 targetPosition = _target.position + _offset;
-            Vector3 smoothed = Vector3.SmoothDamp(transform.position, targetPosition, ref _velocity, _smoothTime);
+            _basePosition = Vector3.SmoothDamp(_basePosition, targetPosition, ref _velocity, _smoothTime);
 
+            Vector3 result = _basePosition;
             if (_shake != null)
             {
-                smoothed += _shake.CurrentOffset;
+                result += _shake.CurrentOffset;
             }
 
-            transform.position = smoothed;
+            transform.position = result;
         }
 
         private void OnValidate()
