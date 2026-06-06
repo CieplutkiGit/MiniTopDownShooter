@@ -19,5 +19,13 @@ namespace Game
             Vector3 move = new Vector3(direction.x, 0, direction.y);
             _rigidbody.MovePosition(_rigidbody.position + move * _speed * Time.fixedDeltaTime);
         }
+
+        public void Warp(Vector3 position)
+        {
+            _rigidbody.linearVelocity = Vector3.zero;
+            _rigidbody.angularVelocity = Vector3.zero;
+            _rigidbody.position = position;
+            transform.position = position;
+        }
     }
 }

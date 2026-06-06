@@ -72,6 +72,13 @@ namespace Game
             Died?.Invoke();
         }
 
+        public void Respawn(Vector3 position)
+        {
+            _movement.Warp(position);
+            _health.ResetHealth();
+            ChangeState(_aliveState);
+        }
+
         private void OnDestroy()
         {
             _input.Dispose();
