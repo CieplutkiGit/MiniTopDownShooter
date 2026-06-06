@@ -44,7 +44,7 @@ namespace Application
 
         public void EndGame()
         {
-            if (_currentState == GameState.Playing)
+            if (_currentState == GameState.Playing || _currentState == GameState.Paused)
             {
                 ChangeState(GameState.GameOver);
             }
