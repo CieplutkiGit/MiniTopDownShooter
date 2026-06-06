@@ -70,6 +70,12 @@ namespace Game
 
         private bool TryGetSpawnPosition(out Vector3 position)
         {
+            if (_player == null)
+            {
+                position = Vector3.zero;
+                return false;
+            }
+
             float angle = UnityEngine.Random.value * Mathf.PI * 2f;
             Vector3 direction = new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle));
             Vector3 candidate = _player.position + direction * _spawnRadius;
