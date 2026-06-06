@@ -6,12 +6,13 @@ namespace Game
 {
     public class ScoreController : MonoBehaviour, IScoreProvider
     {
-        [SerializeField] private EnemySpawner _spawner;
+        [SerializeField] private EnemySpawner _spawnerRef;
         [SerializeField] private GameStateController _gameStateRef;
         [SerializeField] private int _pointsPerKill = 1;
 
         private ScoreTracker _tracker;
         private IGameStateProvider _gameState;
+        private ISpawner _spawner;
 
         public event Action<int> OnScoreChanged;
 
@@ -32,6 +33,7 @@ namespace Game
             _tracker = new ScoreTracker();
             _tracker.OnScoreChanged += HandleScoreChanged;
             _gameState = _gameStateRef;
+            _spawner = _spawnerRef;
         }
 
         private void OnEnable()

@@ -15,12 +15,13 @@ namespace Game
     public class WaveController : MonoBehaviour, IWaveProvider
     {
         [SerializeField] private List<WaveConfig> _waves;
-        [SerializeField] private EnemySpawner _spawner;
+        [SerializeField] private EnemySpawner _spawnerRef;
         [SerializeField] private GameStateController _gameStateRef;
         [SerializeField] private bool _debugLog = false;
 
         private WaveRunner _runner;
         private IGameStateProvider _gameState;
+        private ISpawner _spawner;
 
         public event System.Action<int> WaveStarted;
         public event System.Action<int> WaveCompleted;
@@ -47,6 +48,7 @@ namespace Game
             _runner.WaveCompleted += HandleWaveCompleted;
             _runner.AllWavesCompleted += HandleAllWavesCompleted;
             _gameState = _gameStateRef;
+            _spawner = _spawnerRef;
         }
 
         private void OnEnable()

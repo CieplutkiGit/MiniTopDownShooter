@@ -7,7 +7,7 @@ using UnityEngine.Pool;
 
 namespace Game
 {
-    public class EnemySpawner : MonoBehaviour
+    public class EnemySpawner : MonoBehaviour, ISpawner
     {
         [SerializeField] private EnemyController _enemyPrefab;
         [SerializeField] private Transform _player;
