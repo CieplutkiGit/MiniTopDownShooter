@@ -7,7 +7,7 @@ namespace Game
     public class GameStateController : MonoBehaviour, IGameStateProvider
     {
         [SerializeField] private PlayerController _playerRef;
-        [SerializeField] private bool _autoStart = true;
+        [SerializeField] private bool _autoStart = false;
         [SerializeField] private bool _debugLog = false;
 
         private GameStateManager _manager;
