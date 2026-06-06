@@ -7,6 +7,7 @@ namespace Game
     public class GameOverUI : MonoBehaviour
     {
         [SerializeField] private GameStateController _gameState;
+        [SerializeField] private WorldResetManager _resetManager;
         [SerializeField] private GameObject _panel;
         [SerializeField] private Button _restartButton;
 
@@ -54,13 +55,12 @@ namespace Game
 
         private void HandleRestartClicked()
         {
-            if (_gameState == null)
+            if (_resetManager == null)
             {
                 return;
             }
 
-            // TODO: world reset (player HP, clear enemies, respawn) - wires up in restart manager step
-            _gameState.StartGame();
+            _resetManager.Restart();
         }
     }
 }
