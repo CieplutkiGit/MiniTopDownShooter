@@ -55,6 +55,21 @@ namespace Application
             _isRunning = false;
         }
 
+        public void Resume()
+        {
+            if (_waves == null || _waves.Length == 0)
+            {
+                return;
+            }
+
+            if (_currentWaveIndex >= _waves.Length)
+            {
+                return;
+            }
+
+            _isRunning = true;
+        }
+
         public void NotifyEnemyKilled()
         {
             if (!_isRunning)
