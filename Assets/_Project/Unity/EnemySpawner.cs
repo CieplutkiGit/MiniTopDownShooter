@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Application;
 using UnityEngine;
@@ -22,6 +23,8 @@ namespace Game
         private List<EnemyController> _alive;
         private int _aliveCount;
 
+        public event Action EnemyKilled;
+
         private void Awake()
         {
             _pool = new ObjectPool<EnemyController>(CreateEnemy, OnGetEnemy, OnReleaseEnemy, OnDestroyEnemy, true, _defaultPoolSize, _maxPoolSize);
@@ -34,7 +37,7 @@ namespace Game
             InvokeRepeating(nameof(SpawnEnemy), _spawnInterval, _spawnInterval);
         }
 
-        private void SpawnEnemy()
+        public void SpawnOne()
         {
             if (_gameState != null && _gameState.CurrentState != GameState.Playing)
             {
@@ -93,6 +96,7 @@ namespace Game
             _alive.Remove(enemy);
             _aliveCount--;
             _pool.Release(enemy);
+            EnemyKilled?.Invoke();
         }
 
         private EnemyController CreateEnemy()
