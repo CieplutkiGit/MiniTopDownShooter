@@ -6,11 +6,12 @@ namespace Game
 {
     public class GameStateController : MonoBehaviour, IGameStateProvider
     {
-        [SerializeField] private PlayerController _player;
+        [SerializeField] private PlayerController _playerRef;
         [SerializeField] private bool _autoStart = true;
         [SerializeField] private bool _debugLog = false;
 
         private GameStateManager _manager;
+        private IPlayerEvents _player;
 
         public event Action<GameState, GameState> OnStateChanged;
 
@@ -23,6 +24,7 @@ namespace Game
         {
             _manager = new GameStateManager();
             _manager.OnStateChanged += HandleStateChanged;
+            _player = _playerRef;
         }
 
         private void OnEnable()
