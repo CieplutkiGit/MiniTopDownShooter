@@ -4,9 +4,8 @@ using UnityEngine;
 
 namespace Game
 {
-    public class PlayerAudio : MonoBehaviour
+    public class PlayerAudio : AudioListenerBase
     {
-        [SerializeField] private AudioSource _source;
         [SerializeField] private HealthComponent _playerHealthRef;
         [SerializeField] private PlayerController _playerRef;
         [SerializeField] private AudioClip _hitClip;
@@ -62,16 +61,6 @@ namespace Game
         private void HandleDied()
         {
             PlayClip(_deathClip);
-        }
-
-        private void PlayClip(AudioClip clip)
-        {
-            if (clip == null || _source == null)
-            {
-                return;
-            }
-
-            _source.PlayOneShot(clip);
         }
     }
 }

@@ -3,9 +3,8 @@ using UnityEngine;
 
 namespace Game
 {
-    public class GunAudio : MonoBehaviour
+    public class GunAudio : AudioListenerBase
     {
-        [SerializeField] private AudioSource _source;
         [SerializeField] private Gun _gunRef;
         [SerializeField] private AudioClip _shotClip;
 
@@ -38,12 +37,7 @@ namespace Game
 
         private void HandleFired()
         {
-            if (_shotClip == null || _source == null)
-            {
-                return;
-            }
-
-            _source.PlayOneShot(_shotClip);
+            PlayClip(_shotClip);
         }
     }
 }

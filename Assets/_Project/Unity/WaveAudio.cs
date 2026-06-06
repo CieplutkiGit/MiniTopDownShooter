@@ -3,9 +3,8 @@ using UnityEngine;
 
 namespace Game
 {
-    public class WaveAudio : MonoBehaviour
+    public class WaveAudio : AudioListenerBase
     {
-        [SerializeField] private AudioSource _source;
         [SerializeField] private WaveController _waveRef;
         [SerializeField] private AudioClip _waveStartClip;
 
@@ -38,12 +37,7 @@ namespace Game
 
         private void HandleWaveStarted(int waveNumber)
         {
-            if (_waveStartClip == null || _source == null)
-            {
-                return;
-            }
-
-            _source.PlayOneShot(_waveStartClip);
+            PlayClip(_waveStartClip);
         }
     }
 }

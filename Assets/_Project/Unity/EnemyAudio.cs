@@ -3,9 +3,8 @@ using UnityEngine;
 
 namespace Game
 {
-    public class EnemyAudio : MonoBehaviour
+    public class EnemyAudio : AudioListenerBase
     {
-        [SerializeField] private AudioSource _source;
         [SerializeField] private EnemySpawner _spawnerRef;
         [SerializeField] private AudioClip _deathClip;
 
@@ -38,12 +37,7 @@ namespace Game
 
         private void HandleEnemyKilled()
         {
-            if (_deathClip == null || _source == null)
-            {
-                return;
-            }
-
-            _source.PlayOneShot(_deathClip);
+            PlayClip(_deathClip);
         }
     }
 }

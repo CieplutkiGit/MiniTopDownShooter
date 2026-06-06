@@ -3,9 +3,8 @@ using UnityEngine;
 
 namespace Game
 {
-    public class GameStateAudio : MonoBehaviour
+    public class GameStateAudio : AudioListenerBase
     {
-        [SerializeField] private AudioSource _source;
         [SerializeField] private GameStateController _gameStateRef;
         [SerializeField] private AudioClip _gameOverClip;
 
@@ -43,12 +42,7 @@ namespace Game
                 return;
             }
 
-            if (_gameOverClip == null || _source == null)
-            {
-                return;
-            }
-
-            _source.PlayOneShot(_gameOverClip);
+            PlayClip(_gameOverClip);
         }
     }
 }
