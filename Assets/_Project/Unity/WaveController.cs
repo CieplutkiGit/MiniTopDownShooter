@@ -141,7 +141,10 @@ namespace Game
                 return;
             }
 
-            _spawner.SpawnOne();
+            if (_spawner.SpawnOne())
+            {
+                _runner.NotifyEnemySpawned();
+            }
         }
 
         private void HandleEnemyKilled()

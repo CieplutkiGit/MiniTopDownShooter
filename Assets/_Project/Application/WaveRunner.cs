@@ -70,6 +70,16 @@ namespace Application
             _isRunning = true;
         }
 
+        public void NotifyEnemySpawned()
+        {
+            if (!_isRunning)
+            {
+                return;
+            }
+
+            _spawnedInWave++;
+        }
+
         public void NotifyEnemyKilled()
         {
             if (!_isRunning)
@@ -106,7 +116,6 @@ namespace Application
                 if (_spawnTimer <= 0f)
                 {
                     SpawnRequested?.Invoke();
-                    _spawnedInWave++;
                     _spawnTimer = current.SpawnInterval;
                 }
             }

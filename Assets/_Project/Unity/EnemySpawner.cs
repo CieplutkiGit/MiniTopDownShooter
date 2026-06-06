@@ -31,21 +31,21 @@ namespace Game
             _alive = new List<EnemyController>();
         }
 
-        public void SpawnOne()
+        public bool SpawnOne()
         {
             if (_gameState != null && _gameState.CurrentState != GameState.Playing)
             {
-                return;
+                return false;
             }
 
             if (_aliveCount >= _maxAlive)
             {
-                return;
+                return false;
             }
 
             if (!TryGetSpawnPosition(out Vector3 position))
             {
-                return;
+                return false;
             }
 
             EnemyController enemy = _pool.Get();
@@ -53,6 +53,7 @@ namespace Game
             enemy.Spawn(position, _player);
             _alive.Add(enemy);
             _aliveCount++;
+            return true;
         }
 
         public void ClearAllAlive()

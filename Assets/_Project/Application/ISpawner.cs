@@ -5,6 +5,6 @@ namespace Application
     public interface ISpawner
     {
         event Action EnemyKilled;
-        void SpawnOne();
+        bool SpawnOne();
     }
 }
