@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Application;
 using UnityEngine;
 using UnityEngine.AI;
@@ -18,12 +19,14 @@ namespace Game
 
         private ObjectPool<EnemyController> _pool;
         private IGameStateProvider _gameState;
+        private List<EnemyController> _alive;
         private int _aliveCount;
 
         private void Awake()
         {
             _pool = new ObjectPool<EnemyController>(CreateEnemy, OnGetEnemy, OnReleaseEnemy, OnDestroyEnemy, true, _defaultPoolSize, _maxPoolSize);
             _gameState = _gameStateRef;
+            _alive = new List<EnemyController>();
         }
 
         private void Start()
@@ -51,7 +54,21 @@ namespace Game
             EnemyController enemy = _pool.Get();
             enemy.Died += OnEnemyDied;
             enemy.Spawn(position, _player);
+            _alive.Add(enemy);
             _aliveCount++;
+        }
+
+        public void ClearAllAlive()
+        {
+            for (int i = _alive.Count - 1; i >= 0; i--)
+            {
+                EnemyController enemy = _alive[i];
+                enemy.Died -= OnEnemyDied;
+                _pool.Release(enemy);
+            }
+
+            _alive.Clear();
+            _aliveCount = 0;
         }
 
         private bool TryGetSpawnPosition(out Vector3 position)
@@ -73,6 +90,7 @@ namespace Game
         private void OnEnemyDied(EnemyController enemy)
         {
             enemy.Died -= OnEnemyDied;
+            _alive.Remove(enemy);
             _aliveCount--;
             _pool.Release(enemy);
         }
