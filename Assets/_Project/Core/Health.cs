@@ -40,6 +40,11 @@ namespace Core
                 return;
             }
 
+            if (data.Damage <= 0)
+            {
+                return;
+            }
+
             _currentHealth -= data.Damage;
 
             if (_currentHealth < 0)
