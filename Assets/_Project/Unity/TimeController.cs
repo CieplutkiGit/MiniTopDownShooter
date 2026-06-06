@@ -34,7 +34,7 @@ namespace Game
 
         private void HandleStateChanged(GameState oldState, GameState newState)
         {
-            if (newState == GameState.Paused)
+            if (newState == GameState.Paused || newState == GameState.Menu)
             {
                 Time.timeScale = 0f;
             }
