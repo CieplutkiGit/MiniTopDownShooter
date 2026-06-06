@@ -16,14 +16,14 @@ namespace Game
                 _spawner.ClearAllAlive();
             }
 
-            if (_player != null && _spawnPoint != null)
-            {
-                _player.Respawn(_spawnPoint.position);
-            }
-
             if (_gameState != null)
             {
                 _gameState.StartGame();
+            }
+
+            if (_player != null && _spawnPoint != null)
+            {
+                _player.Respawn(_spawnPoint.position);
             }
         }
     }
