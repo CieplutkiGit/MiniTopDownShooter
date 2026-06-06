@@ -12,7 +12,7 @@ namespace Game
         public float DelayAfter = 3f;
     }
 
-    public class WaveController : MonoBehaviour
+    public class WaveController : MonoBehaviour, IWaveProvider
     {
         [SerializeField] private List<WaveConfig> _waves;
         [SerializeField] private EnemySpawner _spawner;
@@ -21,6 +21,22 @@ namespace Game
 
         private WaveRunner _runner;
         private IGameStateProvider _gameState;
+
+        public event System.Action<int> WaveStarted;
+        public event System.Action<int> WaveCompleted;
+        public event System.Action AllWavesCompleted;
+
+        public int CurrentWaveNumber
+        {
+            get
+            {
+                if (_runner == null)
+                {
+                    return 0;
+                }
+                return _runner.CurrentWaveNumber;
+            }
+        }
 
         private void Awake()
         {
@@ -130,6 +146,8 @@ namespace Game
             {
                 Debug.Log($"Wave {waveNumber} started");
             }
+
+            WaveStarted?.Invoke(waveNumber);
         }
 
         private void HandleWaveCompleted(int waveNumber)
@@ -138,6 +156,8 @@ namespace Game
             {
                 Debug.Log($"Wave {waveNumber} completed");
             }
+
+            WaveCompleted?.Invoke(waveNumber);
         }
 
         private void HandleAllWavesCompleted()
@@ -146,6 +166,8 @@ namespace Game
             {
                 Debug.Log("All waves completed");
             }
+
+            AllWavesCompleted?.Invoke();
         }
     }
 }
