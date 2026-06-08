@@ -11,10 +11,12 @@ namespace Game
     public class EnemyController : MonoBehaviour
     {
         [SerializeField] private float _thinkInterval = 0.2f;
+        [SerializeField] private EnemyStats _statsRef;
 
         private EnemyMovement _movement;
         private EnemyAttack _attack;
         private HealthComponent _health;
+        private IEnemyStats _stats;
 
         private IEnemyState _currentState;
         private ChaseState _chaseState;
@@ -32,6 +34,7 @@ namespace Game
             _attack = GetComponent<EnemyAttack>();
             _health = GetComponent<HealthComponent>();
             _deadState = new DeadState(_movement);
+            _stats = _statsRef;
         }
 
         private void OnEnable()
@@ -48,7 +51,17 @@ namespace Game
         public void Spawn(Vector3 position, Transform target)
         {
             _movement.Warp(position);
-            _health.ResetHealth();
+
+            if (_stats != null)
+            {
+                _movement.Init(_stats.MoveSpeed);
+                _attack.Init(_stats.Damage, _stats.AttackRange, _stats.AttackCooldown);
+                _health.SetMaxHealth(_stats.MaxHealth);
+            }
+            else
+            {
+                _health.ResetHealth();
+            }
 
             _target = target;
             _targetDamageable = target.GetComponent<IDamageable>();

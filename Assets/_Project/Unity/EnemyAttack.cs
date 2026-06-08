@@ -11,6 +11,13 @@ namespace Game
 
         private float _lastAttackTime;
 
+        public void Init(int damage, float attackRange, float attackCooldown)
+        {
+            _damage = damage;
+            _attackRange = attackRange;
+            _attackCooldown = attackCooldown;
+        }
+
         public bool IsInRange(float distance)
         {
             return distance <= _attackRange;

@@ -54,6 +54,19 @@ namespace Game
             }
         }
 
+        public void SetMaxHealth(int maxHealth)
+        {
+            if (_health != null)
+            {
+                _health.OnDead -= HandleDead;
+                _health.OnHealthChanged -= HandleHealthChanged;
+            }
+
+            _health = new Health(maxHealth);
+            _health.OnDead += HandleDead;
+            _health.OnHealthChanged += HandleHealthChanged;
+        }
+
         public void TakeDamage(DamageData data)
         {
             _health.TakeDamage(data);

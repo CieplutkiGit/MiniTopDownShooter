@@ -13,6 +13,11 @@ namespace Game
             _agent = GetComponent<NavMeshAgent>();
         }
 
+        public void Init(float speed)
+        {
+            _agent.speed = speed;
+        }
+
         public void MoveToward(Vector3 targetPosition)
         {
             _agent.SetDestination(targetPosition);
