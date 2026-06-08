@@ -18,7 +18,7 @@ GameObject:
   - component: {fileID: 2686218851008760920}
   - component: {fileID: 1491644836695588414}
   m_Layer: 7
-  m_Name: Enemy
+  m_Name: Enemy_Fast
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -151,7 +151,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 33a9f8c17fda7404a9e11b3fe745ba1a, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Unity::Game.EnemyMovement
 --- !u!114 &1639913267662684004
 MonoBehaviour:
@@ -163,7 +163,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ea25a9c3e1989ce489f4e8a658b9a4c2, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Unity::Game.EnemyAttack
   _damage: 10
   _attackCooldown: 1
@@ -178,7 +178,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 846d107c4e109444197f08c4a6bcae47, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Unity::Game.HealthComponent
   _maxHealth: 100
 --- !u!114 &1491644836695588414
@@ -191,7 +191,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7d8b655eb99d3584396f4b02ff715b1a, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Unity::Game.EnemyController
   _thinkInterval: 0.2
-  _statsRef: {fileID: 11400000, guid: c70fc4f4beb34c3ead0498f3e007bda3, type: 2}
+  _statsRef: {fileID: 11400000, guid: 6d1cba89931347f9bb5622c08af2f8d0, type: 2}

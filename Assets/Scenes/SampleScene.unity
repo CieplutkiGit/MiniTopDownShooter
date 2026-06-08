@@ -3109,7 +3109,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 68b2dc8834ab9fd4c982aa94e7761f92, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity::Game.EnemySpawner
-  _enemyPrefab: {fileID: 1491644836695588414, guid: 8e457981d3ae14b4a948ed5ae1f8771f, type: 3}
+  _prefabs:
+  - Prefab: {fileID: 1491644836695588414, guid: 8e457981d3ae14b4a948ed5ae1f8771f, type: 3}
+    Weight: 6
+  - Prefab: {fileID: 1491644836695588414, guid: bc8a0c0604014e87859c57d1de20d564, type: 3}
+    Weight: 3
+  - Prefab: {fileID: 1491644836695588414, guid: 8d5471049d044ab5af4a5d9a748f4384, type: 3}
+    Weight: 1
   _player: {fileID: 646322117}
   _gameStateRef: {fileID: 1702298050}
   _maxAlive: 100
