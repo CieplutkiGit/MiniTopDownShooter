@@ -9,7 +9,7 @@ namespace Game
 {
     public class EnemySpawner : MonoBehaviour, ISpawner
     {
-        [SerializeField] private EnemyController _enemyPrefab;
+        [SerializeField] private WeightedPrefab[] _prefabs;
         [SerializeField] private Transform _player;
         [SerializeField] private GameStateController _gameStateRef;
         [SerializeField] private int _maxAlive = 100;
@@ -17,18 +17,38 @@ namespace Game
         [SerializeField] private int _defaultPoolSize = 50;
         [SerializeField] private int _maxPoolSize = 150;
 
-        private ObjectPool<EnemyController> _pool;
+        private Dictionary<EnemyController, VariantPool> _pools;
+        private Dictionary<EnemyController, VariantPool> _instanceToPool;
         private IGameStateProvider _gameState;
         private List<EnemyController> _alive;
         private int _aliveCount;
+        private int _totalWeight;
 
         public event Action EnemyKilled;
 
         private void Awake()
         {
-            _pool = new ObjectPool<EnemyController>(CreateEnemy, OnGetEnemy, OnReleaseEnemy, OnDestroyEnemy, true, _defaultPoolSize, _maxPoolSize);
             _gameState = _gameStateRef;
             _alive = new List<EnemyController>();
+            _pools = new Dictionary<EnemyController, VariantPool>();
+            _instanceToPool = new Dictionary<EnemyController, VariantPool>();
+
+            for (int i = 0; i < _prefabs.Length; i++)
+            {
+                EnemyController prefab = _prefabs[i].Prefab;
+
+                if (prefab == null)
+                {
+                    continue;
+                }
+
+                _totalWeight += _prefabs[i].Weight;
+
+                if (!_pools.ContainsKey(prefab))
+                {
+                    _pools[prefab] = new VariantPool(prefab, _defaultPoolSize, _maxPoolSize);
+                }
+            }
         }
 
         public bool SpawnOne()
@@ -48,7 +68,16 @@ namespace Game
                 return false;
             }
 
-            EnemyController enemy = _pool.Get();
+            EnemyController prefab = PickPrefab();
+
+            if (prefab == null)
+            {
+                return false;
+            }
+
+            VariantPool pool = _pools[prefab];
+            EnemyController enemy = pool.Get();
+            _instanceToPool[enemy] = pool;
             enemy.Died += OnEnemyDied;
             enemy.Spawn(position, _player);
             _alive.Add(enemy);
@@ -62,11 +91,44 @@ namespace Game
             {
                 EnemyController enemy = _alive[i];
                 enemy.Died -= OnEnemyDied;
-                _pool.Release(enemy);
+
+                if (_instanceToPool.TryGetValue(enemy, out VariantPool pool))
+                {
+                    pool.Release(enemy);
+                    _instanceToPool.Remove(enemy);
+                }
             }
 
             _alive.Clear();
             _aliveCount = 0;
+        }
+
+        private EnemyController PickPrefab()
+        {
+            if (_prefabs == null || _prefabs.Length == 0 || _totalWeight <= 0)
+            {
+                return null;
+            }
+
+            int roll = UnityEngine.Random.Range(0, _totalWeight);
+            int cumulative = 0;
+
+            for (int i = 0; i < _prefabs.Length; i++)
+            {
+                if (_prefabs[i].Prefab == null)
+                {
+                    continue;
+                }
+
+                cumulative += _prefabs[i].Weight;
+
+                if (roll < cumulative)
+                {
+                    return _prefabs[i].Prefab;
+                }
+            }
+
+            return _prefabs[_prefabs.Length - 1].Prefab;
         }
 
         private bool TryGetSpawnPosition(out Vector3 position)
@@ -96,28 +158,57 @@ namespace Game
             enemy.Died -= OnEnemyDied;
             _alive.Remove(enemy);
             _aliveCount--;
-            _pool.Release(enemy);
+
+            if (_instanceToPool.TryGetValue(enemy, out VariantPool pool))
+            {
+                pool.Release(enemy);
+                _instanceToPool.Remove(enemy);
+            }
+
             EnemyKilled?.Invoke();
         }
 
-        private EnemyController CreateEnemy()
+        private class VariantPool
         {
-            return Instantiate(_enemyPrefab);
-        }
+            private readonly EnemyController _prefab;
+            private readonly ObjectPool<EnemyController> _pool;
 
-        private void OnGetEnemy(EnemyController enemy)
-        {
-            enemy.gameObject.SetActive(true);
-        }
+            public VariantPool(EnemyController prefab, int defaultSize, int maxSize)
+            {
+                _prefab = prefab;
+                _pool = new ObjectPool<EnemyController>(
+                    Create, OnGet, OnRelease, OnDestroyEnemy, true, defaultSize, maxSize);
+            }
 
-        private void OnReleaseEnemy(EnemyController enemy)
-        {
-            enemy.gameObject.SetActive(false);
-        }
+            public EnemyController Get()
+            {
+                return _pool.Get();
+            }
 
-        private void OnDestroyEnemy(EnemyController enemy)
-        {
-            Destroy(enemy.gameObject);
+            public void Release(EnemyController enemy)
+            {
+                _pool.Release(enemy);
+            }
+
+            private EnemyController Create()
+            {
+                return UnityEngine.Object.Instantiate(_prefab);
+            }
+
+            private void OnGet(EnemyController enemy)
+            {
+                enemy.gameObject.SetActive(true);
+            }
+
+            private void OnRelease(EnemyController enemy)
+            {
+                enemy.gameObject.SetActive(false);
+            }
+
+            private void OnDestroyEnemy(EnemyController enemy)
+            {
+                UnityEngine.Object.Destroy(enemy.gameObject);
+            }
         }
     }
 }
