@@ -1,5 +1,6 @@
 using Application;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Game
 {
@@ -7,8 +8,16 @@ namespace Game
     {
         [SerializeField] private PlayerController _player;
         [SerializeField] private Transform _spawnPoint;
-        [SerializeField] private EnemySpawner _spawner;
+        [FormerlySerializedAs("_spawner")]
+        [SerializeField] private EnemySpawner _spawnerRef;
         [SerializeField] private GameStateController _gameState;
+
+        private ISpawner _spawner;
+
+        private void Awake()
+        {
+            _spawner = _spawnerRef;
+        }
 
         public void Restart()
         {

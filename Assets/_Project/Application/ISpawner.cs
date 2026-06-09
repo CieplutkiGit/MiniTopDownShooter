@@ -6,5 +6,6 @@ namespace Application
     {
         event Action EnemyKilled;
         bool SpawnOne();
+        void ClearAllAlive();
     }
 }
