@@ -8,7 +8,7 @@ namespace Game
     [RequireComponent(typeof(EnemyMovement))]
     [RequireComponent(typeof(EnemyAttack))]
     [RequireComponent(typeof(HealthComponent))]
-    public class EnemyController : MonoBehaviour
+    public class EnemyController : MonoBehaviour, IEnemyEvents
     {
         [SerializeField] private float _thinkInterval = 0.2f;
         [SerializeField] private EnemyStats _statsRef;
@@ -27,6 +27,14 @@ namespace Game
         private IDamageable _targetDamageable;
 
         public event Action<EnemyController> Died;
+
+        private Action _diedObservers;
+
+        event Action IEnemyEvents.Died
+        {
+            add { _diedObservers += value; }
+            remove { _diedObservers -= value; }
+        }
 
         private void Awake()
         {
@@ -113,6 +121,7 @@ namespace Game
             CancelInvoke();
             ChangeState(_deadState);
             Died?.Invoke(this);
+            _diedObservers?.Invoke();
         }
     }
 }

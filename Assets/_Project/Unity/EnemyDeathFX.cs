@@ -1,3 +1,4 @@
+using Application;
 using UnityEngine;
 
 namespace Game
@@ -7,34 +8,41 @@ namespace Game
         [SerializeField] private EnemyController _enemyRef;
         [SerializeField] private ParticleSystem _deathEffect;
 
+        private IEnemyEvents _enemy;
+
+        private void Awake()
+        {
+            _enemy = _enemyRef;
+        }
+
         private void OnEnable()
         {
-            if (_enemyRef == null)
+            if (_enemy == null)
             {
                 return;
             }
 
-            _enemyRef.Died += HandleDied;
+            _enemy.Died += HandleDied;
         }
 
         private void OnDisable()
         {
-            if (_enemyRef == null)
+            if (_enemy == null)
             {
                 return;
             }
 
-            _enemyRef.Died -= HandleDied;
+            _enemy.Died -= HandleDied;
         }
 
-        private void HandleDied(EnemyController enemy)
+        private void HandleDied()
         {
             if (_deathEffect == null)
             {
                 return;
             }
 
-            Instantiate(_deathEffect, enemy.transform.position, Quaternion.identity);
+            Instantiate(_deathEffect, transform.position, Quaternion.identity);
         }
     }
 }
