@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Game
 {
-    public class GameStateController : MonoBehaviour, IGameStateProvider
+    public class GameStateController : MonoBehaviour, IGameStateProvider, IGameStateController
     {
         [SerializeField] private PlayerController _playerRef;
         [SerializeField] private bool _autoStart = false;
