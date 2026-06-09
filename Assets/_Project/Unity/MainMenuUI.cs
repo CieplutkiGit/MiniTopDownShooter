@@ -1,15 +1,24 @@
 using Application;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace Game
 {
     public class MainMenuUI : MonoBehaviour
     {
-        [SerializeField] private GameStateController _gameState;
+        [FormerlySerializedAs("_gameState")]
+        [SerializeField] private GameStateController _gameStateRef;
         [SerializeField] private WorldResetManager _resetManager;
         [SerializeField] private GameObject _panel;
         [SerializeField] private Button _playButton;
+
+        private IGameStateProvider _gameState;
+
+        private void Awake()
+        {
+            _gameState = _gameStateRef;
+        }
 
         private void OnEnable()
         {

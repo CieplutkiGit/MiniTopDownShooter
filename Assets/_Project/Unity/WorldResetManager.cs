@@ -10,13 +10,16 @@ namespace Game
         [SerializeField] private Transform _spawnPoint;
         [FormerlySerializedAs("_spawner")]
         [SerializeField] private EnemySpawner _spawnerRef;
-        [SerializeField] private GameStateController _gameState;
+        [FormerlySerializedAs("_gameState")]
+        [SerializeField] private GameStateController _gameStateRef;
 
         private ISpawner _spawner;
+        private IGameStateController _gameState;
 
         private void Awake()
         {
             _spawner = _spawnerRef;
+            _gameState = _gameStateRef;
         }
 
         public void Restart()

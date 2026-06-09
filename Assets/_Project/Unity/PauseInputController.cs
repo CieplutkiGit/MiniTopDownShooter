@@ -1,18 +1,22 @@
 using Application;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
 
 namespace Game
 {
     public class PauseInputController : MonoBehaviour
     {
-        [SerializeField] private GameStateController _gameState;
+        [FormerlySerializedAs("_gameState")]
+        [SerializeField] private GameStateController _gameStateRef;
 
         private GameInput _input;
+        private IGameStateController _gameState;
 
         private void Awake()
         {
             _input = new GameInput();
+            _gameState = _gameStateRef;
         }
 
         private void OnEnable()
