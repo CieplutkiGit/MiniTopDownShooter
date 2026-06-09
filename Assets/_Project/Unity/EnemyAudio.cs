@@ -35,7 +35,7 @@ namespace Game
             _spawner.EnemyKilled -= HandleEnemyKilled;
         }
 
-        private void HandleEnemyKilled()
+        private void HandleEnemyKilled(int scoreValue)
         {
             PlayClip(_deathClip);
         }

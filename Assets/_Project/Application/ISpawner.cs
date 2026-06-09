@@ -4,7 +4,7 @@ namespace Application
 {
     public interface ISpawner
     {
-        event Action EnemyKilled;
+        event Action<int> EnemyKilled;
         bool SpawnOne();
         void ClearAllAlive();
     }

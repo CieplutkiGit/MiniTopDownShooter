@@ -12,6 +12,7 @@ namespace Game
     {
         [SerializeField] private float _thinkInterval = 0.2f;
         [SerializeField] private EnemyStats _statsRef;
+        [SerializeField] private int _fallbackScore = 10;
 
         private EnemyMovement _movement;
         private EnemyAttack _attack;
@@ -27,6 +28,18 @@ namespace Game
         private IDamageable _targetDamageable;
 
         public event Action<EnemyController> Died;
+
+        public int ScoreValue
+        {
+            get
+            {
+                if (_stats != null)
+                {
+                    return _stats.ScoreValue;
+                }
+                return _fallbackScore;
+            }
+        }
 
         private Action _diedObservers;
 

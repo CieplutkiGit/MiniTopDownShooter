@@ -147,7 +147,7 @@ namespace Game
             }
         }
 
-        private void HandleEnemyKilled()
+        private void HandleEnemyKilled(int scoreValue)
         {
             _runner.NotifyEnemyKilled();
         }

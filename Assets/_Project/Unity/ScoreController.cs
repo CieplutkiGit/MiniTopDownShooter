@@ -8,7 +8,6 @@ namespace Game
     {
         [SerializeField] private EnemySpawner _spawnerRef;
         [SerializeField] private GameStateController _gameStateRef;
-        [SerializeField] private int _pointsPerKill = 1;
 
         private ScoreTracker _tracker;
         private IGameStateProvider _gameState;
@@ -70,9 +69,9 @@ namespace Game
             }
         }
 
-        private void HandleEnemyKilled()
+        private void HandleEnemyKilled(int scoreValue)
         {
-            _tracker.Add(_pointsPerKill);
+            _tracker.Add(scoreValue);
         }
 
         private void HandleStateChanged(GameState oldState, GameState newState)

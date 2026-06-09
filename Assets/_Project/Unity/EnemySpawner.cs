@@ -24,7 +24,7 @@ namespace Game
         private int _aliveCount;
         private int _totalWeight;
 
-        public event Action EnemyKilled;
+        public event Action<int> EnemyKilled;
 
         private void Awake()
         {
@@ -155,6 +155,8 @@ namespace Game
 
         private void OnEnemyDied(EnemyController enemy)
         {
+            int scoreValue = enemy.ScoreValue;
+
             enemy.Died -= OnEnemyDied;
             _alive.Remove(enemy);
             _aliveCount--;
@@ -165,7 +167,7 @@ namespace Game
                 _instanceToPool.Remove(enemy);
             }
 
-            EnemyKilled?.Invoke();
+            EnemyKilled?.Invoke(scoreValue);
         }
 
         private class VariantPool
