@@ -65,6 +65,7 @@ namespace Game
             _health = new Health(maxHealth);
             _health.OnDead += HandleDead;
             _health.OnHealthChanged += HandleHealthChanged;
+            HandleHealthChanged(_health.Current, _health.Max);
         }
 
         public void TakeDamage(DamageData data)

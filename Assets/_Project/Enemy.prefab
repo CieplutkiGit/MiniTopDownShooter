@@ -18,6 +18,7 @@ GameObject:
   - component: {fileID: 2686218851008760920}
   - component: {fileID: 1491644836695588414}
   - component: {fileID: 7111111111111111111}
+  - component: {fileID: 7444444444444444444}
   m_Layer: 7
   m_Name: Enemy
   m_TagString: Untagged
@@ -210,3 +211,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity::Game.EnemyDeathFX
   _enemyRef: {fileID: 1491644836695588414}
   _deathEffect: {fileID: 8333333333, guid: d45e7f12c83b4a96f1e2d3c4b5a67890, type: 3}
+--- !u!114 &7444444444444444444
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4874851253939397579}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c4a8e2f95d3b4176b8e0a2c6f91d537e, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Unity::Game.EnemyHitFX
+  _healthRef: {fileID: 2686218851008760920}
+  _hitEffect: {fileID: 8333333333, guid: e7c3a91d6b8f4e2a9c5d0b3f7a16e482, type: 3}
