@@ -6432,6 +6432,7 @@ GameObject:
   - component: {fileID: 2222222222}
   - component: {fileID: 2333333333}
   - component: {fileID: 2444444444}
+  - component: {fileID: 2777777777}
   m_Layer: 0
   m_Name: MuzzleFlash
   m_TagString: Untagged
@@ -7144,6 +7145,7 @@ GameObject:
   - component: {fileID: 3222222222}
   - component: {fileID: 3333333333}
   - component: {fileID: 3444444444}
+  - component: {fileID: 3777777777}
   m_Layer: 0
   m_Name: HitEffect
   m_TagString: Untagged
@@ -7845,6 +7847,50 @@ ParticleSystemRenderer:
   m_OcclusionProbeChannels: {x: -1, y: -1, z: -1, w: -1}
   m_TrailMaterial: {fileID: 0}
   m_TrailMaterialCount: 0
+--- !u!114 &2777777777
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2111111111}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b2e9d4a17c6f4b83a9e1d05f3c728a64, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Unity::Game.ParticleBurst
+  _color: {r: 1, g: 0.92, b: 0.3, a: 1}
+  _count: 10
+  _lifetime: 0.1
+  _speed: 3
+  _size: 0.3
+  _radius: 0.05
+  _playOnAwake: 0
+  _destroyOnFinish: 0
+  _worldSpace: 0
+  _material: {fileID: 2100000, guid: 9f2c7e4d3a1b4c5e8d6f0a1b2c3d4e5f, type: 2}
+--- !u!114 &3777777777
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3111111111}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b2e9d4a17c6f4b83a9e1d05f3c728a64, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Unity::Game.ParticleBurst
+  _color: {r: 1, g: 0.2, b: 0.15, a: 1}
+  _count: 15
+  _lifetime: 0.3
+  _speed: 2.5
+  _size: 0.35
+  _radius: 0.1
+  _playOnAwake: 0
+  _destroyOnFinish: 0
+  _worldSpace: 0
+  _material: {fileID: 2100000, guid: 9f2c7e4d3a1b4c5e8d6f0a1b2c3d4e5f, type: 2}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
