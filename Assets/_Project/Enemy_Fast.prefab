@@ -19,6 +19,7 @@ GameObject:
   - component: {fileID: 1491644836695588414}
   - component: {fileID: 7222222222222222222}
   - component: {fileID: 7555555555555555555}
+  - component: {fileID: 7888888888888888888}
   m_Layer: 7
   m_Name: Enemy_Fast
   m_TagString: Untagged
@@ -225,3 +226,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity::Game.EnemyHitFX
   _healthRef: {fileID: 2686218851008760920}
   _hitEffect: {fileID: 8333333333, guid: e7c3a91d6b8f4e2a9c5d0b3f7a16e482, type: 3}
+--- !u!114 &7888888888888888888
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4874851253939397579}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f7a2d8e4c1b9463f8a5d2c7e0b94f163, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Unity::Game.EnemyDeathDebris
+  _enemyRef: {fileID: 1491644836695588414}
+  _renderer: {fileID: 678664222975679587}
+  _chunkMesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+  _chunkCount: 5
+  _chunkSize: 0.2
+  _minSpeed: 4
+  _maxSpeed: 8
+  _lifetime: 0.9
+  _gravity: 20
+  _bounce: 0.4
+  _floorY: 0
