@@ -133,8 +133,8 @@ namespace Game
         {
             CancelInvoke();
             ChangeState(_deadState);
-            Died?.Invoke(this);
             _diedObservers?.Invoke();
+            Died?.Invoke(this);
         }
     }
 }
