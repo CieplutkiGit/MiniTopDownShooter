@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 3658081544116871395}
   - component: {fileID: 6247917408618948358}
   - component: {fileID: -1546224609084277103}
+  - component: {fileID: 6999999999999999999}
   m_Layer: 8
   m_Name: Projectile
   m_TagString: Untagged
@@ -155,3 +156,20 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &6999999999999999999
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1408015697780313747}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d8f3a6c21e9b4075a3c8e1f47b260d93, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Unity::Game.BulletTrail
+  _material: {fileID: 2100000, guid: 9f2c7e4d3a1b4c5e8d6f0a1b2c3d4e5f, type: 2}
+  _startColor: {r: 1, g: 0.9, b: 0.4, a: 1}
+  _endColor: {r: 1, g: 0.5, b: 0.1, a: 0}
+  _time: 0.15
+  _width: 0.12
