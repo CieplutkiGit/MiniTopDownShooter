@@ -3,17 +3,23 @@ using UnityEngine;
 
 namespace Game
 {
-    public class EnemyHitFX : MonoBehaviour
+    public class EnemyHitFX : MonoBehaviour, IEffectPoolUser
     {
         [SerializeField] private HealthComponent _healthRef;
         [SerializeField] private ParticleSystem _hitEffect;
 
         private IHealthReadable _health;
+        private EffectPool _pool;
         private int _lastHealth;
 
         private void Awake()
         {
             _health = _healthRef;
+        }
+
+        public void SetEffectPool(EffectPool pool)
+        {
+            _pool = pool;
         }
 
         private void OnEnable()
@@ -54,6 +60,12 @@ namespace Game
 
             if (_hitEffect == null)
             {
+                return;
+            }
+
+            if (_pool != null)
+            {
+                _pool.Play(_hitEffect, transform.position);
                 return;
             }
 

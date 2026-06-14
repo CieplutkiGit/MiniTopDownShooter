@@ -16,6 +16,7 @@ namespace Game
         [SerializeField] private float _spawnRadius = 15f;
         [SerializeField] private int _defaultPoolSize = 50;
         [SerializeField] private int _maxPoolSize = 150;
+        [SerializeField] private EffectPool _effectPool;
 
         private Dictionary<EnemyController, VariantPool> _pools;
         private Dictionary<EnemyController, VariantPool> _instanceToPool;
@@ -46,7 +47,7 @@ namespace Game
 
                 if (!_pools.ContainsKey(prefab))
                 {
-                    _pools[prefab] = new VariantPool(prefab, _defaultPoolSize, _maxPoolSize);
+                    _pools[prefab] = new VariantPool(prefab, _defaultPoolSize, _maxPoolSize, _effectPool);
                 }
             }
         }
@@ -173,11 +174,13 @@ namespace Game
         private class VariantPool
         {
             private readonly EnemyController _prefab;
+            private readonly EffectPool _effectPool;
             private readonly ObjectPool<EnemyController> _pool;
 
-            public VariantPool(EnemyController prefab, int defaultSize, int maxSize)
+            public VariantPool(EnemyController prefab, int defaultSize, int maxSize, EffectPool effectPool)
             {
                 _prefab = prefab;
+                _effectPool = effectPool;
                 _pool = new ObjectPool<EnemyController>(
                     Create, OnGet, OnRelease, OnDestroyEnemy, true, defaultSize, maxSize);
             }
@@ -194,7 +197,24 @@ namespace Game
 
             private EnemyController Create()
             {
-                return UnityEngine.Object.Instantiate(_prefab);
+                EnemyController enemy = UnityEngine.Object.Instantiate(_prefab);
+                InjectEffectPool(enemy);
+                return enemy;
+            }
+
+            private void InjectEffectPool(EnemyController enemy)
+            {
+                if (_effectPool == null)
+                {
+                    return;
+                }
+
+                IEffectPoolUser[] users = enemy.GetComponentsInChildren<IEffectPoolUser>(true);
+
+                for (int i = 0; i < users.Length; i++)
+                {
+                    users[i].SetEffectPool(_effectPool);
+                }
             }
 
             private void OnGet(EnemyController enemy)

@@ -12,14 +12,16 @@ namespace Game
 
         private Vector3 _direction;
         private Action<Projectile> _returnToPool;
+        private EffectPool _effectPool;
         private int _damage;
         private float _spawnTime;
         private bool _isReturning;
 
-        public void Initialize(Vector3 direction, Action<Projectile> returnToPool, int damage)
+        public void Initialize(Vector3 direction, Action<Projectile> returnToPool, int damage, EffectPool effectPool)
         {
             _direction = direction;
             _returnToPool = returnToPool;
+            _effectPool = effectPool;
             _damage = damage;
             _spawnTime = Time.time;
             _isReturning = false;
@@ -52,6 +54,12 @@ namespace Game
         {
             if (_impactEffect == null)
             {
+                return;
+            }
+
+            if (_effectPool != null)
+            {
+                _effectPool.Play(_impactEffect, transform.position);
                 return;
             }
 

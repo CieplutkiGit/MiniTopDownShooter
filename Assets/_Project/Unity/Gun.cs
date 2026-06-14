@@ -13,6 +13,7 @@ namespace Game
         [SerializeField] private float _fireRate = 0.2f;
         [SerializeField] private int _defaultPoolSize = 10;
         [SerializeField] private int _maxPoolSize = 20;
+        [SerializeField] private EffectPool _effectPool;
 
         private ObjectPool<Projectile> _pool;
         private float _lastShootTime;
@@ -40,7 +41,7 @@ namespace Game
 
             Projectile projectile = _pool.Get();
             projectile.transform.position = _spawnPoint.position;
-            projectile.Initialize(direction, _pool.Release, _damage);
+            projectile.Initialize(direction, _pool.Release, _damage, _effectPool);
 
             Fired?.Invoke();
         }

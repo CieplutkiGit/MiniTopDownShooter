@@ -3,16 +3,22 @@ using UnityEngine;
 
 namespace Game
 {
-    public class EnemyDeathFX : MonoBehaviour
+    public class EnemyDeathFX : MonoBehaviour, IEffectPoolUser
     {
         [SerializeField] private EnemyController _enemyRef;
         [SerializeField] private ParticleSystem _deathEffect;
 
         private IEnemyEvents _enemy;
+        private EffectPool _pool;
 
         private void Awake()
         {
             _enemy = _enemyRef;
+        }
+
+        public void SetEffectPool(EffectPool pool)
+        {
+            _pool = pool;
         }
 
         private void OnEnable()
@@ -39,6 +45,12 @@ namespace Game
         {
             if (_deathEffect == null)
             {
+                return;
+            }
+
+            if (_pool != null)
+            {
+                _pool.Play(_deathEffect, transform.position);
                 return;
             }
 
