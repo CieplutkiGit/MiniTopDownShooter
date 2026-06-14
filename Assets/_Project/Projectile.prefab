@@ -129,6 +129,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity::Game.Projectile
   _speed: 20
   _lifetime: 3
+  _impactEffect: {fileID: 8333333333, guid: a1c6e9f30d2b48578f1a4c93e6b07d25, type: 3}
 --- !u!54 &-1546224609084277103
 Rigidbody:
   m_ObjectHideFlags: 0

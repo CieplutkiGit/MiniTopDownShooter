@@ -8,6 +8,7 @@ namespace Game
     {
         [SerializeField] private float _speed = 20f;
         [SerializeField] private float _lifetime = 3f;
+        [SerializeField] private ParticleSystem _impactEffect;
 
         private Vector3 _direction;
         private Action<Projectile> _returnToPool;
@@ -39,8 +40,22 @@ namespace Game
                 DamageData damage = new DamageData(_damage);
                 damageable.TakeDamage(damage);
             }
+            else
+            {
+                SpawnImpact();
+            }
 
             Return();
+        }
+
+        private void SpawnImpact()
+        {
+            if (_impactEffect == null)
+            {
+                return;
+            }
+
+            Instantiate(_impactEffect, transform.position, Quaternion.identity);
         }
 
         private void Return()
