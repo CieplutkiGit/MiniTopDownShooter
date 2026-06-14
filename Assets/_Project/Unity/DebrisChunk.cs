@@ -1,9 +1,11 @@
+using System;
 using UnityEngine;
 
 namespace Game
 {
     public class DebrisChunk : MonoBehaviour
     {
+        private Action<DebrisChunk> _onFinished;
         private Vector3 _velocity;
         private Vector3 _spin;
         private Vector3 _startScale;
@@ -12,6 +14,11 @@ namespace Game
         private float _gravity;
         private float _bounce;
         private float _floorY;
+
+        public void SetReturnCallback(Action<DebrisChunk> callback)
+        {
+            _onFinished = callback;
+        }
 
         public void Initialize(Vector3 velocity, Vector3 spin, float lifetime, float gravity, float bounce, float floorY)
         {
@@ -31,7 +38,7 @@ namespace Game
 
             if (_age >= _lifetime)
             {
-                Destroy(gameObject);
+                Finish();
                 return;
             }
 
@@ -58,6 +65,17 @@ namespace Game
                 float shrink = 1f - (progress - 0.6f) / 0.4f;
                 transform.localScale = _startScale * shrink;
             }
+        }
+
+        private void Finish()
+        {
+            if (_onFinished != null)
+            {
+                _onFinished(this);
+                return;
+            }
+
+            Destroy(gameObject);
         }
     }
 }
