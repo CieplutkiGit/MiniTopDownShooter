@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace Game
@@ -17,6 +18,7 @@ namespace Game
         [SerializeField] private Material _material;
 
         private ParticleSystem _system;
+        private Action<ParticleBurst> _onFinished;
 
         private void Awake()
         {
@@ -35,6 +37,30 @@ namespace Game
         public void Play()
         {
             _system.Play();
+        }
+
+        public void SetReturnCallback(Action<ParticleBurst> callback)
+        {
+            _onFinished = callback;
+
+            ParticleSystem.MainModule main = _system.main;
+            main.stopAction = ParticleSystemStopAction.Callback;
+        }
+
+        public void PlayAt(Vector3 position)
+        {
+            transform.position = position;
+            _system.Play();
+        }
+
+        private void OnParticleSystemStopped()
+        {
+            if (_onFinished == null)
+            {
+                return;
+            }
+
+            _onFinished(this);
         }
 
         private void Configure()
