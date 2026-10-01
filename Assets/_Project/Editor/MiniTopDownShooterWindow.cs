@@ -16,7 +16,7 @@ public class MiniTopDownShooterWindow : EditorWindow
     {
         MiniTopDownShooterWindow window = GetWindow<MiniTopDownShooterWindow>();
         window.titleContent = new GUIContent("Mini Top Down Shooter");
-        window.minSize = new Vector2(520f, 420f);
+        window.minSize = new Vector2(540f, 440f);
         window.Show();
     }
 
@@ -32,7 +32,7 @@ public class MiniTopDownShooterWindow : EditorWindow
         EditorGUILayout.Space(8);
         EditorGUILayout.LabelField("Mini Top Down Shooter", EditorStyles.boldLabel);
         EditorGUILayout.LabelField(
-            "Setup, validation, and reusable weapon authoring.",
+            "Setup, validation, and reusable gameplay data authoring.",
             EditorStyles.wordWrappedLabel);
 
         EditorGUILayout.Space(10);
@@ -49,6 +49,11 @@ public class MiniTopDownShooterWindow : EditorWindow
             if (GUILayout.Button("Create Weapon Definition", GUILayout.Height(30)))
             {
                 CreateWeaponDefinition();
+            }
+
+            if (GUILayout.Button("Create Wave Set", GUILayout.Height(30)))
+            {
+                CreateWaveSet();
             }
         }
 
@@ -87,7 +92,27 @@ public class MiniTopDownShooterWindow : EditorWindow
         ValidateSingleton<WaveController>("WaveController", report, ref errors, ref warnings);
         ValidateSingleton<EffectPool>("EffectPool", report, ref errors, ref warnings);
 
-        Gun[] guns = Object.FindObjectsByType<Gun>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        PlayerController[] players = Object.FindObjectsByType<PlayerController>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None);
+
+        foreach (PlayerController player in players)
+        {
+            SerializedObject serializedPlayer = new SerializedObject(player);
+            SerializedProperty aimCamera = serializedPlayer.FindProperty("_aimCamera");
+
+            if ((aimCamera == null || aimCamera.objectReferenceValue == null) && Camera.main == null)
+            {
+                AddWarning(
+                    report,
+                    $"PlayerController '{player.name}' has no aim camera and no Main Camera is available. Mouse aiming will be disabled.",
+                    ref warnings);
+            }
+        }
+
+        Gun[] guns = Object.FindObjectsByType<Gun>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None);
 
         if (guns.Length == 0)
         {
@@ -132,9 +157,22 @@ public class MiniTopDownShooterWindow : EditorWindow
             SerializedObject serializedWaveController = new SerializedObject(waveController);
             SerializedProperty waves = serializedWaveController.FindProperty("_waves");
 
-            if (waves == null || waves.arraySize == 0)
+            bool hasReusableSet = waveController.WaveSet != null && waveController.WaveSet.Count > 0;
+            bool hasInlineWaves = waves != null && waves.arraySize > 0;
+
+            if (!hasReusableSet && !hasInlineWaves)
             {
-                AddWarning(report, $"WaveController '{waveController.name}' has no waves.", ref warnings);
+                AddWarning(
+                    report,
+                    $"WaveController '{waveController.name}' has no Wave Set or inline waves.",
+                    ref warnings);
+            }
+            else if (waveController.WaveSet == null && hasInlineWaves)
+            {
+                AddWarning(
+                    report,
+                    $"WaveController '{waveController.name}' uses inline waves. Assign a Wave Set for reusable configuration.",
+                    ref warnings);
             }
         }
 
@@ -160,7 +198,9 @@ public class MiniTopDownShooterWindow : EditorWindow
         ref int warnings)
         where T : Component
     {
-        T[] objects = Object.FindObjectsByType<T>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        T[] objects = Object.FindObjectsByType<T>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None);
 
         if (objects.Length == 0)
         {
@@ -176,7 +216,11 @@ public class MiniTopDownShooterWindow : EditorWindow
         }
     }
 
-    private static void ValidateGun(Gun gun, StringBuilder report, ref int errors, ref int warnings)
+    private static void ValidateGun(
+        Gun gun,
+        StringBuilder report,
+        ref int errors,
+        ref int warnings)
     {
         SerializedObject serializedGun = new SerializedObject(gun);
         SerializedProperty spawnPoint = serializedGun.FindProperty("_spawnPoint");
@@ -203,7 +247,10 @@ public class MiniTopDownShooterWindow : EditorWindow
         }
         else if (gun.Definition.ProjectilePrefab == null)
         {
-            AddError(report, $"Weapon Definition '{gun.Definition.name}' has no projectile prefab.", ref errors);
+            AddError(
+                report,
+                $"Weapon Definition '{gun.Definition.name}' has no projectile prefab.",
+                ref errors);
         }
     }
 
@@ -226,6 +273,27 @@ public class MiniTopDownShooterWindow : EditorWindow
         AssetDatabase.SaveAssets();
         Selection.activeObject = definition;
         EditorGUIUtility.PingObject(definition);
+    }
+
+    private static void CreateWaveSet()
+    {
+        string path = EditorUtility.SaveFilePanelInProject(
+            "Create Wave Set",
+            "WaveSet",
+            "asset",
+            "Choose where to save the reusable wave configuration.",
+            "Assets/_Project/Data");
+
+        if (string.IsNullOrEmpty(path))
+        {
+            return;
+        }
+
+        WaveSet waveSet = CreateInstance<WaveSet>();
+        AssetDatabase.CreateAsset(waveSet, path);
+        AssetDatabase.SaveAssets();
+        Selection.activeObject = waveSet;
+        EditorGUIUtility.PingObject(waveSet);
     }
 
     private static void LogReport(string report, int errors, int warnings)

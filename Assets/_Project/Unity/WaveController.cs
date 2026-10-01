@@ -7,17 +7,30 @@ namespace Game
     [System.Serializable]
     public class WaveConfig
     {
+        [Min(1)]
         public int EnemyCount = 5;
+
+        [Min(0.01f)]
         public float SpawnInterval = 1f;
+
+        [Min(0f)]
         public float DelayAfter = 3f;
     }
 
     public class WaveController : MonoBehaviour, IWaveProvider
     {
+        [Header("Wave Data")]
+        [Tooltip("Optional reusable Wave Set. When assigned, it overrides the inline waves below.")]
+        [SerializeField] private WaveSet _waveSet;
+
         [SerializeField] private List<WaveConfig> _waves;
+
+        [Header("Scene References")]
         [SerializeField] private EnemySpawner _spawnerRef;
         [SerializeField] private GameStateController _gameStateRef;
-        [SerializeField] private bool _debugLog = false;
+
+        [Header("Debug")]
+        [SerializeField] private bool _debugLog;
 
         private WaveRunner _runner;
         private IGameStateProvider _gameState;
@@ -27,6 +40,8 @@ namespace Game
         public event System.Action<int> WaveCompleted;
         public event System.Action AllWavesCompleted;
 
+        public WaveSet WaveSet => _waveSet;
+
         public int CurrentWaveNumber
         {
             get
@@ -35,6 +50,7 @@ namespace Game
                 {
                     return 0;
                 }
+
                 return _runner.CurrentWaveNumber;
             }
         }
@@ -100,16 +116,29 @@ namespace Game
 
         private Wave[] BuildWaveData()
         {
-            if (_waves == null || _waves.Count == 0)
+            IReadOnlyList<WaveConfig> source = _waveSet != null ? _waveSet.Waves : _waves;
+
+            if (source == null || source.Count == 0)
             {
                 return new Wave[0];
             }
 
-            Wave[] result = new Wave[_waves.Count];
-            for (int i = 0; i < _waves.Count; i++)
+            Wave[] result = new Wave[source.Count];
+
+            for (int i = 0; i < source.Count; i++)
             {
-                WaveConfig config = _waves[i];
-                result[i] = new Wave(config.EnemyCount, config.SpawnInterval, config.DelayAfter);
+                WaveConfig config = source[i];
+
+                if (config == null)
+                {
+                    result[i] = new Wave(1, 1f, 0f);
+                    continue;
+                }
+
+                result[i] = new Wave(
+                    Mathf.Max(1, config.EnemyCount),
+                    Mathf.Max(0.01f, config.SpawnInterval),
+                    Mathf.Max(0f, config.DelayAfter));
             }
 
             return result;
@@ -184,9 +213,14 @@ namespace Game
 
         private void OnValidate()
         {
-            if (_waves == null || _waves.Count == 0)
+            bool hasReusableSet = _waveSet != null && _waveSet.Count > 0;
+            bool hasInlineWaves = _waves != null && _waves.Count > 0;
+
+            if (!hasReusableSet && !hasInlineWaves)
             {
-                Debug.LogWarning("WaveController has no waves configured. No enemies will spawn.", this);
+                Debug.LogWarning(
+                    "WaveController has no configured waves. Assign a Wave Set or add inline waves.",
+                    this);
             }
         }
     }
