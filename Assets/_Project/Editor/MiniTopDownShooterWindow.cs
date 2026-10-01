@@ -1,0 +1,258 @@
+using System.Text;
+using Game;
+using UnityEditor;
+using UnityEngine;
+using UnityEngine.AI;
+using UnityEngine.SceneManagement;
+
+public class MiniTopDownShooterWindow : EditorWindow
+{
+    private const string DocumentationPath = "Assets/_Project/Documentation/README.md";
+    private Vector2 _scroll;
+    private string _lastReport = "Run validation to inspect the currently open scene.";
+
+    [MenuItem("Tools/Mini Top Down Shooter/Setup & Validation")]
+    public static void ShowWindow()
+    {
+        MiniTopDownShooterWindow window = GetWindow<MiniTopDownShooterWindow>();
+        window.titleContent = new GUIContent("Mini Top Down Shooter");
+        window.minSize = new Vector2(520f, 420f);
+        window.Show();
+    }
+
+    [MenuItem("Tools/Mini Top Down Shooter/Validate Open Scene")]
+    public static void ValidateFromMenu()
+    {
+        string report = BuildValidationReport(out int errors, out int warnings);
+        LogReport(report, errors, warnings);
+    }
+
+    private void OnGUI()
+    {
+        EditorGUILayout.Space(8);
+        EditorGUILayout.LabelField("Mini Top Down Shooter", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField(
+            "Setup, validation, and reusable weapon authoring.",
+            EditorStyles.wordWrappedLabel);
+
+        EditorGUILayout.Space(10);
+        EditorGUILayout.LabelField($"Open scene: {SceneManager.GetActiveScene().name}");
+
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            if (GUILayout.Button("Validate Open Scene", GUILayout.Height(30)))
+            {
+                _lastReport = BuildValidationReport(out int errors, out int warnings);
+                LogReport(_lastReport, errors, warnings);
+            }
+
+            if (GUILayout.Button("Create Weapon Definition", GUILayout.Height(30)))
+            {
+                CreateWeaponDefinition();
+            }
+        }
+
+        if (GUILayout.Button("Open Documentation"))
+        {
+            Object documentation = AssetDatabase.LoadAssetAtPath<Object>(DocumentationPath);
+            if (documentation != null)
+            {
+                AssetDatabase.OpenAsset(documentation);
+            }
+            else
+            {
+                Debug.LogWarning($"Documentation not found at {DocumentationPath}.");
+            }
+        }
+
+        EditorGUILayout.Space(12);
+        EditorGUILayout.LabelField("Validation report", EditorStyles.boldLabel);
+        _scroll = EditorGUILayout.BeginScrollView(_scroll);
+        EditorGUILayout.TextArea(_lastReport, GUILayout.ExpandHeight(true));
+        EditorGUILayout.EndScrollView();
+    }
+
+    private static string BuildValidationReport(out int errors, out int warnings)
+    {
+        errors = 0;
+        warnings = 0;
+
+        StringBuilder report = new StringBuilder();
+        report.AppendLine($"Scene: {SceneManager.GetActiveScene().name}");
+        report.AppendLine();
+
+        ValidateSingleton<PlayerController>("PlayerController", report, ref errors, ref warnings);
+        ValidateSingleton<GameStateController>("GameStateController", report, ref errors, ref warnings);
+        ValidateSingleton<EnemySpawner>("EnemySpawner", report, ref errors, ref warnings);
+        ValidateSingleton<WaveController>("WaveController", report, ref errors, ref warnings);
+        ValidateSingleton<EffectPool>("EffectPool", report, ref errors, ref warnings);
+
+        Gun[] guns = Object.FindObjectsByType<Gun>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+
+        if (guns.Length == 0)
+        {
+            AddError(report, "No Gun component found.", ref errors);
+        }
+        else
+        {
+            report.AppendLine($"[OK] Gun components: {guns.Length}");
+            foreach (Gun gun in guns)
+            {
+                ValidateGun(gun, report, ref errors, ref warnings);
+            }
+        }
+
+        EnemySpawner[] spawners = Object.FindObjectsByType<EnemySpawner>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None);
+
+        foreach (EnemySpawner spawner in spawners)
+        {
+            SerializedObject serializedSpawner = new SerializedObject(spawner);
+            SerializedProperty prefabs = serializedSpawner.FindProperty("_prefabs");
+            SerializedProperty player = serializedSpawner.FindProperty("_player");
+
+            if (prefabs == null || prefabs.arraySize == 0)
+            {
+                AddError(report, $"EnemySpawner '{spawner.name}' has no enemy prefabs.", ref errors);
+            }
+
+            if (player == null || player.objectReferenceValue == null)
+            {
+                AddError(report, $"EnemySpawner '{spawner.name}' has no player reference.", ref errors);
+            }
+        }
+
+        WaveController[] waveControllers = Object.FindObjectsByType<WaveController>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None);
+
+        foreach (WaveController waveController in waveControllers)
+        {
+            SerializedObject serializedWaveController = new SerializedObject(waveController);
+            SerializedProperty waves = serializedWaveController.FindProperty("_waves");
+
+            if (waves == null || waves.arraySize == 0)
+            {
+                AddWarning(report, $"WaveController '{waveController.name}' has no waves.", ref warnings);
+            }
+        }
+
+        NavMeshTriangulation triangulation = NavMesh.CalculateTriangulation();
+        if (triangulation.vertices == null || triangulation.vertices.Length == 0)
+        {
+            AddWarning(report, "No baked NavMesh detected.", ref warnings);
+        }
+        else
+        {
+            report.AppendLine("[OK] Baked NavMesh detected.");
+        }
+
+        report.AppendLine();
+        report.AppendLine($"Result: {errors} error(s), {warnings} warning(s).");
+        return report.ToString();
+    }
+
+    private static void ValidateSingleton<T>(
+        string displayName,
+        StringBuilder report,
+        ref int errors,
+        ref int warnings)
+        where T : Component
+    {
+        T[] objects = Object.FindObjectsByType<T>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+
+        if (objects.Length == 0)
+        {
+            AddError(report, $"{displayName} is missing.", ref errors);
+        }
+        else if (objects.Length > 1)
+        {
+            AddWarning(report, $"Found {objects.Length} {displayName} components.", ref warnings);
+        }
+        else
+        {
+            report.AppendLine($"[OK] {displayName}");
+        }
+    }
+
+    private static void ValidateGun(Gun gun, StringBuilder report, ref int errors, ref int warnings)
+    {
+        SerializedObject serializedGun = new SerializedObject(gun);
+        SerializedProperty spawnPoint = serializedGun.FindProperty("_spawnPoint");
+        SerializedProperty legacyPrefab = serializedGun.FindProperty("_prefab");
+
+        if (spawnPoint == null || spawnPoint.objectReferenceValue == null)
+        {
+            AddError(report, $"Gun '{gun.name}' has no spawn point.", ref errors);
+        }
+
+        if (gun.Definition == null)
+        {
+            if (legacyPrefab == null || legacyPrefab.objectReferenceValue == null)
+            {
+                AddError(report, $"Gun '{gun.name}' has no projectile configuration.", ref errors);
+            }
+            else
+            {
+                AddWarning(
+                    report,
+                    $"Gun '{gun.name}' uses legacy inline values. Assign a Weapon Definition for reusable configuration.",
+                    ref warnings);
+            }
+        }
+        else if (gun.Definition.ProjectilePrefab == null)
+        {
+            AddError(report, $"Weapon Definition '{gun.Definition.name}' has no projectile prefab.", ref errors);
+        }
+    }
+
+    private static void CreateWeaponDefinition()
+    {
+        string path = EditorUtility.SaveFilePanelInProject(
+            "Create Weapon Definition",
+            "WeaponDefinition",
+            "asset",
+            "Choose where to save the reusable weapon configuration.",
+            "Assets/_Project/Data");
+
+        if (string.IsNullOrEmpty(path))
+        {
+            return;
+        }
+
+        WeaponDefinition definition = CreateInstance<WeaponDefinition>();
+        AssetDatabase.CreateAsset(definition, path);
+        AssetDatabase.SaveAssets();
+        Selection.activeObject = definition;
+        EditorGUIUtility.PingObject(definition);
+    }
+
+    private static void LogReport(string report, int errors, int warnings)
+    {
+        if (errors > 0)
+        {
+            Debug.LogError(report);
+        }
+        else if (warnings > 0)
+        {
+            Debug.LogWarning(report);
+        }
+        else
+        {
+            Debug.Log(report);
+        }
+    }
+
+    private static void AddError(StringBuilder report, string message, ref int errors)
+    {
+        errors++;
+        report.AppendLine($"[ERROR] {message}");
+    }
+
+    private static void AddWarning(StringBuilder report, string message, ref int warnings)
+    {
+        warnings++;
+        report.AppendLine($"[WARN] {message}");
+    }
+}
