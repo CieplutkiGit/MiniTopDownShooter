@@ -5,15 +5,19 @@
 ### Added
 
 - Reusable `WeaponDefinition` ScriptableObject
-- Multi-projectile shots
-- Configurable projectile spread
+- Multi-projectile shots and configurable spread
+- Reusable `WaveSet` ScriptableObject
+- Mouse aiming with left-click firing
 - Asset Store setup and validation editor window
-- Open-scene checks for core gameplay objects, gun setup, enemy spawning, waves, and NavMesh
-- Buyer-facing quick start and weapon documentation
+- Open-scene checks for core gameplay objects, gun setup, camera fallback, enemy spawning, waves, and NavMesh
+- EditMode tests for `Health` and `WaveRunner`
+- Buyer-facing quick start, weapon, wave, dependency, extension, and licensing documentation
 
 ### Changed
 
 - `Gun` can use a Weapon Definition while preserving existing inline serialized values as backwards-compatible defaults
+- `WaveController` can use a Wave Set while preserving existing inline wave data
+- `PlayerController` uses an assigned aim camera or falls back to `Camera.main`
 - Gun startup reports missing projectile and spawn-point configuration clearly
 
 ## 1.0.0

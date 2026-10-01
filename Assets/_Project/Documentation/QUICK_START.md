@@ -17,7 +17,7 @@ The validator checks:
 - effect pool
 - gun setup
 - enemy prefab configuration
-- player reference on the spawner
+- player and camera references
 - wave configuration
 - baked NavMesh
 
@@ -26,8 +26,11 @@ The validator checks:
 The current demo uses Unity's Input System.
 
 - Move: WASD or gamepad left stick
-- Aim: arrow keys or gamepad right stick
+- Aim: mouse, arrow keys, or gamepad right stick
+- Fire: left mouse button, or aim with arrow keys / gamepad right stick
 - Pause: Escape or gamepad Start
+
+Mouse aiming projects the pointer onto a horizontal plane through the player. If no explicit aim camera is assigned, `PlayerController` falls back to `Camera.main`.
 
 ## Create a reusable weapon
 
@@ -46,15 +49,16 @@ Existing guns remain backwards-compatible. If no Weapon Definition is assigned, 
 4. Add the prefab to the `EnemySpawner` weighted prefab list.
 5. Run validation again.
 
-## Configure waves
+## Create reusable waves
 
-Each `WaveController` entry controls:
+1. Open **Tools > Mini Top Down Shooter > Setup & Validation**.
+2. Click **Create Wave Set**.
+3. Add wave entries and tune enemy count, spawn interval, and delay after each wave.
+4. Assign the Wave Set to `WaveController`.
 
-- enemy count
-- spawn interval
-- delay after the wave
+A Wave Set overrides the controller's inline wave list. Existing scenes using inline waves remain compatible.
 
-The `EnemySpawner` controls which enemy variants appear and their relative weights.
+See `WAVES.md` for details.
 
 ## Before publishing a game
 
@@ -62,5 +66,6 @@ The `EnemySpawner` controls which enemy variants appear and their relative weigh
 - Verify the NavMesh is baked for every gameplay scene.
 - Confirm every gun has a valid projectile configuration.
 - Tune pool sizes for peak simultaneous objects.
-- Test keyboard and gamepad input.
+- Test mouse, keyboard, and gamepad input.
+- Run the included EditMode tests.
 - Replace or license all sample presentation content appropriately.
