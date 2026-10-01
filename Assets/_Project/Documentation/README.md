@@ -7,7 +7,7 @@ The package focuses on a small, understandable runtime rather than taking over a
 ## Included systems
 
 - Rigidbody player movement and rotation
-- Keyboard and gamepad twin-stick input
+- Mouse, keyboard, and gamepad aiming/input
 - Reusable Weapon Definition assets
 - Projectile pooling
 - Multi-projectile spread support
@@ -15,7 +15,7 @@ The package focuses on a small, understandable runtime rather than taking over a
 - Enemy chase, attack, and death states
 - NavMesh enemy movement
 - Weighted enemy spawning with pooling
-- Configurable waves
+- Reusable Wave Set assets and configurable waves
 - Score and high score
 - Pause, menu, game-over, and HUD logic
 - Audio hooks
@@ -34,7 +34,7 @@ Developed with Unity 6000.3.10f1.
 4. Enter Play Mode.
 5. Create reusable weapon data with **Create Weapon Definition** and assign the asset to a `Gun`.
 
-See `QUICK_START.md` for setup and `WEAPONS.md` for weapon authoring.
+See `QUICK_START.md` for setup, `WEAPONS.md` for weapon authoring, and `WAVES.md` for reusable wave presets.
 
 ## Design goal
 
