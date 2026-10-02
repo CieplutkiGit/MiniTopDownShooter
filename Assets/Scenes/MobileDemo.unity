@@ -2027,6 +2027,7 @@ GameObject:
   - component: {fileID: 646322121}
   - component: {fileID: 646322122}
   - component: {fileID: 3555555555}
+  - component: {fileID: 3566666666}
   m_Layer: 6
   m_Name: Player
   m_TagString: Player
@@ -8189,3 +8190,19 @@ MonoBehaviour:
   _moveDeadZone: 0.12
   _aimDeadZone: 0.12
   _aimFireThreshold: 0.2
+
+--- !u!114 &3566666666
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 646322112}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f8a0eaa6f814cf89ab1a43e01da2e64, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Unity::Game.DamageAffiliation
+  _team: 1
+  _allowFriendlyFire: 0
+  _ignoreFriendlyCollisions: 1
