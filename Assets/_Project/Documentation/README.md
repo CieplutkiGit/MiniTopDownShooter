@@ -7,7 +7,7 @@ The package focuses on a small, understandable runtime rather than taking over a
 ## Included systems
 
 - Rigidbody player movement and rotation
-- Mouse, keyboard, and gamepad aiming/input
+- Mouse, keyboard, gamepad, and touch aiming/input
 - Saved runtime input rebinding hooks
 - Reusable Weapon Definition assets
 - Semi-auto, automatic, burst, and shotgun firing modes
@@ -17,18 +17,19 @@ The package focuses on a small, understandable runtime rather than taking over a
 - Projectile pooling with per-weapon speed/lifetime overrides
 - Multi-projectile spread, spread growth, and recovery
 - Optional hitscan penetration and damage falloff
-- Health and damage
-- Enemy chase, attack, and death states
+- Health, damage, and optional damage modifiers
+- Legacy melee chase enemy plus modular ranged, rusher, charger, tank/armor, and boss-phase examples
 - NavMesh enemy movement
 - Weighted enemy spawning with pooling
 - Point, circle, and box spawn zones with distance/off-screen/NavMesh constraints
 - Reusable Wave Set assets with per-wave enemy groups, weights, delays, zones, and boss entries
 - Score and high score
+- Dual-stick mobile controls, action buttons, safe-area support, and platform visibility
 - Pause, menu, game-over, and HUD logic
 - Audio hooks
 - Screen shake, hit flash, muzzle flash, projectile trails, impact FX, and death FX
 - Editor setup and validation tools
-- EditMode tests for core health, waves, and weapon ammo state
+- EditMode tests for core health, waves, weapon ammo state, mobile input state, and enemy armor
 
 ## Recommended Unity version
 
@@ -43,7 +44,7 @@ Developed with Unity 6000.3.10f1.
 5. Create reusable weapon data with **Create Weapon Definition** and assign the asset to a `Gun`.
 6. Create reusable wave composition with **Create Wave Set** and optionally add `SpawnZone` components.
 
-See `QUICK_START.md` for setup, `WEAPONS.md` for weapon authoring, and `WAVES.md` for reusable wave composition.
+See `QUICK_START.md` for setup, `WEAPONS.md` for weapon authoring, `WAVES.md` for wave composition, `ENEMIES.md` for archetypes, and `MOBILE.md` for touch controls.
 
 ## Design goal
 
