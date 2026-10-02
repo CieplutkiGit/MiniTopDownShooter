@@ -18,6 +18,8 @@ namespace Game
         [Min(0.1f)]
         [SerializeField] private float _retreatDistance = 4f;
 
+        public Gun Gun => _gun;
+
         public override void Tick()
         {
             if (Target == null)
