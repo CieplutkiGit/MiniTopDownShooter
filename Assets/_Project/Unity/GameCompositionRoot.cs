@@ -225,12 +225,12 @@ namespace Game
             // UI Wiring
             if (_mainMenuUI != null && _gameStateController != null && _worldResetManager != null)
             {
-                _mainMenuUI.Initialize(_gameStateController, _worldResetManager);
+                _mainMenuUI.Initialize(_gameStateController, _worldResetManager, _settingsUI);
             }
 
             if (_pauseUI != null && _gameStateController != null)
             {
-                _pauseUI.Initialize(_gameStateController);
+                _pauseUI.Initialize(_gameStateController, _settingsUI);
             }
 
             if (_gameOverUI != null && _gameStateController != null && _worldResetManager != null)

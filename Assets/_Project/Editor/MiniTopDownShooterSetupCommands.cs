@@ -1,10 +1,13 @@
+using System.Collections.Generic;
 using Game;
+using TMPro;
 using Unity.AI.Navigation;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public static class MiniTopDownShooterSetupCommands
 {
@@ -609,5 +612,432 @@ public static class MiniTopDownShooterSetupCommands
         {
             EditorSceneManager.MarkSceneDirty(scene);
         }
+    }
+
+    [MenuItem("Tools/Mini Top Down Shooter/Wire All Scenes")]
+    public static void WireAllScenes()
+    {
+        string[] scenes = new[]
+        {
+            "Assets/Scenes/SampleScene.unity",
+            "Assets/Scenes/ArenaShowcase.unity",
+            "Assets/Scenes/MobileDemo.unity"
+        };
+
+        TMP_FontAsset font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(
+            "Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF.asset");
+
+        for (int s = 0; s < scenes.Length; s++)
+        {
+            string scenePath = scenes[s];
+            if (!System.IO.File.Exists(scenePath))
+            {
+                Debug.LogWarning($"Scene not found at {scenePath}");
+                continue;
+            }
+
+            Scene scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
+            Debug.Log($"Wiring scene: {scene.name}");
+
+            // 1. Player, starter weapons, and WeaponLoadout
+            PlayerController player = Object.FindFirstObjectByType<PlayerController>(FindObjectsInactive.Include);
+            WeaponLoadout loadout = null;
+            if (player != null)
+            {
+                loadout = WirePlayerLoadout(player);
+            }
+
+            // 2. Canvas & UI elements
+            Canvas canvas = Object.FindFirstObjectByType<Canvas>(FindObjectsInactive.Include);
+            if (canvas == null)
+            {
+                GameObject canvasObj = new GameObject("Canvas", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+                canvas = canvasObj.GetComponent<Canvas>();
+                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            }
+
+            VictoryUI victoryUI = Object.FindFirstObjectByType<VictoryUI>(FindObjectsInactive.Include);
+            if (victoryUI == null && canvas != null)
+            {
+                victoryUI = WireVictoryUI(canvas.transform, font);
+            }
+
+            SettingsUI settingsUI = Object.FindFirstObjectByType<SettingsUI>(FindObjectsInactive.Include);
+            if (settingsUI == null && canvas != null)
+            {
+                settingsUI = WireSettingsUI(canvas.transform, player, font);
+            }
+
+            WeaponHUD weaponHUD = Object.FindFirstObjectByType<WeaponHUD>(FindObjectsInactive.Include);
+            if (weaponHUD == null && canvas != null)
+            {
+                weaponHUD = WireWeaponHUD(canvas.transform, loadout, font);
+            }
+
+            BossHealthBarUI bossUI = Object.FindFirstObjectByType<BossHealthBarUI>(FindObjectsInactive.Include);
+            if (bossUI == null && canvas != null)
+            {
+                bossUI = WireBossHealthBarUI(canvas.transform, font);
+            }
+
+            // Connect settings buttons to MainMenu and Pause if present
+            MainMenuUI mainMenu = Object.FindFirstObjectByType<MainMenuUI>(FindObjectsInactive.Include);
+            if (mainMenu != null && settingsUI != null)
+            {
+                SerializedObject serializedMenu = new SerializedObject(mainMenu);
+                SerializedProperty settingsProp = serializedMenu.FindProperty("_settingsUIRef");
+                if (settingsProp != null)
+                {
+                    settingsProp.objectReferenceValue = settingsUI;
+                }
+                SerializedProperty buttonProp = serializedMenu.FindProperty("_settingsButton");
+                if (buttonProp != null && buttonProp.objectReferenceValue == null)
+                {
+                    Transform parent = mainMenu.transform;
+                    SerializedProperty panelProp = serializedMenu.FindProperty("_panel");
+                    if (panelProp != null && panelProp.objectReferenceValue is GameObject pObj)
+                    {
+                        parent = pObj.transform;
+                    }
+                    Button existingBtn = parent.Find("SettingsButton")?.GetComponent<Button>();
+                    if (existingBtn == null)
+                    {
+                        existingBtn = CreateButton("SettingsButton", parent, font, "Settings", new Vector2(0f, -60f), new Vector2(160f, 40f));
+                    }
+                    buttonProp.objectReferenceValue = existingBtn;
+                }
+                serializedMenu.ApplyModifiedProperties();
+            }
+
+            PauseUI pauseUI = Object.FindFirstObjectByType<PauseUI>(FindObjectsInactive.Include);
+            if (pauseUI != null && settingsUI != null)
+            {
+                SerializedObject serializedPause = new SerializedObject(pauseUI);
+                SerializedProperty settingsProp = serializedPause.FindProperty("_settingsUIRef");
+                if (settingsProp != null)
+                {
+                    settingsProp.objectReferenceValue = settingsUI;
+                }
+                SerializedProperty buttonProp = serializedPause.FindProperty("_settingsButton");
+                if (buttonProp != null && buttonProp.objectReferenceValue == null)
+                {
+                    Transform parent = pauseUI.transform;
+                    SerializedProperty panelProp = serializedPause.FindProperty("_panel");
+                    if (panelProp != null && panelProp.objectReferenceValue is GameObject pObj)
+                    {
+                        parent = pObj.transform;
+                    }
+                    Button existingBtn = parent.Find("SettingsButton")?.GetComponent<Button>();
+                    if (existingBtn == null)
+                    {
+                        existingBtn = CreateButton("SettingsButton", parent, font, "Settings", new Vector2(0f, -20f), new Vector2(160f, 40f));
+                    }
+                    buttonProp.objectReferenceValue = existingBtn;
+                }
+                serializedPause.ApplyModifiedProperties();
+            }
+
+            // 3. Fix common missing references
+            FixCommonSetupIssues();
+
+            // 4. Ensure GameCompositionRoot
+            GameCompositionRoot compRoot = Object.FindFirstObjectByType<GameCompositionRoot>(FindObjectsInactive.Include);
+            if (compRoot == null)
+            {
+                GameObject compObj = new GameObject("GameCompositionRoot");
+                compRoot = compObj.AddComponent<GameCompositionRoot>();
+            }
+
+            compRoot.ComposeDependencies();
+            EditorUtility.SetDirty(compRoot);
+
+            // 5. Mark and Save scene
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            Debug.Log($"Successfully wired and saved scene: {scene.name}");
+        }
+
+        EditorSceneManager.SaveOpenScenes();
+    }
+
+    private static WeaponLoadout WirePlayerLoadout(PlayerController player)
+    {
+        WeaponLoadout loadout = player.GetComponent<WeaponLoadout>();
+        if (loadout == null)
+        {
+            loadout = player.gameObject.AddComponent<WeaponLoadout>();
+        }
+
+        List<Gun> guns = new List<Gun>(player.GetComponentsInChildren<Gun>(true));
+
+        if (guns.Count == 0)
+        {
+            GameObject riflePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(RiflePrefabPath);
+            if (riflePrefab != null)
+            {
+                GameObject rifleObj = PrefabUtility.InstantiatePrefab(riflePrefab) as GameObject;
+                if (rifleObj != null)
+                {
+                    rifleObj.transform.SetParent(player.transform, false);
+                    Gun rifleGun = rifleObj.GetComponent<Gun>();
+                    if (rifleGun != null)
+                    {
+                        guns.Add(rifleGun);
+                    }
+                }
+            }
+        }
+
+        SerializedObject serializedLoadout = new SerializedObject(loadout);
+        SerializedProperty weaponsProp = serializedLoadout.FindProperty("_weapons");
+        weaponsProp.arraySize = guns.Count;
+        for (int i = 0; i < guns.Count; i++)
+        {
+            weaponsProp.GetArrayElementAtIndex(i).objectReferenceValue = guns[i];
+        }
+
+        SerializedProperty mountProp = serializedLoadout.FindProperty("_weaponMount");
+        if (mountProp != null && mountProp.objectReferenceValue == null)
+        {
+            mountProp.objectReferenceValue = player.transform;
+        }
+
+        serializedLoadout.ApplyModifiedProperties();
+
+        PlayerShoot shoot = player.GetComponent<PlayerShoot>();
+        if (shoot != null && guns.Count > 0)
+        {
+            SerializedObject serializedShoot = new SerializedObject(shoot);
+            SerializedProperty gunProp = serializedShoot.FindProperty("_gun");
+            if (gunProp != null && gunProp.objectReferenceValue == null)
+            {
+                gunProp.objectReferenceValue = guns[0];
+                serializedShoot.ApplyModifiedProperties();
+            }
+        }
+
+        return loadout;
+    }
+
+    private static VictoryUI WireVictoryUI(Transform canvasTransform, TMP_FontAsset font)
+    {
+        GameObject victoryObj = CreateUIObject("VictoryUI", canvasTransform);
+        VictoryUI victoryUI = victoryObj.AddComponent<VictoryUI>();
+
+        GameObject panelObj = CreateUIObject("VictoryPanel", victoryObj.transform);
+        StretchFull(panelObj.GetComponent<RectTransform>());
+        Image panelImage = panelObj.AddComponent<Image>();
+        panelImage.color = new Color(0f, 0f, 0f, 0.75f);
+
+        TextMeshProUGUI title = CreateTMPText("TitleText", panelObj.transform, font, "VICTORY!", 44, new Vector2(0f, 120f), new Vector2(500f, 60f));
+        TextMeshProUGUI score = CreateTMPText("ScoreText", panelObj.transform, font, "Final Score: 0", 26, new Vector2(0f, 40f), new Vector2(400f, 40f));
+        TextMeshProUGUI highScore = CreateTMPText("HighScoreText", panelObj.transform, font, "High Score: 0", 22, new Vector2(0f, -10f), new Vector2(400f, 40f));
+        TextMeshProUGUI waves = CreateTMPText("WavesText", panelObj.transform, font, "Waves Cleared: 0", 22, new Vector2(0f, -50f), new Vector2(400f, 40f));
+
+        Button restartBtn = CreateButton("RestartButton", panelObj.transform, font, "Play Again", new Vector2(0f, -120f), new Vector2(200f, 50f));
+        Button menuBtn = CreateButton("MenuButton", panelObj.transform, font, "Main Menu", new Vector2(0f, -180f), new Vector2(200f, 50f));
+
+        SerializedObject serialized = new SerializedObject(victoryUI);
+        serialized.FindProperty("_panel").objectReferenceValue = panelObj;
+        serialized.FindProperty("_titleLabel").objectReferenceValue = title;
+        serialized.FindProperty("_scoreLabel").objectReferenceValue = score;
+        serialized.FindProperty("_highScoreLabel").objectReferenceValue = highScore;
+        serialized.FindProperty("_wavesLabel").objectReferenceValue = waves;
+        serialized.FindProperty("_restartButton").objectReferenceValue = restartBtn;
+        serialized.FindProperty("_menuButton").objectReferenceValue = menuBtn;
+        serialized.ApplyModifiedProperties();
+
+        panelObj.SetActive(false);
+        return victoryUI;
+    }
+
+    private static SettingsUI WireSettingsUI(Transform canvasTransform, PlayerController player, TMP_FontAsset font)
+    {
+        GameObject settingsObj = CreateUIObject("SettingsUI", canvasTransform);
+        SettingsUI settingsUI = settingsObj.AddComponent<SettingsUI>();
+
+        GameObject panelObj = CreateUIObject("SettingsPanel", settingsObj.transform);
+        StretchFull(panelObj.GetComponent<RectTransform>());
+        Image panelImage = panelObj.AddComponent<Image>();
+        panelImage.color = new Color(0.05f, 0.05f, 0.08f, 0.9f);
+
+        CreateTMPText("Title", panelObj.transform, font, "SETTINGS", 36, new Vector2(0f, 180f), new Vector2(400f, 50f));
+
+        Slider masterSlider = CreateSimpleSlider("MasterSlider", panelObj.transform, new Vector2(0f, 110f), 1f);
+        Slider musicSlider = CreateSimpleSlider("MusicSlider", panelObj.transform, new Vector2(0f, 60f), 0.8f);
+        Slider sfxSlider = CreateSimpleSlider("SFXSlider", panelObj.transform, new Vector2(0f, 10f), 1f);
+        Slider sensSlider = CreateSimpleSlider("SensSlider", panelObj.transform, new Vector2(0f, -40f), 1f);
+        Slider deadzoneSlider = CreateSimpleSlider("DeadzoneSlider", panelObj.transform, new Vector2(0f, -90f), 0.1f);
+        Slider touchScaleSlider = CreateSimpleSlider("TouchScaleSlider", panelObj.transform, new Vector2(0f, -140f), 1f);
+
+        Button saveBtn = CreateButton("SaveButton", panelObj.transform, font, "Save", new Vector2(-110f, -210f), new Vector2(100f, 40f));
+        Button defaultsBtn = CreateButton("DefaultsButton", panelObj.transform, font, "Reset", new Vector2(0f, -210f), new Vector2(100f, 40f));
+        Button closeBtn = CreateButton("CloseButton", panelObj.transform, font, "Close", new Vector2(110f, -210f), new Vector2(100f, 40f));
+
+        SerializedObject serialized = new SerializedObject(settingsUI);
+        serialized.FindProperty("_panel").objectReferenceValue = panelObj;
+        serialized.FindProperty("_firstSelected").objectReferenceValue = closeBtn;
+        serialized.FindProperty("_masterVolumeSlider").objectReferenceValue = masterSlider;
+        serialized.FindProperty("_musicVolumeSlider").objectReferenceValue = musicSlider;
+        serialized.FindProperty("_sfxVolumeSlider").objectReferenceValue = sfxSlider;
+        serialized.FindProperty("_sensitivitySlider").objectReferenceValue = sensSlider;
+        serialized.FindProperty("_deadzoneSlider").objectReferenceValue = deadzoneSlider;
+        serialized.FindProperty("_touchScaleSlider").objectReferenceValue = touchScaleSlider;
+        serialized.FindProperty("_saveButton").objectReferenceValue = saveBtn;
+        serialized.FindProperty("_resetDefaultsButton").objectReferenceValue = defaultsBtn;
+        serialized.FindProperty("_closeButton").objectReferenceValue = closeBtn;
+        if (player != null)
+        {
+            serialized.FindProperty("_player").objectReferenceValue = player;
+        }
+        serialized.ApplyModifiedProperties();
+
+        panelObj.SetActive(false);
+        return settingsUI;
+    }
+
+    private static WeaponHUD WireWeaponHUD(Transform canvasTransform, WeaponLoadout loadout, TMP_FontAsset font)
+    {
+        GameObject hudObj = CreateUIObject("WeaponHUD", canvasTransform);
+        RectTransform rt = hudObj.GetComponent<RectTransform>();
+        rt.anchorMin = new Vector2(1f, 0f);
+        rt.anchorMax = new Vector2(1f, 0f);
+        rt.pivot = new Vector2(1f, 0f);
+        rt.anchoredPosition = new Vector2(-30f, 30f);
+        rt.sizeDelta = new Vector2(250f, 100f);
+
+        WeaponHUD hud = hudObj.AddComponent<WeaponHUD>();
+
+        TextMeshProUGUI nameLabel = CreateTMPText("WeaponName", hudObj.transform, font, "Rifle", 20, new Vector2(0f, 35f), new Vector2(240f, 30f), TextAlignmentOptions.Right);
+        TextMeshProUGUI ammoLabel = CreateTMPText("AmmoLabel", hudObj.transform, font, "30 / 90", 26, new Vector2(0f, 5f), new Vector2(240f, 35f), TextAlignmentOptions.Right);
+        TextMeshProUGUI reloadLabel = CreateTMPText("ReloadStatus", hudObj.transform, font, "", 16, new Vector2(0f, -25f), new Vector2(240f, 25f), TextAlignmentOptions.Right);
+        TextMeshProUGUI loadoutLabel = CreateTMPText("LoadoutLabel", hudObj.transform, font, "1 / 1", 16, new Vector2(0f, -45f), new Vector2(240f, 25f), TextAlignmentOptions.Right);
+
+        Slider reloadSlider = CreateSimpleSlider("ReloadProgress", hudObj.transform, new Vector2(0f, -15f), 0f);
+        reloadSlider.gameObject.SetActive(false);
+
+        SerializedObject serialized = new SerializedObject(hud);
+        if (loadout != null)
+        {
+            serialized.FindProperty("_loadoutRef").objectReferenceValue = loadout;
+        }
+        serialized.FindProperty("_weaponNameLabel").objectReferenceValue = nameLabel;
+        serialized.FindProperty("_ammoLabel").objectReferenceValue = ammoLabel;
+        serialized.FindProperty("_reloadStatusLabel").objectReferenceValue = reloadLabel;
+        serialized.FindProperty("_reloadProgressSlider").objectReferenceValue = reloadSlider;
+        serialized.FindProperty("_loadoutLabel").objectReferenceValue = loadoutLabel;
+        serialized.ApplyModifiedProperties();
+
+        return hud;
+    }
+
+    private static BossHealthBarUI WireBossHealthBarUI(Transform canvasTransform, TMP_FontAsset font)
+    {
+        GameObject bossBarObj = CreateUIObject("BossHealthBarUI", canvasTransform);
+        RectTransform rt = bossBarObj.GetComponent<RectTransform>();
+        rt.anchorMin = new Vector2(0.5f, 1f);
+        rt.anchorMax = new Vector2(0.5f, 1f);
+        rt.pivot = new Vector2(0.5f, 1f);
+        rt.anchoredPosition = new Vector2(0f, -40f);
+        rt.sizeDelta = new Vector2(500f, 70f);
+
+        BossHealthBarUI bossUI = bossBarObj.AddComponent<BossHealthBarUI>();
+
+        GameObject panelObj = CreateUIObject("Panel", bossBarObj.transform);
+        StretchFull(panelObj.GetComponent<RectTransform>());
+
+        TextMeshProUGUI nameLabel = CreateTMPText("BossName", panelObj.transform, font, "BOSS", 22, new Vector2(0f, 15f), new Vector2(400f, 30f));
+        TextMeshProUGUI phaseLabel = CreateTMPText("PhaseLabel", panelObj.transform, font, "Phase 1", 16, new Vector2(0f, -5f), new Vector2(400f, 25f));
+        Slider healthSlider = CreateSimpleSlider("HealthSlider", panelObj.transform, new Vector2(0f, -25f), 1f);
+
+        SerializedObject serialized = new SerializedObject(bossUI);
+        serialized.FindProperty("_panel").objectReferenceValue = panelObj;
+        serialized.FindProperty("_bossNameLabel").objectReferenceValue = nameLabel;
+        serialized.FindProperty("_phaseLabel").objectReferenceValue = phaseLabel;
+        serialized.FindProperty("_healthSlider").objectReferenceValue = healthSlider;
+        serialized.ApplyModifiedProperties();
+
+        panelObj.SetActive(false);
+        return bossUI;
+    }
+
+    private static GameObject CreateUIObject(string name, Transform parent)
+    {
+        GameObject obj = new GameObject(name, typeof(RectTransform));
+        obj.transform.SetParent(parent, false);
+        return obj;
+    }
+
+    private static void StretchFull(RectTransform rt)
+    {
+        rt.anchorMin = Vector2.zero;
+        rt.anchorMax = Vector2.one;
+        rt.offsetMin = Vector2.zero;
+        rt.offsetMax = Vector2.zero;
+    }
+
+    private static TextMeshProUGUI CreateTMPText(string name, Transform parent, TMP_FontAsset font, string text, float fontSize, Vector2 anchoredPos, Vector2 size, TextAlignmentOptions alignment = TextAlignmentOptions.Center)
+    {
+        GameObject obj = CreateUIObject(name, parent);
+        RectTransform rt = obj.GetComponent<RectTransform>();
+        rt.anchoredPosition = anchoredPos;
+        rt.sizeDelta = size;
+
+        TextMeshProUGUI tmp = obj.AddComponent<TextMeshProUGUI>();
+        if (font != null)
+        {
+            tmp.font = font;
+        }
+        tmp.text = text;
+        tmp.fontSize = fontSize;
+        tmp.alignment = alignment;
+        tmp.color = Color.white;
+        return tmp;
+    }
+
+    private static Button CreateButton(string name, Transform parent, TMP_FontAsset font, string label, Vector2 anchoredPos, Vector2 size)
+    {
+        GameObject obj = CreateUIObject(name, parent);
+        RectTransform rt = obj.GetComponent<RectTransform>();
+        rt.anchoredPosition = anchoredPos;
+        rt.sizeDelta = size;
+
+        Image img = obj.AddComponent<Image>();
+        img.color = new Color(0.2f, 0.2f, 0.25f, 0.9f);
+
+        Button btn = obj.AddComponent<Button>();
+        btn.targetGraphic = img;
+
+        CreateTMPText("Text", obj.transform, font, label, 18, Vector2.zero, size);
+        return btn;
+    }
+
+    private static Slider CreateSimpleSlider(string name, Transform parent, Vector2 anchoredPos, float defaultValue)
+    {
+        GameObject obj = CreateUIObject(name, parent);
+        RectTransform rt = obj.GetComponent<RectTransform>();
+        rt.anchoredPosition = anchoredPos;
+        rt.sizeDelta = new Vector2(300f, 20f);
+
+        Slider slider = obj.AddComponent<Slider>();
+        slider.minValue = 0f;
+        slider.maxValue = 1f;
+        slider.value = defaultValue;
+
+        GameObject bg = CreateUIObject("Background", obj.transform);
+        StretchFull(bg.GetComponent<RectTransform>());
+        Image bgImg = bg.AddComponent<Image>();
+        bgImg.color = new Color(0.15f, 0.15f, 0.15f, 0.8f);
+
+        GameObject fillArea = CreateUIObject("Fill Area", obj.transform);
+        StretchFull(fillArea.GetComponent<RectTransform>());
+
+        GameObject fill = CreateUIObject("Fill", fillArea.transform);
+        StretchFull(fill.GetComponent<RectTransform>());
+        Image fillImg = fill.AddComponent<Image>();
+        fillImg.color = new Color(0.2f, 0.6f, 1f, 0.9f);
+
+        slider.fillRect = fill.GetComponent<RectTransform>();
+        return slider;
     }
 }

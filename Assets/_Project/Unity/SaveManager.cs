@@ -112,12 +112,20 @@ namespace Game
                     }
                     catch
                     {
-                        File.Move(tempPath, filePath, overwrite: true);
+                        if (File.Exists(filePath))
+                        {
+                            File.Delete(filePath);
+                        }
+                        File.Move(tempPath, filePath);
                     }
                 }
                 else
                 {
-                    File.Move(tempPath, filePath, overwrite: true);
+                    if (File.Exists(filePath))
+                    {
+                        File.Delete(filePath);
+                    }
+                    File.Move(tempPath, filePath);
                     try
                     {
                         File.Copy(filePath, backupPath, true);

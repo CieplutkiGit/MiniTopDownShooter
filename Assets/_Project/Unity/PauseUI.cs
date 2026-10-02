@@ -11,16 +11,22 @@ namespace Game
         [SerializeField] private GameStateController _gameStateRef;
         [SerializeField] private GameObject _panel;
         [SerializeField] private Button _resumeButton;
+        [SerializeField] private Button _settingsButton;
         [SerializeField] private Button _menuButton;
+        [SerializeField] private SettingsUI _settingsUIRef;
 
         private IGameStateController _gameState;
         private bool _isSubscribed;
 
-        public void Initialize(GameStateController gameState)
+        public void Initialize(GameStateController gameState, SettingsUI settings = null)
         {
             UnsubscribeEvents();
 
             _gameStateRef = gameState;
+            if (settings != null)
+            {
+                _settingsUIRef = settings;
+            }
             _gameState = gameState;
 
             if (isActiveAndEnabled)
@@ -36,6 +42,11 @@ namespace Game
                 _gameStateRef = FindFirstObjectByType<GameStateController>();
             }
 
+            if (_settingsUIRef == null)
+            {
+                _settingsUIRef = FindFirstObjectByType<SettingsUI>(FindObjectsInactive.Include);
+            }
+
             _gameState = _gameStateRef;
         }
 
@@ -46,6 +57,11 @@ namespace Game
             if (_resumeButton != null)
             {
                 _resumeButton.onClick.AddListener(HandleResumeClicked);
+            }
+
+            if (_settingsButton != null)
+            {
+                _settingsButton.onClick.AddListener(HandleSettingsClicked);
             }
 
             if (_menuButton != null)
@@ -63,6 +79,11 @@ namespace Game
             if (_resumeButton != null)
             {
                 _resumeButton.onClick.RemoveListener(HandleResumeClicked);
+            }
+
+            if (_settingsButton != null)
+            {
+                _settingsButton.onClick.RemoveListener(HandleSettingsClicked);
             }
 
             if (_menuButton != null)
@@ -146,6 +167,14 @@ namespace Game
             }
 
             _gameState.ReturnToMenu();
+        }
+
+        private void HandleSettingsClicked()
+        {
+            if (_settingsUIRef != null)
+            {
+                _settingsUIRef.Open();
+            }
         }
     }
 }

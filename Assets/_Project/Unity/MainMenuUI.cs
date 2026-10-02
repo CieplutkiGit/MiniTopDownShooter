@@ -12,16 +12,22 @@ namespace Game
         [SerializeField] private WorldResetManager _resetManager;
         [SerializeField] private GameObject _panel;
         [SerializeField] private Button _playButton;
+        [SerializeField] private Button _settingsButton;
+        [SerializeField] private SettingsUI _settingsUIRef;
 
         private IGameStateProvider _gameState;
         private bool _isSubscribed;
 
-        public void Initialize(GameStateController gameState, WorldResetManager resetManager)
+        public void Initialize(GameStateController gameState, WorldResetManager resetManager, SettingsUI settings = null)
         {
             UnsubscribeEvents();
 
             _gameStateRef = gameState;
             _resetManager = resetManager;
+            if (settings != null)
+            {
+                _settingsUIRef = settings;
+            }
             _gameState = gameState;
 
             if (isActiveAndEnabled)
@@ -42,6 +48,11 @@ namespace Game
                 _resetManager = FindFirstObjectByType<WorldResetManager>();
             }
 
+            if (_settingsUIRef == null)
+            {
+                _settingsUIRef = FindFirstObjectByType<SettingsUI>(FindObjectsInactive.Include);
+            }
+
             _gameState = _gameStateRef;
         }
 
@@ -52,6 +63,11 @@ namespace Game
             if (_playButton != null)
             {
                 _playButton.onClick.AddListener(HandlePlayClicked);
+            }
+
+            if (_settingsButton != null)
+            {
+                _settingsButton.onClick.AddListener(HandleSettingsClicked);
             }
 
             GameState initial = GameState.Menu;
@@ -70,6 +86,11 @@ namespace Game
             if (_playButton != null)
             {
                 _playButton.onClick.RemoveListener(HandlePlayClicked);
+            }
+
+            if (_settingsButton != null)
+            {
+                _settingsButton.onClick.RemoveListener(HandleSettingsClicked);
             }
         }
 
@@ -133,6 +154,14 @@ namespace Game
             }
 
             _resetManager.Restart();
+        }
+
+        private void HandleSettingsClicked()
+        {
+            if (_settingsUIRef != null)
+            {
+                _settingsUIRef.Open();
+            }
         }
     }
 }
