@@ -50,6 +50,7 @@ namespace Game
         public WeaponDefinition Definition => _definition;
         public int AmmoInMagazine => _ammo != null ? _ammo.InMagazine : 0;
         public int ReserveAmmo => _ammo != null ? _ammo.ReserveAmmo : 0;
+        public int MagazineSize => _ammo != null ? _ammo.MagazineSize : 0;
         public bool InfiniteAmmo => _ammo == null || _ammo.InfiniteAmmo;
         public bool IsReloading => _isReloading;
         public bool IsEquipped => _isEquipped;
@@ -303,7 +304,10 @@ namespace Game
                 return;
             }
 
-            _burstShotsRemaining--;
+            if (_burstShotsRemaining > 0)
+            {
+                _burstShotsRemaining--;
+            }
 
             if (_burstShotsRemaining > 0)
             {
@@ -313,6 +317,21 @@ namespace Game
 
         private bool FireRound(Vector3 direction, bool ignoreFireInterval)
         {
+            if (_isReloading)
+            {
+                return false;
+            }
+
+            if (DeliveryMode == WeaponDeliveryMode.Projectile && _pool == null)
+            {
+                return false;
+            }
+
+            if (DeliveryMode == WeaponDeliveryMode.Hitscan && _definition == null)
+            {
+                return false;
+            }
+
             if (!ignoreFireInterval && Time.time < _lastShootTime + FireInterval)
             {
                 return false;
