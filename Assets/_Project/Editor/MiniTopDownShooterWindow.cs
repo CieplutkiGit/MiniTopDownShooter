@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Text;
 using Game;
 using UnityEditor;
@@ -148,6 +150,33 @@ public class MiniTopDownShooterWindow : EditorWindow
             }
         }
 
+        HashSet<string> knownSpawnZoneIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        SpawnZone[] spawnZones = Object.FindObjectsByType<SpawnZone>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None);
+
+        foreach (SpawnZone zone in spawnZones)
+        {
+            if (string.IsNullOrWhiteSpace(zone.Id))
+            {
+                AddError(report, $"SpawnZone '{zone.name}' has an empty ID.", ref errors);
+                continue;
+            }
+
+            if (!knownSpawnZoneIds.Add(zone.Id))
+            {
+                AddWarning(
+                    report,
+                    $"Duplicate SpawnZone ID '{zone.Id}'. Per-wave zone selection may be ambiguous.",
+                    ref warnings);
+            }
+        }
+
+        if (spawnZones.Length > 0)
+        {
+            report.AppendLine($"[OK] Spawn zones: {spawnZones.Length}");
+        }
+
         WaveController[] waveControllers = Object.FindObjectsByType<WaveController>(
             FindObjectsInactive.Include,
             FindObjectsSortMode.None);
@@ -173,6 +202,62 @@ public class MiniTopDownShooterWindow : EditorWindow
                     report,
                     $"WaveController '{waveController.name}' uses inline waves. Assign a Wave Set for reusable configuration.",
                     ref warnings);
+            }
+
+            IReadOnlyList<WaveConfig> configuredWaves = waveController.ConfiguredWaves;
+
+            if (configuredWaves != null)
+            {
+                for (int waveIndex = 0; waveIndex < configuredWaves.Count; waveIndex++)
+                {
+                    WaveConfig wave = configuredWaves[waveIndex];
+
+                    if (wave == null)
+                    {
+                        continue;
+                    }
+
+                    if (wave.SpawnZoneIds != null)
+                    {
+                        for (int zoneIndex = 0; zoneIndex < wave.SpawnZoneIds.Count; zoneIndex++)
+                        {
+                            string zoneId = wave.SpawnZoneIds[zoneIndex];
+
+                            if (!string.IsNullOrWhiteSpace(zoneId) &&
+                                !knownSpawnZoneIds.Contains(zoneId))
+                            {
+                                AddWarning(
+                                    report,
+                                    $"Wave {waveIndex + 1} references missing SpawnZone ID '{zoneId}'.",
+                                    ref warnings);
+                            }
+                        }
+                    }
+
+                    if (wave.EnemyGroups != null)
+                    {
+                        for (int groupIndex = 0; groupIndex < wave.EnemyGroups.Count; groupIndex++)
+                        {
+                            WaveEnemyGroup group = wave.EnemyGroups[groupIndex];
+
+                            if (group != null && group.Prefab == null)
+                            {
+                                AddWarning(
+                                    report,
+                                    $"Wave {waveIndex + 1} enemy group {groupIndex + 1} has no prefab and will be ignored.",
+                                    ref warnings);
+                            }
+                        }
+                    }
+
+                    if (wave.BossCount > 0 && wave.BossPrefab == null)
+                    {
+                        AddWarning(
+                            report,
+                            $"Wave {waveIndex + 1} has Boss Count {wave.BossCount} but no Boss Prefab.",
+                            ref warnings);
+                    }
+                }
             }
         }
 
@@ -244,13 +329,27 @@ public class MiniTopDownShooterWindow : EditorWindow
                     $"Gun '{gun.name}' uses legacy inline values. Assign a Weapon Definition for reusable configuration.",
                     ref warnings);
             }
+
+            return;
         }
-        else if (gun.Definition.ProjectilePrefab == null)
+
+        if (gun.Definition.DeliveryMode == WeaponDeliveryMode.Projectile &&
+            gun.Definition.ProjectilePrefab == null)
         {
-            AddError(
-                report,
-                $"Weapon Definition '{gun.Definition.name}' has no projectile prefab.",
-                ref errors);
+            if (legacyPrefab == null || legacyPrefab.objectReferenceValue == null)
+            {
+                AddError(
+                    report,
+                    $"Projectile Weapon Definition '{gun.Definition.name}' has no projectile prefab.",
+                    ref errors);
+            }
+            else
+            {
+                AddWarning(
+                    report,
+                    $"Weapon Definition '{gun.Definition.name}' falls back to Gun '{gun.name}' legacy projectile prefab.",
+                    ref warnings);
+            }
         }
     }
 
