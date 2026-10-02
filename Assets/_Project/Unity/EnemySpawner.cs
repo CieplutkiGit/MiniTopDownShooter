@@ -38,6 +38,27 @@ namespace Game
 
         public IReadOnlyList<SpawnZone> SpawnZones => _spawnZones;
 
+        public bool HasFallbackPrefabs
+        {
+            get
+            {
+                if (_prefabs == null)
+                {
+                    return false;
+                }
+
+                for (int i = 0; i < _prefabs.Length; i++)
+                {
+                    if (_prefabs[i].Prefab != null)
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+        }
+
         private void Awake()
         {
             _gameState = _gameStateRef;
