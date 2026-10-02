@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Reflection;
 using Game;
 using TMPro;
 using Unity.AI.Navigation;
@@ -6,8 +8,10 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.Audio;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using Object = UnityEngine.Object;
 
 public static class MiniTopDownShooterSetupCommands
 {
@@ -19,6 +23,54 @@ public static class MiniTopDownShooterSetupCommands
 
     private const string ShowcaseWaveSetPath =
         "Assets/_Project/Data/Waves/WaveSet_ArenaShowcase.asset";
+
+    public const string AudioMixerPath =
+        "Assets/_Project/Audio/GameAudioMixer.mixer";
+
+    public const string CombatMusicPath =
+        "Assets/_Project/Audio/combat_music.wav";
+
+    [MenuItem("Tools/Mini Top Down Shooter/Build/Build StandaloneWindows64")]
+    public static void BuildStandaloneWindows64()
+    {
+        string[] scenes = new string[]
+        {
+            "Assets/Scenes/SampleScene.unity",
+            "Assets/Scenes/ArenaShowcase.unity",
+            "Assets/Scenes/MobileDemo.unity"
+        };
+
+        string buildPath = "Builds/StandaloneWindows64/MiniTopDownShooter.exe";
+        string buildDir = System.IO.Path.GetDirectoryName(buildPath);
+        if (!System.IO.Directory.Exists(buildDir))
+        {
+            System.IO.Directory.CreateDirectory(buildDir);
+        }
+
+        BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions
+        {
+            scenes = scenes,
+            locationPathName = buildPath,
+            target = BuildTarget.StandaloneWindows64,
+            options = BuildOptions.None
+        };
+
+        UnityEditor.Build.Reporting.BuildReport report = BuildPipeline.BuildPlayer(buildPlayerOptions);
+        UnityEditor.Build.Reporting.BuildSummary summary = report.summary;
+
+        if (summary.result == UnityEditor.Build.Reporting.BuildResult.Succeeded)
+        {
+            Debug.Log($"[Build] Build StandaloneWindows64 SUCCEEDED: {summary.totalSize} bytes in {summary.totalTime.TotalSeconds:F2}s");
+        }
+        else
+        {
+            Debug.LogError($"[Build] Build StandaloneWindows64 FAILED: {summary.result}, errors: {summary.totalErrors}");
+            if (UnityEditorInternal.InternalEditorUtility.inBatchMode)
+            {
+                EditorApplication.Exit(1);
+            }
+        }
+    }
 
     [MenuItem("Tools/Mini Top Down Shooter/Create/Player")]
     public static void CreatePlayer()
@@ -460,6 +512,8 @@ public static class MiniTopDownShooterSetupCommands
             }
         }
 
+        WireAudioInScene();
+
         MarkSceneDirty();
         Debug.Log(
             "Filled common missing references where safe. Run Validate Open Scene for remaining issues.");
@@ -886,6 +940,12 @@ public static class MiniTopDownShooterSetupCommands
         serialized.FindProperty("_saveButton").objectReferenceValue = saveBtn;
         serialized.FindProperty("_resetDefaultsButton").objectReferenceValue = defaultsBtn;
         serialized.FindProperty("_closeButton").objectReferenceValue = closeBtn;
+        AudioMixer mixer = EnsureAudioMixer();
+        if (mixer != null)
+        {
+            serialized.FindProperty("_audioMixer").objectReferenceValue = mixer;
+        }
+
         if (player != null)
         {
             serialized.FindProperty("_player").objectReferenceValue = player;
@@ -959,6 +1019,214 @@ public static class MiniTopDownShooterSetupCommands
 
         panelObj.SetActive(false);
         return bossUI;
+    }
+
+    public static void WireAudioInScene()
+    {
+        AudioMixer mixer = EnsureAudioMixer();
+        AudioMixerGroup musicGroup = null;
+        AudioMixerGroup sfxGroup = null;
+
+        if (mixer != null)
+        {
+            AudioMixerGroup[] musicGroups = mixer.FindMatchingGroups("Music");
+            if (musicGroups != null && musicGroups.Length > 0)
+            {
+                for (int i = 0; i < musicGroups.Length; i++)
+                {
+                    if (musicGroups[i].name == "Music")
+                    {
+                        musicGroup = musicGroups[i];
+                        break;
+                    }
+                }
+            }
+
+            AudioMixerGroup[] sfxGroups = mixer.FindMatchingGroups("SFX");
+            if (sfxGroups != null && sfxGroups.Length > 0)
+            {
+                for (int i = 0; i < sfxGroups.Length; i++)
+                {
+                    if (sfxGroups[i].name == "SFX")
+                    {
+                        sfxGroup = sfxGroups[i];
+                        break;
+                    }
+                }
+            }
+        }
+
+        AudioClip combatMusic = AssetDatabase.LoadAssetAtPath<AudioClip>(CombatMusicPath);
+        GameStateAudio gameStateAudio = Object.FindFirstObjectByType<GameStateAudio>(FindObjectsInactive.Include);
+        AudioSource musicSource = null;
+
+        if (gameStateAudio != null)
+        {
+            SerializedObject serializedGSA = new SerializedObject(gameStateAudio);
+            if (combatMusic != null)
+            {
+                serializedGSA.FindProperty("_combatMusicClip").objectReferenceValue = combatMusic;
+            }
+
+            SerializedProperty musicSourceProp = serializedGSA.FindProperty("_musicSource");
+            musicSource = musicSourceProp.objectReferenceValue as AudioSource;
+            if (musicSource == null)
+            {
+                Transform musicChild = gameStateAudio.transform.Find("MusicSource");
+                if (musicChild != null)
+                {
+                    musicSource = musicChild.GetComponent<AudioSource>();
+                }
+                if (musicSource == null)
+                {
+                    GameObject musicObj = new GameObject("MusicSource");
+                    musicObj.transform.SetParent(gameStateAudio.transform, false);
+                    musicSource = musicObj.AddComponent<AudioSource>();
+                }
+                musicSourceProp.objectReferenceValue = musicSource;
+            }
+
+            if (musicSource != null && musicGroup != null)
+            {
+                musicSource.outputAudioMixerGroup = musicGroup;
+                EditorUtility.SetDirty(musicSource);
+            }
+
+            SerializedProperty sourceProp = serializedGSA.FindProperty("_source");
+            AudioSource gsaSource = sourceProp.objectReferenceValue as AudioSource;
+            if (gsaSource == null)
+            {
+                gsaSource = gameStateAudio.GetComponent<AudioSource>();
+                if (gsaSource == null)
+                {
+                    gsaSource = gameStateAudio.gameObject.AddComponent<AudioSource>();
+                }
+                sourceProp.objectReferenceValue = gsaSource;
+            }
+
+            if (gsaSource != null && sfxGroup != null)
+            {
+                gsaSource.outputAudioMixerGroup = sfxGroup;
+                EditorUtility.SetDirty(gsaSource);
+            }
+
+            serializedGSA.ApplyModifiedProperties();
+            EditorUtility.SetDirty(gameStateAudio);
+        }
+
+        SettingsUI settingsUI = Object.FindFirstObjectByType<SettingsUI>(FindObjectsInactive.Include);
+        if (settingsUI != null)
+        {
+            SerializedObject serializedSettings = new SerializedObject(settingsUI);
+            if (mixer != null)
+            {
+                serializedSettings.FindProperty("_audioMixer").objectReferenceValue = mixer;
+            }
+            if (musicSource != null)
+            {
+                serializedSettings.FindProperty("_musicSource").objectReferenceValue = musicSource;
+            }
+            serializedSettings.ApplyModifiedProperties();
+            EditorUtility.SetDirty(settingsUI);
+        }
+
+        AudioSource[] allAudioSources = Object.FindObjectsByType<AudioSource>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        for (int i = 0; i < allAudioSources.Length; i++)
+        {
+            AudioSource asrc = allAudioSources[i];
+            if (musicSource != null && asrc == musicSource)
+            {
+                continue;
+            }
+            if (sfxGroup != null)
+            {
+                asrc.outputAudioMixerGroup = sfxGroup;
+                EditorUtility.SetDirty(asrc);
+            }
+        }
+    }
+
+    public static AudioMixer EnsureAudioMixer()
+    {
+        AudioMixer mixer = AssetDatabase.LoadAssetAtPath<AudioMixer>(AudioMixerPath);
+        if (mixer != null)
+        {
+            return mixer;
+        }
+
+        return CreateGameAudioMixerAsset();
+    }
+
+    public static AudioMixer CreateGameAudioMixerAsset()
+    {
+        string path = AudioMixerPath;
+        string dir = System.IO.Path.GetDirectoryName(path);
+        if (!System.IO.Directory.Exists(dir))
+        {
+            System.IO.Directory.CreateDirectory(dir);
+        }
+
+        if (System.IO.File.Exists(path))
+        {
+            AssetDatabase.DeleteAsset(path);
+        }
+
+        Type controllerType = typeof(AudioImporter).Assembly.GetType("UnityEditor.Audio.AudioMixerController");
+        Type groupType = typeof(AudioImporter).Assembly.GetType("UnityEditor.Audio.AudioMixerGroupController");
+        Type audioGroupParamPathType = typeof(AudioImporter).Assembly.GetType("UnityEditor.Audio.AudioGroupParameterPath");
+        Type exposedParamType = typeof(AudioImporter).Assembly.GetType("UnityEditor.Audio.ExposedAudioParameter");
+
+        var createMethod = controllerType.GetMethod("CreateMixerControllerAtPath", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+        var controller = createMethod.Invoke(null, new object[] { path });
+
+        var masterGroupProp = controllerType.GetProperty("masterGroup", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+        var masterGroup = masterGroupProp.GetValue(controller);
+
+        var createNewGroupMethod = controllerType.GetMethod("CreateNewGroup", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+        var musicGroup = createNewGroupMethod.Invoke(controller, new object[] { "Music", false });
+        var sfxGroup = createNewGroupMethod.Invoke(controller, new object[] { "SFX", false });
+
+        var childrenProp = groupType.GetProperty("children", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+        var childrenArray = Array.CreateInstance(groupType, 2);
+        childrenArray.SetValue(musicGroup, 0);
+        childrenArray.SetValue(sfxGroup, 1);
+        childrenProp.SetValue(masterGroup, childrenArray);
+
+        var getGUIDForVolume = groupType.GetMethod("GetGUIDForVolume", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+        var addExposedParamMethod = controllerType.GetMethod("AddExposedParameter", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+
+        object p1 = Activator.CreateInstance(audioGroupParamPathType, new object[] { masterGroup, getGUIDForVolume.Invoke(masterGroup, null) });
+        addExposedParamMethod.Invoke(controller, new object[] { p1 });
+
+        object p2 = Activator.CreateInstance(audioGroupParamPathType, new object[] { musicGroup, getGUIDForVolume.Invoke(musicGroup, null) });
+        addExposedParamMethod.Invoke(controller, new object[] { p2 });
+
+        object p3 = Activator.CreateInstance(audioGroupParamPathType, new object[] { sfxGroup, getGUIDForVolume.Invoke(sfxGroup, null) });
+        addExposedParamMethod.Invoke(controller, new object[] { p3 });
+
+        var exposedParamsProp = controllerType.GetProperty("exposedParameters", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+        Array exposed = (Array)exposedParamsProp.GetValue(controller);
+
+        var nameField = exposedParamType.GetField("name", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+        object e0 = exposed.GetValue(0);
+        nameField.SetValue(e0, "MasterVolume");
+        exposed.SetValue(e0, 0);
+
+        object e1 = exposed.GetValue(1);
+        nameField.SetValue(e1, "MusicVolume");
+        exposed.SetValue(e1, 1);
+
+        object e2 = exposed.GetValue(2);
+        nameField.SetValue(e2, "SFXVolume");
+        exposed.SetValue(e2, 2);
+
+        exposedParamsProp.SetValue(controller, exposed);
+
+        EditorUtility.SetDirty((UnityEngine.Object)controller);
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+
+        return AssetDatabase.LoadAssetAtPath<AudioMixer>(path);
     }
 
     private static GameObject CreateUIObject(string name, Transform parent)

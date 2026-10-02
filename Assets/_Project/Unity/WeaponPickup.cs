@@ -7,6 +7,25 @@ namespace Game
         [SerializeField] private Gun _weaponPrefab;
         [SerializeField] private bool _equipImmediately = true;
         [SerializeField] private bool _destroyOnCollect = true;
+        [SerializeField] private bool _isRuntimeDrop;
+
+        public bool IsRuntimeDrop
+        {
+            get => _isRuntimeDrop;
+            set => _isRuntimeDrop = value;
+        }
+
+        public Gun WeaponPrefab
+        {
+            get => _weaponPrefab;
+            set => _weaponPrefab = value;
+        }
+
+        public bool EquipImmediately
+        {
+            get => _equipImmediately;
+            set => _equipImmediately = value;
+        }
 
         private void OnTriggerEnter(Collider other)
         {
@@ -28,13 +47,39 @@ namespace Game
 
             if (!loadout.AddWeapon(weapon, _equipImmediately))
             {
-                Destroy(weapon.gameObject);
+                if (UnityEngine.Application.isPlaying)
+                {
+                    Destroy(weapon.gameObject);
+                }
+                else
+                {
+                    DestroyImmediate(weapon.gameObject);
+                }
                 return;
             }
 
             if (_destroyOnCollect)
             {
-                Destroy(gameObject);
+                Collect();
+            }
+        }
+
+        public void Collect()
+        {
+            if (_isRuntimeDrop)
+            {
+                if (UnityEngine.Application.isPlaying)
+                {
+                    Destroy(gameObject);
+                }
+                else
+                {
+                    DestroyImmediate(gameObject);
+                }
+            }
+            else
+            {
+                gameObject.SetActive(false);
             }
         }
     }

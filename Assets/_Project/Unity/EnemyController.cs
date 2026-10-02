@@ -86,16 +86,30 @@ namespace Game
         public void Spawn(Vector3 position, Transform target)
         {
             CancelInvoke();
-            _movement.Warp(position);
-            _movement.SetSpeedMultiplier(1f);
+            transform.position = position;
+
+            if (_movement != null)
+            {
+                _movement.Warp(position);
+                _movement.SetSpeedMultiplier(1f);
+            }
 
             if (_stats != null)
             {
-                _movement.Init(_stats.MoveSpeed);
-                _attack.Init(_stats.Damage, _stats.AttackRange, _stats.AttackCooldown);
-                _health.SetMaxHealth(_stats.MaxHealth);
+                if (_movement != null)
+                {
+                    _movement.Init(_stats.MoveSpeed);
+                }
+                if (_attack != null)
+                {
+                    _attack.Init(_stats.Damage, _stats.AttackRange, _stats.AttackCooldown);
+                }
+                if (_health != null)
+                {
+                    _health.SetMaxHealth(_stats.MaxHealth);
+                }
             }
-            else
+            else if (_health != null)
             {
                 _health.ResetHealth();
             }

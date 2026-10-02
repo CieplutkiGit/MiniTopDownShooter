@@ -40,16 +40,71 @@ namespace Game
         [Range(1, 10)]
         [SerializeField] private int _maxSpawnRetries = 5;
 
-        private Dictionary<EnemyController, VariantPool> _pools;
-        private Dictionary<EnemyController, VariantPool> _instanceToPool;
+        private Dictionary<EnemyController, VariantPool> _pools = new Dictionary<EnemyController, VariantPool>();
+        private Dictionary<EnemyController, VariantPool> _instanceToPool = new Dictionary<EnemyController, VariantPool>();
         private IGameStateProvider _gameState;
-        private List<EnemyController> _alive;
+        private List<EnemyController> _alive = new List<EnemyController>();
         private int _aliveCount;
         private int _totalWeight;
 
         public event Action<int> EnemyKilled;
 
-        public IReadOnlyList<SpawnZone> SpawnZones => _spawnZones;
+        public int MaxAlive => _maxAlive;
+        public int AliveCount => _aliveCount;
+
+        private void EnsureCollections()
+        {
+            if (_alive == null)
+            {
+                _alive = new List<EnemyController>();
+            }
+
+            if (_pools == null)
+            {
+                _pools = new Dictionary<EnemyController, VariantPool>();
+            }
+
+            if (_instanceToPool == null)
+            {
+                _instanceToPool = new Dictionary<EnemyController, VariantPool>();
+            }
+        }
+
+        public bool HasZone(string zoneId)
+        {
+            if (string.IsNullOrEmpty(zoneId) || _spawnZones == null)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < _spawnZones.Length; i++)
+            {
+                if (_spawnZones[i] != null && string.Equals(_spawnZones[i].Id, zoneId, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public bool ValidateZones(IReadOnlyList<string> zoneIds)
+        {
+            if (zoneIds == null || zoneIds.Count == 0)
+            {
+                return true;
+            }
+
+            for (int i = 0; i < zoneIds.Count; i++)
+            {
+                if (!HasZone(zoneIds[i]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
 
         public bool HasFallbackPrefabs
         {
@@ -74,6 +129,7 @@ namespace Game
 
         public void Initialize(Transform player, GameStateController gameState, EffectPool effectPool)
         {
+            EnsureCollections();
             _player = player;
             _gameStateRef = gameState;
             _gameState = gameState;
@@ -82,6 +138,7 @@ namespace Game
 
         private void Awake()
         {
+            EnsureCollections();
             if (_player == null)
             {
                 PlayerController pc = FindFirstObjectByType<PlayerController>();
@@ -102,9 +159,6 @@ namespace Game
             }
 
             _gameState = _gameStateRef;
-            _alive = new List<EnemyController>();
-            _pools = new Dictionary<EnemyController, VariantPool>();
-            _instanceToPool = new Dictionary<EnemyController, VariantPool>();
 
             if (_spawnCamera == null)
             {
@@ -166,6 +220,15 @@ namespace Game
             if (prefab == null)
             {
                 return SpawnResult.InvalidConfiguration;
+            }
+
+            // Validate requested zone IDs against configured zones. Missing required zones are InvalidConfiguration.
+            if (allowedZoneIds != null && allowedZoneIds.Count > 0)
+            {
+                if (!ValidateZones(allowedZoneIds))
+                {
+                    return SpawnResult.InvalidConfiguration;
+                }
             }
 
             bool gotPosition = false;
@@ -256,6 +319,7 @@ namespace Game
 
         public void ClearAllAlive()
         {
+            EnsureCollections();
             for (int i = _alive.Count - 1; i >= 0; i--)
             {
                 EnemyController enemy = _alive[i];
@@ -286,6 +350,7 @@ namespace Game
 
         private VariantPool EnsurePool(EnemyController prefab)
         {
+            EnsureCollections();
             if (!_pools.TryGetValue(prefab, out VariantPool pool))
             {
                 pool = new VariantPool(
@@ -437,19 +502,21 @@ namespace Game
 
         private bool TryGetLegacySpawnPosition(out Vector3 position)
         {
-            if (_player == null)
-            {
-                position = Vector3.zero;
-                return false;
-            }
+            Vector3 origin = _player != null ? _player.position : transform.position;
 
             float angle = UnityEngine.Random.value * Mathf.PI * 2f;
             Vector3 direction = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle));
-            Vector3 candidate = _player.position + direction * _spawnRadius;
+            Vector3 candidate = origin + direction * _spawnRadius;
 
             if (NavMesh.SamplePosition(candidate, out NavMeshHit hit, 2f, NavMesh.AllAreas))
             {
                 position = hit.position;
+                return true;
+            }
+
+            if (NavMesh.CalculateTriangulation().vertices.Length == 0)
+            {
+                position = candidate;
                 return true;
             }
 
@@ -471,6 +538,11 @@ namespace Game
                 _instanceToPool.Remove(enemy);
             }
 
+            EnemyKilled?.Invoke(scoreValue);
+        }
+
+        public void NotifyEnemyKilled(int scoreValue)
+        {
             EnemyKilled?.Invoke(scoreValue);
         }
 

@@ -33,10 +33,30 @@ jobs:
       - name: Validate Unity license secrets
         shell: bash
         run: |
-          if [[ -z "$UNITY_LICENSE" && -z "$UNITY_SERIAL" ]]; then
-            echo "::error::Configure UNITY_LICENSE for a personal license or UNITY_SERIAL with UNITY_EMAIL/UNITY_PASSWORD for a professional license."
+          if [[ -n "$UNITY_LICENSE" ]]; then
+            echo "Unity personal license (UNITY_LICENSE) is configured."
+            exit 0
+          fi
+
+          missing=()
+          if [[ -z "$UNITY_SERIAL" ]]; then
+            missing+=("UNITY_SERIAL")
+          fi
+          if [[ -z "$UNITY_EMAIL" ]]; then
+            missing+=("UNITY_EMAIL")
+          fi
+          if [[ -z "$UNITY_PASSWORD" ]]; then
+            missing+=("UNITY_PASSWORD")
+          fi
+
+          if [[ ${#missing[@]} -eq 3 ]]; then
+            echo "::error title=Validation Blocked::Unity license secrets are not configured. To run Unity CI, configure either UNITY_LICENSE (personal license) or UNITY_SERIAL, UNITY_EMAIL, and UNITY_PASSWORD (professional license). Missing secrets: UNITY_LICENSE, ${missing[*]}."
+            exit 1
+          elif [[ ${#missing[@]} -gt 0 ]]; then
+            echo "::error title=Validation Blocked::Incomplete Unity professional license credentials. Missing secrets: ${missing[*]}."
             exit 1
           fi
+          echo "Unity professional license credentials are configured."
 
       - name: Cache Unity Library
         uses: actions/cache@v4
@@ -92,10 +112,30 @@ jobs:
       - name: Validate Unity license secrets
         shell: bash
         run: |
-          if [[ -z "$UNITY_LICENSE" && -z "$UNITY_SERIAL" ]]; then
-            echo "::error::Configure UNITY_LICENSE for a personal license or UNITY_SERIAL with UNITY_EMAIL/UNITY_PASSWORD for a professional license."
+          if [[ -n "$UNITY_LICENSE" ]]; then
+            echo "Unity personal license (UNITY_LICENSE) is configured."
+            exit 0
+          fi
+
+          missing=()
+          if [[ -z "$UNITY_SERIAL" ]]; then
+            missing+=("UNITY_SERIAL")
+          fi
+          if [[ -z "$UNITY_EMAIL" ]]; then
+            missing+=("UNITY_EMAIL")
+          fi
+          if [[ -z "$UNITY_PASSWORD" ]]; then
+            missing+=("UNITY_PASSWORD")
+          fi
+
+          if [[ ${#missing[@]} -eq 3 ]]; then
+            echo "::error title=Validation Blocked::Unity license secrets are not configured. To run Unity CI, configure either UNITY_LICENSE (personal license) or UNITY_SERIAL, UNITY_EMAIL, and UNITY_PASSWORD (professional license). Missing secrets: UNITY_LICENSE, ${missing[*]}."
+            exit 1
+          elif [[ ${#missing[@]} -gt 0 ]]; then
+            echo "::error title=Validation Blocked::Incomplete Unity professional license credentials. Missing secrets: ${missing[*]}."
             exit 1
           fi
+          echo "Unity professional license credentials are configured."
 
       - name: Cache Unity Library
         uses: actions/cache@v4

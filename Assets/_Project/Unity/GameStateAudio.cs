@@ -14,6 +14,14 @@ namespace Game
         private IGameStateProvider _gameState;
         private bool _isSubscribed;
 
+        public AudioClip CombatMusicClip
+        {
+            get => _combatMusicClip;
+            set => _combatMusicClip = value;
+        }
+
+        public AudioSource MusicSource => _musicSource;
+
         public void Initialize(GameStateController gameState)
         {
             UnsubscribeEvents();
@@ -61,6 +69,15 @@ namespace Game
         }
 
         private void OnDisable()
+        {
+            UnsubscribeEvents();
+            if (_musicSource != null)
+            {
+                _musicSource.Stop();
+            }
+        }
+
+        private void OnDestroy()
         {
             UnsubscribeEvents();
             if (_musicSource != null)

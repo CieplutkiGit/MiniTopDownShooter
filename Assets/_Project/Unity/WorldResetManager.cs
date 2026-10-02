@@ -19,8 +19,84 @@ namespace Game
         private ISpawner _spawner;
         private IGameStateController _gameState;
 
+        private class AuthoredAmmoData
+        {
+            public AmmoPickup Component;
+            public Vector3 Position;
+            public Quaternion Rotation;
+            public Vector3 LocalScale;
+            public Transform Parent;
+            public int Amount;
+            public bool InitialActiveSelf;
+        }
+
+        private class AuthoredWeaponData
+        {
+            public WeaponPickup Component;
+            public Vector3 Position;
+            public Quaternion Rotation;
+            public Vector3 LocalScale;
+            public Transform Parent;
+            public Gun WeaponPrefab;
+            public bool EquipImmediately;
+            public bool InitialActiveSelf;
+        }
+
+        private readonly System.Collections.Generic.List<AuthoredAmmoData> _authoredAmmo = new System.Collections.Generic.List<AuthoredAmmoData>();
+        private readonly System.Collections.Generic.List<AuthoredWeaponData> _authoredWeapons = new System.Collections.Generic.List<AuthoredWeaponData>();
+        private bool _hasRegisteredAuthoredPickups;
+
+        public void RegisterAuthoredPickups()
+        {
+            if (_hasRegisteredAuthoredPickups)
+            {
+                return;
+            }
+
+            _authoredAmmo.Clear();
+            _authoredWeapons.Clear();
+
+            AmmoPickup[] ammo = FindObjectsByType<AmmoPickup>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            for (int i = 0; i < ammo.Length; i++)
+            {
+                if (ammo[i] == null) continue;
+                ammo[i].IsRuntimeDrop = false;
+                _authoredAmmo.Add(new AuthoredAmmoData
+                {
+                    Component = ammo[i],
+                    Position = ammo[i].transform.position,
+                    Rotation = ammo[i].transform.rotation,
+                    LocalScale = ammo[i].transform.localScale,
+                    Parent = ammo[i].transform.parent,
+                    Amount = ammo[i].Amount,
+                    InitialActiveSelf = ammo[i].gameObject.activeSelf
+                });
+            }
+
+            WeaponPickup[] weapons = FindObjectsByType<WeaponPickup>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            for (int i = 0; i < weapons.Length; i++)
+            {
+                if (weapons[i] == null) continue;
+                weapons[i].IsRuntimeDrop = false;
+                _authoredWeapons.Add(new AuthoredWeaponData
+                {
+                    Component = weapons[i],
+                    Position = weapons[i].transform.position,
+                    Rotation = weapons[i].transform.rotation,
+                    LocalScale = weapons[i].transform.localScale,
+                    Parent = weapons[i].transform.parent,
+                    WeaponPrefab = weapons[i].WeaponPrefab,
+                    EquipImmediately = weapons[i].EquipImmediately,
+                    InitialActiveSelf = weapons[i].gameObject.activeSelf
+                });
+            }
+
+            _hasRegisteredAuthoredPickups = true;
+        }
+
         public void Initialize(PlayerController player, EnemySpawner spawner, GameStateController gameState, WaveController waves, EffectPool effectPool, ScoreController score, Transform spawnPoint = null)
         {
+            RegisterAuthoredPickups();
             _player = player;
             _spawnerRef = spawner;
             _gameStateRef = gameState;
@@ -37,6 +113,8 @@ namespace Game
 
         private void Awake()
         {
+            RegisterAuthoredPickups();
+
             if (_player == null)
             {
                 _player = FindFirstObjectByType<PlayerController>();
@@ -71,6 +149,8 @@ namespace Game
             _gameState = _gameStateRef;
         }
 
+        public void ResetWorld() => Restart();
+
         public void Restart()
         {
             if (_gameState == null)
@@ -100,25 +180,22 @@ namespace Game
             }
             ClearActiveDebris();
 
-            // 4. Clear active pickups (both ammo and weapon pickups)
-            ClearActivePickups();
+            // 4. Restore authored pickups and clear runtime drops
+            RestorePickups();
 
-            // 5. Restore camera and screen shake state
-            ResetCameraState();
-
-            // 6. Restore timers and wave progress
+            // 5. Restore timers and wave progress
             if (_waveRef != null)
             {
                 _waveRef.ResetWaves();
             }
 
-            // 7. Reset score tracker
+            // 6. Reset score tracker
             if (_scoreRef != null)
             {
                 _scoreRef.ResetScore();
             }
 
-            // 8. Restore player health, ammo, starting weapons, rotation, and input BEFORE entering Playing
+            // 7. Restore player health, ammo, starting weapons, rotation, and input BEFORE entering Playing
             if (_player != null && _spawnPoint != null)
             {
                 _player.ResetToSpawn(_spawnPoint.position, _spawnPoint.rotation);
@@ -127,6 +204,9 @@ namespace Game
             {
                 _player.ResetToSpawn(_player.transform.position, _player.transform.rotation);
             }
+
+            // 8. Restore camera and screen shake state AFTER player reset to spawn
+            ResetCameraState();
 
             // 9. Now safely enter Playing
             _gameState.StartGame();
@@ -156,23 +236,79 @@ namespace Game
             }
         }
 
-        private void ClearActivePickups()
+        private void RestorePickups()
         {
-            AmmoPickup[] ammoPickups = FindObjectsByType<AmmoPickup>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
-            for (int i = 0; i < ammoPickups.Length; i++)
+            if (!_hasRegisteredAuthoredPickups)
             {
-                if (ammoPickups[i] != null)
+                RegisterAuthoredPickups();
+            }
+
+            // Remove runtime drops (any pickup currently in scene that was not registered as authored, or marked as runtime drop)
+            System.Collections.Generic.HashSet<AmmoPickup> authoredAmmoSet = new System.Collections.Generic.HashSet<AmmoPickup>();
+            for (int i = 0; i < _authoredAmmo.Count; i++)
+            {
+                if (_authoredAmmo[i].Component != null)
                 {
-                    SafeDestroy(ammoPickups[i].gameObject);
+                    authoredAmmoSet.Add(_authoredAmmo[i].Component);
                 }
             }
 
-            WeaponPickup[] weaponPickups = FindObjectsByType<WeaponPickup>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
-            for (int i = 0; i < weaponPickups.Length; i++)
+            AmmoPickup[] allAmmo = FindObjectsByType<AmmoPickup>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            for (int i = 0; i < allAmmo.Length; i++)
             {
-                if (weaponPickups[i] != null)
+                if (allAmmo[i] != null && (!authoredAmmoSet.Contains(allAmmo[i]) || allAmmo[i].IsRuntimeDrop))
                 {
-                    SafeDestroy(weaponPickups[i].gameObject);
+                    SafeDestroy(allAmmo[i].gameObject);
+                }
+            }
+
+            System.Collections.Generic.HashSet<WeaponPickup> authoredWeaponSet = new System.Collections.Generic.HashSet<WeaponPickup>();
+            for (int i = 0; i < _authoredWeapons.Count; i++)
+            {
+                if (_authoredWeapons[i].Component != null)
+                {
+                    authoredWeaponSet.Add(_authoredWeapons[i].Component);
+                }
+            }
+
+            WeaponPickup[] allWeapons = FindObjectsByType<WeaponPickup>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            for (int i = 0; i < allWeapons.Length; i++)
+            {
+                if (allWeapons[i] != null && (!authoredWeaponSet.Contains(allWeapons[i]) || allWeapons[i].IsRuntimeDrop))
+                {
+                    SafeDestroy(allWeapons[i].gameObject);
+                }
+            }
+
+            // Restore each authored pickup exactly once
+            for (int i = 0; i < _authoredAmmo.Count; i++)
+            {
+                AuthoredAmmoData data = _authoredAmmo[i];
+                if (data.Component != null)
+                {
+                    data.Component.transform.SetParent(data.Parent);
+                    data.Component.transform.position = data.Position;
+                    data.Component.transform.rotation = data.Rotation;
+                    data.Component.transform.localScale = data.LocalScale;
+                    data.Component.Amount = data.Amount;
+                    data.Component.IsRuntimeDrop = false;
+                    data.Component.gameObject.SetActive(data.InitialActiveSelf);
+                }
+            }
+
+            for (int i = 0; i < _authoredWeapons.Count; i++)
+            {
+                AuthoredWeaponData data = _authoredWeapons[i];
+                if (data.Component != null)
+                {
+                    data.Component.transform.SetParent(data.Parent);
+                    data.Component.transform.position = data.Position;
+                    data.Component.transform.rotation = data.Rotation;
+                    data.Component.transform.localScale = data.LocalScale;
+                    data.Component.WeaponPrefab = data.WeaponPrefab;
+                    data.Component.EquipImmediately = data.EquipImmediately;
+                    data.Component.IsRuntimeDrop = false;
+                    data.Component.gameObject.SetActive(data.InitialActiveSelf);
                 }
             }
         }

@@ -20,12 +20,18 @@ namespace Game
 
         public void Update()
         {
-            _movement.MoveToward(_target.position);
+            if (_movement != null && _target != null)
+            {
+                _movement.MoveToward(_target.position);
+            }
         }
 
         public void Exit()
         {
-            _movement.Stop();
+            if (_movement != null)
+            {
+                _movement.Stop();
+            }
         }
     }
 }

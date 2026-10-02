@@ -172,7 +172,18 @@ namespace Game
             _runner.AllWavesCompleted -= HandleAllWavesCompleted;
         }
 
-        private void Update()
+        public void SetWaves(IEnumerable<WaveConfig> waves)
+        {
+            _waveSet = null;
+            _waves = waves != null ? new List<WaveConfig>(waves) : new List<WaveConfig>();
+        }
+
+        public void SetWaveSet(WaveSet waveSet)
+        {
+            _waveSet = waveSet;
+        }
+
+        public void Tick(float deltaTime)
         {
             if (_runner == null || !_runner.IsRunning)
             {
@@ -181,7 +192,7 @@ namespace Game
 
             if (_pendingSpawnEntry != null)
             {
-                _pendingSpawnDelay -= Time.deltaTime;
+                _pendingSpawnDelay -= deltaTime;
 
                 if (_pendingSpawnDelay <= 0f)
                 {
@@ -194,7 +205,12 @@ namespace Game
                 return;
             }
 
-            _runner.Tick(Time.deltaTime);
+            _runner.Tick(deltaTime);
+        }
+
+        private void Update()
+        {
+            Tick(Time.deltaTime);
         }
 
         private Wave[] BuildWaveData()
@@ -380,6 +396,7 @@ namespace Game
         }
 
         private const int MaxSpawnEntryRetries = 5;
+        private const int MaxPositionAttempts = 15;
 
         private void TrySpawnEntry(WaveSpawnEntry entry)
         {
@@ -411,6 +428,17 @@ namespace Game
                 return;
             }
 
+            string prefabName = entry.Prefab != null ? entry.Prefab.name : "null";
+            string zoneStr = entry.ZoneIds != null && entry.ZoneIds.Count > 0 ? string.Join(", ", entry.ZoneIds) : "none";
+
+            // If spawner failed due to invalid configuration:
+            if (result == SpawnResult.InvalidConfiguration)
+            {
+                Debug.LogError($"[WaveController] Fatal spawn error: Invalid configuration for enemy '{prefabName}' (requested zones: [{zoneStr}]). Terminating wave.");
+                TerminateWithSpawnError();
+                return;
+            }
+
             entry.RetryCount++;
 
             // Preserve authored spawn restrictions after retries: attempt safe stuck recovery within the authored zone
@@ -424,20 +452,80 @@ namespace Game
                 }
             }
 
-            // If spawner permanently exhausted retries due to invalid configuration:
-            if (result == SpawnResult.InvalidConfiguration && entry.RetryCount > MaxSpawnEntryRetries * 3)
+            // If recovery still fails, stop after 15 failed position attempts for that entry:
+            if (entry.RetryCount >= MaxPositionAttempts)
             {
-                // Visible failure path: NEVER count an unspawned required enemy/boss as killed!
-                Debug.LogError($"[WaveController] Fatal spawn failure: could not spawn enemy '{(entry.Prefab != null ? entry.Prefab.name : "null")}' after {entry.RetryCount} retries. Reason: {result}. Preserving integrity without granting false kill.");
-                if (_gameStateRef != null)
+                Debug.LogError($"[WaveController] Fatal spawn error: Unable to find valid spawn position for enemy '{prefabName}' (requested zones: [{zoneStr}]) after {entry.RetryCount} attempts. Terminating wave.");
+                TerminateWithSpawnError();
+                return;
+            }
+        }
+
+        private void TerminateWithSpawnError()
+        {
+            _activePlan = null;
+            _pendingSpawnEntry = null;
+            _pendingSpawnDelay = 0f;
+
+            if (_runner != null && _runner.IsRunning)
+            {
+                _runner.StopWaves();
+            }
+
+            if (_gameStateRef != null)
+            {
+                _gameStateRef.EndGame();
+            }
+            else if (_gameState is IGameStateController stateCtrl)
+            {
+                stateCtrl.EndGame();
+            }
+        }
+
+        private bool ValidateActiveWave(int waveNumber, out string errorReason)
+        {
+            errorReason = null;
+
+            if (_spawnerRef != null && _spawnerRef.MaxAlive <= 0)
+            {
+                errorReason = "Spawner has zero or negative spawn capacity";
+                return false;
+            }
+
+            if (_activePlan == null || _activePlan.Count == 0)
+            {
+                return true;
+            }
+
+            for (int i = 0; i < _activePlan.Count; i++)
+            {
+                WaveSpawnEntry entry = _activePlan[i];
+                if (entry == null) continue;
+
+                if (entry.Prefab == null)
                 {
-                    _gameStateRef.EndGame();
+                    bool hasFallback = _spawnerRef != null ? _spawnerRef.HasFallbackPrefabs : (_spawner != null);
+                    if (!hasFallback)
+                    {
+                        string zoneIds = entry.ZoneIds != null && entry.ZoneIds.Count > 0 ? string.Join(", ", entry.ZoneIds) : "none";
+                        errorReason = $"Missing required enemy prefab for spawn entry {i} (zones: [{zoneIds}])";
+                        return false;
+                    }
                 }
-                else if (_gameState is IGameStateController stateCtrl)
+
+                if (entry.ZoneIds != null && entry.ZoneIds.Count > 0 && _spawnerRef != null)
                 {
-                    stateCtrl.EndGame();
+                    if (!_spawnerRef.ValidateZones(entry.ZoneIds))
+                    {
+                        string prefabName = entry.Prefab != null ? entry.Prefab.name : "Fallback";
+                        string zoneIds = string.Join(", ", entry.ZoneIds);
+                        errorReason = $"Required zone configuration missing for enemy '{prefabName}' (requested zones: [{zoneIds}])";
+                        return false;
+                    }
                 }
             }
+
+            return true;
         }
 
         private void HandleEnemyKilled(int scoreValue)
@@ -462,6 +550,13 @@ namespace Game
                 {
                     _activePlan[i].DelayConsumed = false;
                 }
+            }
+
+            if (!ValidateActiveWave(waveNumber, out string errorReason))
+            {
+                Debug.LogError($"[WaveController] Wave {waveNumber} configuration invalid: {errorReason}. Terminating wave.");
+                TerminateWithSpawnError();
+                return;
             }
 
             if (_debugLog)

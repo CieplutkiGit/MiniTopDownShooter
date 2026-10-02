@@ -40,10 +40,31 @@ namespace Game
 
         public void Initialize(PlayerController player, WaveController waves)
         {
+            if (_player != null)
+            {
+                _player.Died -= HandlePlayerDied;
+            }
+            if (_waves != null)
+            {
+                _waves.AllWavesCompleted -= HandleAllWavesCompleted;
+            }
+
             _playerRef = player;
             _waveRef = waves;
             _player = player;
             _waves = waves;
+
+            if (isActiveAndEnabled)
+            {
+                if (_player != null)
+                {
+                    _player.Died += HandlePlayerDied;
+                }
+                if (_waves != null)
+                {
+                    _waves.AllWavesCompleted += HandleAllWavesCompleted;
+                }
+            }
         }
 
         private void Awake()

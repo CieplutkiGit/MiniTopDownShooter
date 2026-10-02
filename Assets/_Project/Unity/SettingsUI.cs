@@ -241,6 +241,36 @@ namespace Game
             }
         }
 
+        public UnityEngine.Audio.AudioMixer AudioMixer
+        {
+            get => _audioMixer;
+            set => _audioMixer = value;
+        }
+
+        public AudioSource MusicSource
+        {
+            get => _musicSource;
+            set => _musicSource = value;
+        }
+
+        public string MasterVolumeParam
+        {
+            get => !string.IsNullOrEmpty(_masterVolumeParam) ? _masterVolumeParam : "MasterVolume";
+            set => _masterVolumeParam = value;
+        }
+
+        public string MusicVolumeParam
+        {
+            get => !string.IsNullOrEmpty(_musicVolumeParam) ? _musicVolumeParam : "MusicVolume";
+            set => _musicVolumeParam = value;
+        }
+
+        public string SFXVolumeParam
+        {
+            get => !string.IsNullOrEmpty(_sfxVolumeParam) ? _sfxVolumeParam : "SFXVolume";
+            set => _sfxVolumeParam = value;
+        }
+
         private void ApplySettingsToGame(GameSettingsData data)
         {
             if (data == null)
@@ -248,27 +278,33 @@ namespace Game
                 return;
             }
 
-            AudioListener.volume = data.MasterVolume;
-
             if (_audioMixer != null)
             {
-                if (!string.IsNullOrEmpty(_masterVolumeParam))
-                {
-                    _audioMixer.SetFloat(_masterVolumeParam, VolumeToDecibels(data.MasterVolume));
-                }
-                if (!string.IsNullOrEmpty(_musicVolumeParam))
-                {
-                    _audioMixer.SetFloat(_musicVolumeParam, VolumeToDecibels(data.MusicVolume));
-                }
-                if (!string.IsNullOrEmpty(_sfxVolumeParam))
-                {
-                    _audioMixer.SetFloat(_sfxVolumeParam, VolumeToDecibels(data.SFXVolume));
-                }
-            }
+                // Use mixer as the sole volume authority: remove duplicate attenuation
+                AudioListener.volume = 1f;
 
-            if (_musicSource != null)
+                if (_musicSource != null)
+                {
+                    _musicSource.volume = 1f;
+                }
+
+                string masterParam = !string.IsNullOrEmpty(_masterVolumeParam) ? _masterVolumeParam : "MasterVolume";
+                string musicParam = !string.IsNullOrEmpty(_musicVolumeParam) ? _musicVolumeParam : "MusicVolume";
+                string sfxParam = !string.IsNullOrEmpty(_sfxVolumeParam) ? _sfxVolumeParam : "SFXVolume";
+
+                _audioMixer.SetFloat(masterParam, VolumeToDecibels(data.MasterVolume));
+                _audioMixer.SetFloat(musicParam, VolumeToDecibels(data.MusicVolume));
+                _audioMixer.SetFloat(sfxParam, VolumeToDecibels(data.SFXVolume));
+            }
+            else
             {
-                _musicSource.volume = data.MusicVolume;
+                // Fallback when no AudioMixer is assigned
+                AudioListener.volume = data.MasterVolume;
+
+                if (_musicSource != null)
+                {
+                    _musicSource.volume = data.MusicVolume;
+                }
             }
 
             MobileDemoControlsBootstrap mobileControls = FindFirstObjectByType<MobileDemoControlsBootstrap>();

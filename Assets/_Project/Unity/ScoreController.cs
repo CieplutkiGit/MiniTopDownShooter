@@ -32,31 +32,20 @@ namespace Game
             _tracker?.Reset();
         }
 
+        private bool _isSubscribed;
+
         public void Initialize(EnemySpawner spawner, GameStateController gameState)
         {
-            if (_spawner != null && enabled)
-            {
-                _spawner.EnemyKilled -= HandleEnemyKilled;
-            }
-
-            if (_gameState != null && enabled)
-            {
-                _gameState.OnStateChanged -= HandleStateChanged;
-            }
+            UnsubscribeEvents();
 
             _spawnerRef = spawner;
             _gameStateRef = gameState;
             _spawner = spawner;
             _gameState = gameState;
 
-            if (_spawner != null && enabled)
+            if (isActiveAndEnabled)
             {
-                _spawner.EnemyKilled += HandleEnemyKilled;
-            }
-
-            if (_gameState != null && enabled)
-            {
-                _gameState.OnStateChanged += HandleStateChanged;
+                SubscribeEvents();
             }
         }
 
@@ -68,22 +57,52 @@ namespace Game
                 _tracker.OnScoreChanged += HandleScoreChanged;
             }
 
-            if (_gameStateRef == null)
+            if (_gameState == null)
             {
-                _gameStateRef = FindFirstObjectByType<GameStateController>();
+                if (_gameStateRef == null)
+                {
+                    _gameStateRef = FindFirstObjectByType<GameStateController>();
+                }
+                _gameState = _gameStateRef;
             }
 
-            if (_spawnerRef == null)
+            if (_spawner == null)
             {
-                _spawnerRef = FindFirstObjectByType<EnemySpawner>();
+                if (_spawnerRef == null)
+                {
+                    _spawnerRef = FindFirstObjectByType<EnemySpawner>();
+                }
+                _spawner = _spawnerRef;
             }
-
-            _gameState = _gameStateRef;
-            _spawner = _spawnerRef;
         }
 
         private void OnEnable()
         {
+            SubscribeEvents();
+        }
+
+        private void OnDisable()
+        {
+            UnsubscribeEvents();
+        }
+
+        private void OnDestroy()
+        {
+            UnsubscribeEvents();
+
+            if (_tracker != null)
+            {
+                _tracker.OnScoreChanged -= HandleScoreChanged;
+            }
+        }
+
+        private void SubscribeEvents()
+        {
+            if (_isSubscribed)
+            {
+                return;
+            }
+
             if (_spawner != null)
             {
                 _spawner.EnemyKilled += HandleEnemyKilled;
@@ -93,10 +112,17 @@ namespace Game
             {
                 _gameState.OnStateChanged += HandleStateChanged;
             }
+
+            _isSubscribed = true;
         }
 
-        private void OnDisable()
+        private void UnsubscribeEvents()
         {
+            if (!_isSubscribed)
+            {
+                return;
+            }
+
             if (_spawner != null)
             {
                 _spawner.EnemyKilled -= HandleEnemyKilled;
@@ -106,23 +132,33 @@ namespace Game
             {
                 _gameState.OnStateChanged -= HandleStateChanged;
             }
-        }
 
-        private void OnDestroy()
-        {
-            if (_tracker != null)
-            {
-                _tracker.OnScoreChanged -= HandleScoreChanged;
-            }
+            _isSubscribed = false;
         }
 
         private void HandleEnemyKilled(int scoreValue)
         {
+            if (!isActiveAndEnabled)
+            {
+                return;
+            }
+
+            if (_tracker == null)
+            {
+                _tracker = new ScoreTracker();
+                _tracker.OnScoreChanged += HandleScoreChanged;
+            }
+
             _tracker.Add(scoreValue);
         }
 
         private void HandleStateChanged(GameState oldState, GameState newState)
         {
+            if (!isActiveAndEnabled)
+            {
+                return;
+            }
+
             if (newState != GameState.Playing)
             {
                 return;
@@ -131,6 +167,12 @@ namespace Game
             if (oldState == GameState.Paused)
             {
                 return;
+            }
+
+            if (_tracker == null)
+            {
+                _tracker = new ScoreTracker();
+                _tracker.OnScoreChanged += HandleScoreChanged;
             }
 
             _tracker.Reset();
