@@ -121,16 +121,7 @@ namespace Game
                 }
                 else
                 {
-                    if (File.Exists(filePath))
-                    {
-                        File.Delete(filePath);
-                    }
                     File.Move(tempPath, filePath);
-                    try
-                    {
-                        File.Copy(filePath, backupPath, true);
-                    }
-                    catch {}
                 }
 
                 return true;
@@ -188,7 +179,7 @@ namespace Game
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogError($"[SaveManager] Backup file also corrupt at '{backupPath}': {ex.Message}. Falling back to default.");
+                    Debug.LogWarning($"[SaveManager] Backup file also corrupt at '{backupPath}': {ex.Message}. Falling back to default.");
                 }
             }
 

@@ -143,7 +143,10 @@ namespace Game
                 case Application.WeaponFireMode.Burst:
                     if (wasPressed && _runtime.StartBurst(Time.time))
                     {
-                        DeliverRound(_aimDirection);
+                        if (_runtime.TickBurst(Time.time))
+                        {
+                            DeliverRound(_aimDirection);
+                        }
                     }
                     break;
 
@@ -218,6 +221,14 @@ namespace Game
             {
                 Unequipped?.Invoke();
             }
+        }
+
+        public void ConfigureForTesting(WeaponRuntime runtime, IWeaponDelivery delivery, Transform spawnPoint)
+        {
+            _runtime = runtime;
+            _delivery = delivery;
+            _spawnPoint = spawnPoint;
+            _isEquipped = true;
         }
 
         public void ResetRuntimeState()

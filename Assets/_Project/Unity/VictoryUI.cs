@@ -26,7 +26,7 @@ namespace Game
         private IWaveProvider _waves;
         private bool _isSubscribed;
 
-        public void Initialize(GameStateController gameState, WorldResetManager resetManager, ScoreController score, HighScoreController highScore, WaveController waves)
+        public void Initialize(GameStateController gameState, WorldResetManager resetManager = null, ScoreController score = null, HighScoreController highScore = null, WaveController waves = null)
         {
             UnsubscribeEvents();
 

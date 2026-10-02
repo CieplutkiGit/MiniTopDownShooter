@@ -185,10 +185,37 @@ namespace Game
 
         public void ResetToSpawn(Vector3 position, Quaternion rotation)
         {
-            _movement.Warp(position);
-            _rotation.SetRotation(rotation);
-            _health.ResetHealth();
+            if (_movement == null)
+            {
+                _movement = GetComponent<PlayerMovement>();
+            }
+            if (_movement != null)
+            {
+                _movement.Warp(position);
+            }
 
+            if (_rotation == null)
+            {
+                _rotation = GetComponent<PlayerRotation>();
+            }
+            if (_rotation != null)
+            {
+                _rotation.SetRotation(rotation);
+            }
+
+            if (_health == null)
+            {
+                _health = GetComponent<HealthComponent>();
+            }
+            if (_health != null)
+            {
+                _health.ResetHealth();
+            }
+
+            if (_shoot == null)
+            {
+                _shoot = GetComponent<PlayerShoot>();
+            }
             if (_shoot != null)
             {
                 _shoot.ResetWeapons();
@@ -202,10 +229,16 @@ namespace Game
                 }
             }
 
-            _input.ResetGameplayTransientState();
-            _input.ClearQueuedActions();
+            if (_input != null)
+            {
+                _input.ResetGameplayTransientState();
+                _input.ClearQueuedActions();
+            }
 
-            ChangeState(_aliveState);
+            if (_aliveState != null)
+            {
+                ChangeState(_aliveState);
+            }
         }
 
         public void ApplySettings(GameSettingsData settings)

@@ -163,7 +163,7 @@ namespace Game
             {
                 if (ammoPickups[i] != null)
                 {
-                    Destroy(ammoPickups[i].gameObject);
+                    SafeDestroy(ammoPickups[i].gameObject);
                 }
             }
 
@@ -172,8 +172,21 @@ namespace Game
             {
                 if (weaponPickups[i] != null)
                 {
-                    Destroy(weaponPickups[i].gameObject);
+                    SafeDestroy(weaponPickups[i].gameObject);
                 }
+            }
+        }
+
+        private static void SafeDestroy(GameObject go)
+        {
+            if (go == null) return;
+            if (UnityEngine.Application.isPlaying)
+            {
+                Destroy(go);
+            }
+            else
+            {
+                DestroyImmediate(go);
             }
         }
 

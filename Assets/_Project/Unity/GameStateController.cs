@@ -22,6 +22,20 @@ namespace Game
             get { return _manager.CurrentState; }
         }
 
+        private bool _isManagerSubscribed;
+
+        public GameStateController()
+        {
+            SubscribeManager();
+        }
+
+        private void SubscribeManager()
+        {
+            if (_isManagerSubscribed) return;
+            _manager.OnStateChanged += HandleStateChanged;
+            _isManagerSubscribed = true;
+        }
+
         public bool IsPlaying => _manager.CurrentState == GameState.Playing;
 
         public void Initialize(PlayerController player, WaveController waves)
@@ -34,7 +48,7 @@ namespace Game
 
         private void Awake()
         {
-            _manager.OnStateChanged += HandleStateChanged;
+            SubscribeManager();
             if (_playerRef == null)
             {
                 _playerRef = FindFirstObjectByType<PlayerController>();

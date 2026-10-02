@@ -108,7 +108,7 @@ namespace Application
 
         public bool StartBurst(float currentTime)
         {
-            if (_burstShotsRemaining > 0 || _isReloading)
+            if (_burstShotsRemaining > 0 || _isReloading || _ammo.InMagazine <= 0)
             {
                 return false;
             }
@@ -118,17 +118,8 @@ namespace Application
                 return false;
             }
 
-            if (!TryFire(currentTime))
-            {
-                return false;
-            }
-
-            _burstShotsRemaining = _config.BurstCount - 1;
-
-            if (_burstShotsRemaining > 0)
-            {
-                _nextBurstShotTime = currentTime + _config.BurstInterval;
-            }
+            _burstShotsRemaining = _config.BurstCount;
+            _nextBurstShotTime = currentTime;
 
             return true;
         }

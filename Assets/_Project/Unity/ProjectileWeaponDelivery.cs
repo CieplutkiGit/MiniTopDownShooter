@@ -113,7 +113,7 @@ namespace Game
                 Projectile p = _activeProjectiles[i];
                 if (p != null && p.gameObject != null)
                 {
-                    UnityEngine.Object.Destroy(p.gameObject);
+                    SafeDestroy(p.gameObject);
                 }
             }
             _activeProjectiles.Clear();
@@ -124,6 +124,19 @@ namespace Game
             {
                 _pool.Clear();
                 _pool.Dispose();
+            }
+        }
+
+        private static void SafeDestroy(GameObject go)
+        {
+            if (go == null) return;
+            if (UnityEngine.Application.isPlaying)
+            {
+                UnityEngine.Object.Destroy(go);
+            }
+            else
+            {
+                UnityEngine.Object.DestroyImmediate(go);
             }
         }
 
@@ -170,7 +183,7 @@ namespace Game
             _activeProjectiles.Remove(projectile);
             if (projectile != null)
             {
-                UnityEngine.Object.Destroy(projectile.gameObject);
+                SafeDestroy(projectile.gameObject);
             }
         }
 
@@ -185,7 +198,7 @@ namespace Game
                 _activeProjectiles.Remove(projectile);
                 if (projectile.gameObject != null)
                 {
-                    UnityEngine.Object.Destroy(projectile.gameObject);
+                    SafeDestroy(projectile.gameObject);
                 }
             }
         }

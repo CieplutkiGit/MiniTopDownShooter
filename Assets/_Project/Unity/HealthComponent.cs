@@ -23,8 +23,16 @@ namespace Game
 
         private void Awake()
         {
-            CacheDamageModifiers();
-            CreateHealth(_maxHealth);
+            EnsureHealthInitialized();
+        }
+
+        private void EnsureHealthInitialized()
+        {
+            if (_health == null)
+            {
+                CacheDamageModifiers();
+                CreateHealth(_maxHealth);
+            }
         }
 
         private void OnDestroy()
@@ -46,6 +54,8 @@ namespace Game
 
         public void TakeDamage(DamageData data)
         {
+            EnsureHealthInitialized();
+
             DamageData resolved = data;
 
             for (int i = 0; i < _damageModifiers.Count; i++)
@@ -63,6 +73,7 @@ namespace Game
 
         public void ResetHealth()
         {
+            EnsureHealthInitialized();
             _health.Reset();
         }
 
