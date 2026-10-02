@@ -41,7 +41,7 @@ namespace Game
         [SerializeField] private float _impactRange = 1.5f;
 
         private ChargeState _state;
-        private float _stateTimer;
+        private float _stateEndTime;
         private Vector3 _chargeDestination;
         private bool _dealtChargeDamage;
 
@@ -94,7 +94,7 @@ namespace Game
             if (distance <= _chargeTriggerRange && distance >= _minimumChargeRange)
             {
                 _state = ChargeState.Windup;
-                _stateTimer = _windupDuration;
+                _stateEndTime = Time.time + _windupDuration;
                 Movement.Stop();
                 return;
             }
@@ -112,9 +112,7 @@ namespace Game
         private void TickWindup()
         {
             Movement.Stop();
-            _stateTimer -= Time.deltaTime;
-
-            if (_stateTimer > 0f)
+            if (Time.time < _stateEndTime)
             {
                 return;
             }
@@ -124,7 +122,7 @@ namespace Game
             if (direction.sqrMagnitude <= Mathf.Epsilon)
             {
                 _state = ChargeState.Recovery;
-                _stateTimer = _recoveryDuration;
+                _stateEndTime = Time.time + _recoveryDuration;
                 return;
             }
 
@@ -133,13 +131,11 @@ namespace Game
             Movement.SetSpeedMultiplier(_chargeSpeedMultiplier);
             Movement.MoveToward(_chargeDestination);
             _state = ChargeState.Charging;
-            _stateTimer = _chargeDuration;
+            _stateEndTime = Time.time + _chargeDuration;
         }
 
         private void TickCharging()
         {
-            _stateTimer -= Time.deltaTime;
-
             if (!_dealtChargeDamage && DistanceToTarget() <= _impactRange)
             {
                 _dealtChargeDamage = true;
@@ -148,7 +144,7 @@ namespace Game
 
             Movement.MoveToward(_chargeDestination);
 
-            if (_stateTimer > 0f &&
+            if (Time.time < _stateEndTime &&
                 Vector3.Distance(transform.position, _chargeDestination) > 0.35f)
             {
                 return;
@@ -157,15 +153,13 @@ namespace Game
             Movement.SetSpeedMultiplier(1f);
             Movement.Stop();
             _state = ChargeState.Recovery;
-            _stateTimer = _recoveryDuration;
+            _stateEndTime = Time.time + _recoveryDuration;
         }
 
         private void TickRecovery()
         {
             Movement.Stop();
-            _stateTimer -= Time.deltaTime;
-
-            if (_stateTimer <= 0f)
+            if (Time.time >= _stateEndTime)
             {
                 _state = ChargeState.Approaching;
             }
@@ -174,7 +168,7 @@ namespace Game
         private void ResetCharge()
         {
             _state = ChargeState.Approaching;
-            _stateTimer = 0f;
+            _stateEndTime = 0f;
             _dealtChargeDamage = false;
             Movement.SetSpeedMultiplier(1f);
         }
