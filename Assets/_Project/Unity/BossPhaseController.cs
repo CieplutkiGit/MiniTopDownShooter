@@ -25,6 +25,9 @@ namespace Game
         public bool TriggerShockwaveOnEnter = true;
         public float ShockwaveRadius = 6f;
         public int ShockwaveDamage = 15;
+        public float ShockwaveWindup = 0.8f;
+        public float ShockwaveRecovery = 0.4f;
+        public GameObject ShockwaveTelegraph;
 
         public GameObject[] EnableObjects;
         public GameObject[] DisableObjects;
@@ -42,6 +45,8 @@ namespace Game
         private int _activePhaseIndex = -1;
         private int _baseDamage = -1;
         private float _baseCooldown = -1f;
+        private Coroutine _shockwaveCoroutine;
+        private GameObject _proceduralTelegraph;
 
         public event Action<int> PhaseChanged;
 
@@ -166,8 +171,103 @@ namespace Game
 
             if (phase.TriggerShockwaveOnEnter && phase.ShockwaveRadius > 0f)
             {
-                ExecuteShockwave(phase.ShockwaveRadius, phase.ShockwaveDamage);
+                if (_shockwaveCoroutine != null)
+                {
+                    StopCoroutine(_shockwaveCoroutine);
+                }
+                _shockwaveCoroutine = StartCoroutine(ShockwaveRoutine(phase));
             }
+        }
+
+        private System.Collections.IEnumerator ShockwaveRoutine(BossPhase phase)
+        {
+            if (_movement != null)
+            {
+                _movement.SetSpeedMultiplier(0f);
+            }
+
+            GameObject telegraph = phase.ShockwaveTelegraph;
+            if (telegraph != null)
+            {
+                telegraph.SetActive(true);
+            }
+            else
+            {
+                telegraph = EnsureProceduralTelegraph(phase.ShockwaveRadius);
+                if (telegraph != null)
+                {
+                    telegraph.SetActive(true);
+                }
+            }
+
+            float windup = Mathf.Max(0.1f, phase.ShockwaveWindup);
+            yield return new WaitForSeconds(windup);
+
+            ExecuteShockwave(phase.ShockwaveRadius, phase.ShockwaveDamage);
+
+            if (_transitionEffect != null)
+            {
+                _transitionEffect.Play();
+            }
+
+            if (telegraph != null)
+            {
+                telegraph.SetActive(false);
+            }
+
+            float recovery = Mathf.Max(0f, phase.ShockwaveRecovery);
+            if (recovery > 0f)
+            {
+                yield return new WaitForSeconds(recovery);
+            }
+
+            if (_movement != null && _activePhaseIndex >= 0 && _phases != null && _activePhaseIndex < _phases.Length)
+            {
+                _movement.SetSpeedMultiplier(Mathf.Max(0f, _phases[_activePhaseIndex].MovementSpeedMultiplier));
+            }
+
+            _shockwaveCoroutine = null;
+        }
+
+        private GameObject EnsureProceduralTelegraph(float radius)
+        {
+            if (_proceduralTelegraph == null)
+            {
+                _proceduralTelegraph = new GameObject("ShockwaveTelegraph");
+                _proceduralTelegraph.transform.SetParent(transform, false);
+                _proceduralTelegraph.transform.localPosition = new Vector3(0f, 0.05f, 0f);
+
+                LineRenderer line = _proceduralTelegraph.AddComponent<LineRenderer>();
+                line.useWorldSpace = false;
+                line.loop = true;
+                line.startWidth = 0.15f;
+                line.endWidth = 0.15f;
+                line.positionCount = 36;
+
+                for (int i = 0; i < 36; i++)
+                {
+                    float angle = (i * 360f / 36f) * Mathf.Deg2Rad;
+                    line.SetPosition(i, new Vector3(Mathf.Cos(angle) * radius, 0f, Mathf.Sin(angle) * radius));
+                }
+
+                line.material = new Material(Shader.Find("Sprites/Default"));
+                line.startColor = new Color(1f, 0.2f, 0.2f, 0.7f);
+                line.endColor = new Color(1f, 0.2f, 0.2f, 0.7f);
+            }
+            else
+            {
+                LineRenderer line = _proceduralTelegraph.GetComponent<LineRenderer>();
+                if (line != null)
+                {
+                    for (int i = 0; i < 36; i++)
+                    {
+                        float angle = (i * 360f / 36f) * Mathf.Deg2Rad;
+                        line.SetPosition(i, new Vector3(Mathf.Cos(angle) * radius, 0f, Mathf.Sin(angle) * radius));
+                    }
+                }
+            }
+
+            return _proceduralTelegraph;
         }
 
         private void ExecuteShockwave(float radius, int damage)
@@ -204,6 +304,17 @@ namespace Game
 
         private void ResetPhasePresentation()
         {
+            if (_shockwaveCoroutine != null)
+            {
+                StopCoroutine(_shockwaveCoroutine);
+                _shockwaveCoroutine = null;
+            }
+
+            if (_proceduralTelegraph != null)
+            {
+                _proceduralTelegraph.SetActive(false);
+            }
+
             if (_movement != null)
             {
                 _movement.SetSpeedMultiplier(1f);
@@ -227,6 +338,11 @@ namespace Game
                 if (phase == null)
                 {
                     continue;
+                }
+
+                if (phase.ShockwaveTelegraph != null)
+                {
+                    phase.ShockwaveTelegraph.SetActive(false);
                 }
 
                 SetObjectsActive(phase.EnableObjects, false);

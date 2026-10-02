@@ -302,6 +302,24 @@ namespace Game
                 playerAudio.Initialize(_player);
             }
 
+            GameStateAudio gameStateAudio = FindFirstObjectByType<GameStateAudio>();
+            if (gameStateAudio != null && _gameStateController != null)
+            {
+                gameStateAudio.Initialize(_gameStateController);
+            }
+
+            WaveAudio waveAudio = FindFirstObjectByType<WaveAudio>();
+            if (waveAudio != null && _waveController != null)
+            {
+                waveAudio.Initialize(_waveController);
+            }
+
+            EnemyAudio enemyAudio = FindFirstObjectByType<EnemyAudio>();
+            if (enemyAudio != null && _enemySpawner != null)
+            {
+                enemyAudio.Initialize(_enemySpawner);
+            }
+
             if (_settingsUI != null && _player != null)
             {
                 _settingsUI.Initialize(_player);

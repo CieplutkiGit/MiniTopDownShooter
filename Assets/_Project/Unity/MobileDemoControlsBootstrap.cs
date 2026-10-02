@@ -17,16 +17,15 @@ namespace Game
         [SerializeField] private float _aimFireThreshold = 0.2f;
 
         private MobileInputState _input;
+        private GameObject _canvasObject;
+        private RectTransform _safeArea;
 
         public MobileInputState Input => _input;
+        public GameObject CanvasObject => _canvasObject;
+        public RectTransform SafeArea => _safeArea;
 
         private void Awake()
         {
-            if (!UnityEngine.Application.isMobilePlatform && !_showOnDesktop)
-            {
-                return;
-            }
-
             _input = GetComponent<MobileInputState>();
 
             if (_input == null)
@@ -35,12 +34,48 @@ namespace Game
             }
 
             BuildControls();
+
+            Application.GameSettingsData settings = SaveManager.LoadSettings();
+            if (settings != null)
+            {
+                ApplySettings(settings);
+            }
+        }
+
+        public void ApplySettings(Application.GameSettingsData settings)
+        {
+            if (settings == null)
+            {
+                return;
+            }
+
+            if (_canvasObject == null)
+            {
+                BuildControls();
+            }
+
+            if (_canvasObject != null)
+            {
+                bool shouldBeActive = settings.MobileTouchControls || UnityEngine.Application.isMobilePlatform || _showOnDesktop;
+                _canvasObject.SetActive(shouldBeActive);
+            }
+
+            if (_safeArea != null)
+            {
+                _safeArea.localScale = Vector3.one * Mathf.Clamp(settings.TouchControlScale, 0.5f, 2.5f);
+            }
         }
 
         private void BuildControls()
         {
             if (GameObject.Find("MobileDemoControls") != null)
             {
+                _canvasObject = GameObject.Find("MobileDemoControls");
+                if (_canvasObject != null)
+                {
+                    Transform safeChild = _canvasObject.transform.Find("SafeArea");
+                    _safeArea = safeChild != null ? safeChild as RectTransform : null;
+                }
                 return;
             }
 
@@ -50,6 +85,8 @@ namespace Game
                 typeof(Canvas),
                 typeof(CanvasScaler),
                 typeof(GraphicRaycaster));
+
+            _canvasObject = canvasObject;
 
             Canvas canvas = canvasObject.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
@@ -72,6 +109,7 @@ namespace Game
                 Vector2.zero,
                 Vector2.zero);
 
+            _safeArea = safeArea;
             safeArea.gameObject.AddComponent<SafeAreaFitter>();
 
             CreateJoystick(

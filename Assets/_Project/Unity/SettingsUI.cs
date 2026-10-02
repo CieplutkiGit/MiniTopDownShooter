@@ -16,9 +16,20 @@ namespace Game
         [SerializeField] private Slider _musicVolumeSlider;
         [SerializeField] private Slider _sfxVolumeSlider;
 
+        [Header("Audio Mixer & Music Hooks")]
+        [SerializeField] private UnityEngine.Audio.AudioMixer _audioMixer;
+        [SerializeField] private string _masterVolumeParam = "MasterVolume";
+        [SerializeField] private string _musicVolumeParam = "MusicVolume";
+        [SerializeField] private string _sfxVolumeParam = "SFXVolume";
+        [SerializeField] private AudioSource _musicSource;
+
         [Header("Input Sliders")]
         [SerializeField] private Slider _sensitivitySlider;
         [SerializeField] private Slider _deadzoneSlider;
+
+        [Header("Mobile Touch Controls")]
+        [SerializeField] private Toggle _mobileTouchControlsToggle;
+        [SerializeField] private Slider _touchScaleSlider;
 
         [Header("Buttons")]
         [SerializeField] private Button _saveButton;
@@ -87,15 +98,36 @@ namespace Game
             }
         }
 
+        private void SetPanelActive(bool active)
+        {
+            if (_panel == null)
+            {
+                return;
+            }
+
+            if (_panel == gameObject)
+            {
+                CanvasGroup cg = GetComponent<CanvasGroup>();
+                if (cg == null)
+                {
+                    cg = gameObject.AddComponent<CanvasGroup>();
+                }
+                cg.alpha = active ? 1f : 0f;
+                cg.interactable = active;
+                cg.blocksRaycasts = active;
+            }
+            else
+            {
+                _panel.SetActive(active);
+            }
+        }
+
         public void Open()
         {
             _currentSettings = SaveManager.LoadSettings();
             ApplySettingsToUI(_currentSettings);
 
-            if (_panel != null)
-            {
-                _panel.SetActive(true);
-            }
+            SetPanelActive(true);
 
             if (_firstSelected != null && EventSystem.current != null)
             {
@@ -105,10 +137,7 @@ namespace Game
 
         public void Close()
         {
-            if (_panel != null)
-            {
-                _panel.SetActive(false);
-            }
+            SetPanelActive(false);
         }
 
         public void SaveAndApply()
@@ -156,6 +185,16 @@ namespace Game
             {
                 _deadzoneSlider.value = data.Deadzone;
             }
+
+            if (_mobileTouchControlsToggle != null)
+            {
+                _mobileTouchControlsToggle.isOn = data.MobileTouchControls;
+            }
+
+            if (_touchScaleSlider != null)
+            {
+                _touchScaleSlider.value = data.TouchControlScale;
+            }
         }
 
         private void ReadSettingsFromUI()
@@ -189,6 +228,16 @@ namespace Game
             {
                 _currentSettings.Deadzone = _deadzoneSlider.value;
             }
+
+            if (_mobileTouchControlsToggle != null)
+            {
+                _currentSettings.MobileTouchControls = _mobileTouchControlsToggle.isOn;
+            }
+
+            if (_touchScaleSlider != null)
+            {
+                _currentSettings.TouchControlScale = _touchScaleSlider.value;
+            }
         }
 
         private void ApplySettingsToGame(GameSettingsData data)
@@ -200,6 +249,33 @@ namespace Game
 
             AudioListener.volume = data.MasterVolume;
 
+            if (_audioMixer != null)
+            {
+                if (!string.IsNullOrEmpty(_masterVolumeParam))
+                {
+                    _audioMixer.SetFloat(_masterVolumeParam, VolumeToDecibels(data.MasterVolume));
+                }
+                if (!string.IsNullOrEmpty(_musicVolumeParam))
+                {
+                    _audioMixer.SetFloat(_musicVolumeParam, VolumeToDecibels(data.MusicVolume));
+                }
+                if (!string.IsNullOrEmpty(_sfxVolumeParam))
+                {
+                    _audioMixer.SetFloat(_sfxVolumeParam, VolumeToDecibels(data.SFXVolume));
+                }
+            }
+
+            if (_musicSource != null)
+            {
+                _musicSource.volume = data.MusicVolume;
+            }
+
+            MobileDemoControlsBootstrap mobileControls = FindFirstObjectByType<MobileDemoControlsBootstrap>();
+            if (mobileControls != null)
+            {
+                mobileControls.ApplySettings(data);
+            }
+
             if (_player == null)
             {
                 _player = FindFirstObjectByType<PlayerController>();
@@ -209,6 +285,15 @@ namespace Game
             {
                 _player.ApplySettings(data);
             }
+        }
+
+        private static float VolumeToDecibels(float volume)
+        {
+            if (volume <= 0.0001f)
+            {
+                return -80f;
+            }
+            return Mathf.Log10(volume) * 20f;
         }
     }
 }

@@ -48,6 +48,9 @@ namespace Game.Editor
             generatedAny |= EnsureClip("game_over.wav", GenerateGameOverSound(), "a0110000000000000000000000000010");
             generatedAny |= EnsureClip("ui_click.wav", GenerateUIClick(), "a0110000000000000000000000000011");
 
+            // Music loop
+            generatedAny |= EnsureClip("combat_music.wav", GenerateCombatMusic(), "a0110000000000000000000000000012");
+
             if (generatedAny)
             {
                 AssetDatabase.Refresh();
@@ -359,6 +362,62 @@ AudioImporter:
                 float progress = (float)i / count;
                 float env = 1f - progress;
                 samples[i] = Mathf.Sin(2f * Mathf.PI * 1200f * t) * env * 0.5f;
+            }
+
+            return CreateWav(samples, sampleRate);
+        }
+
+        private static byte[] GenerateCombatMusic()
+        {
+            const int sampleRate = 44100;
+            float duration = 4.0f; // 4 seconds at 120 BPM = exactly 8 beats (2 bars of 4/4)
+            int count = (int)(sampleRate * duration);
+            float[] samples = new float[count];
+
+            // Bass note frequencies: A1 (55Hz), C2 (65.41Hz), D2 (73.42Hz), E2 (82.41Hz)
+            float[] bassSequence = new float[] { 55.00f, 55.00f, 65.41f, 55.00f, 73.42f, 73.42f, 82.41f, 55.00f };
+            float beatDur = duration / bassSequence.Length; // 0.5s per eighth-note
+
+            for (int i = 0; i < count; i++)
+            {
+                float t = (float)i / sampleRate;
+                int beatIdx = Mathf.Clamp((int)(t / beatDur), 0, bassSequence.Length - 1);
+                float beatT = t - (beatIdx * beatDur);
+                float beatProgress = beatT / beatDur;
+
+                // Bass synth: fundamental + 2nd harmonic with exponential decay
+                float bassFreq = bassSequence[beatIdx];
+                float bassEnv = Mathf.Exp(-beatProgress * 5f);
+                float bass = (Mathf.Sin(2f * Mathf.PI * bassFreq * t) * 0.7f +
+                              Mathf.Sin(4f * Mathf.PI * bassFreq * t) * 0.3f) * bassEnv;
+
+                // Percussion kick transient on every quarter note (beats 0, 2, 4, 6 in eighth-notes = 0, 1, 2, 3 in quarter notes)
+                float kick = 0f;
+                float quarterT = t % 1.0f;
+                if (quarterT < 0.2f)
+                {
+                    float kickEnv = Mathf.Exp(-quarterT * 22f);
+                    float kickFreq = 120f * Mathf.Exp(-quarterT * 18f);
+                    kick = Mathf.Sin(2f * Mathf.PI * kickFreq * quarterT) * kickEnv * 0.6f;
+                }
+
+                // Hi-hat noise on off-beats
+                float hat = 0f;
+                float eighthT = t % 0.5f;
+                if (eighthT > 0.25f && eighthT < 0.35f)
+                {
+                    float hatT = eighthT - 0.25f;
+                    float hatEnv = Mathf.Exp(-hatT * 40f);
+                    float noise = ((float)((i * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff) * 2f - 1f;
+                    hat = noise * hatEnv * 0.2f;
+                }
+
+                // Atmospheric background pad (A minor chord: A2 110Hz, C3 130.8Hz, E3 164.8Hz)
+                float pad = (Mathf.Sin(2f * Mathf.PI * 110.00f * t) * 0.12f +
+                             Mathf.Sin(2f * Mathf.PI * 130.81f * t) * 0.08f +
+                             Mathf.Sin(2f * Mathf.PI * 164.81f * t) * 0.08f);
+
+                samples[i] = (bass * 0.35f + kick + hat + pad) * 0.75f;
             }
 
             return CreateWav(samples, sampleRate);
