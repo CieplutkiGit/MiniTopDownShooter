@@ -21,6 +21,8 @@ The validator checks:
 - player and camera references
 - wave configuration
 - spawn-zone IDs
+- enemy archetype references
+- mobile joystick/button/safe-area setup when mobile controls are present
 - baked NavMesh
 
 ## Controls
@@ -67,6 +69,31 @@ Existing guns remain backwards-compatible. If no Weapon Definition is assigned, 
 4. Add the prefab to the `EnemySpawner` weighted prefab list for legacy/global spawning, or reference it directly from a WaveSet enemy group.
 5. Run validation again.
 
+## Add enemy archetypes
+
+The default EnemyController with no custom behavior remains the melee chase enemy.
+
+- Ranged shooter: add RangedEnemyBehavior and assign a Gun.
+- Fast/rusher: add RusherEnemyBehavior and tune its rush speed multiplier.
+- Tank/bruiser: use high-health EnemyStats plus EnemyArmor.
+- Charger: add ChargerEnemyBehavior and tune windup/charge/recovery.
+- Boss: add BossPhaseController and configure health-threshold phases.
+
+See ENEMIES.md for setup and pooling rules.
+
+## Add mobile controls
+
+1. Add one MobileInputState.
+2. Add left and right MobileJoystick components for Move and Look.
+3. Enable aim-to-fire on the look stick or add a Fire MobileActionButton.
+4. Add a Pause MobileActionButton.
+5. Add optional Reload and weapon-switch buttons.
+6. Put the control layout under SafeAreaFitter.
+7. Use MobileControlsVisibility if the same scene supports desktop and mobile.
+8. Run scene validation.
+
+See MOBILE.md for the recommended hierarchy and testing checklist.
+
 ## Create reusable waves
 
 1. Open **Tools > Mini Top Down Shooter > Setup & Validation**.
@@ -95,7 +122,8 @@ See `WAVES.md` for composition rules and fallback behavior.
 - Confirm hitscan masks/ranges match the intended targets.
 - Test finite ammo, reload, empty-fire, switching, and pickups.
 - Tune pool sizes for peak simultaneous objects.
-- Test mouse, keyboard, and gamepad input.
+- Test mouse, keyboard, gamepad, and multi-touch input.
+- Test safe areas and mobile UI on multiple aspect ratios.
 - Test saved rebinding and reset-to-default.
 - Run the included EditMode tests.
 - Replace or license all sample presentation content appropriately.
