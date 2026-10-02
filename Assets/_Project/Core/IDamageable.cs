@@ -1,5 +1,5 @@
 
-namespace Core
+namespace Cieplutki.MiniTopDownShooter.Core
 {
     public interface IDamageable 
     {

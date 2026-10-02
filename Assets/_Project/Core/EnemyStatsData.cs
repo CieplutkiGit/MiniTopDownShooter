@@ -1,4 +1,4 @@
-namespace Core
+namespace Cieplutki.MiniTopDownShooter.Core
 {
     public struct EnemyStatsData
     {
