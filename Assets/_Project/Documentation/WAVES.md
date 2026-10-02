@@ -99,7 +99,7 @@ This is spawn/composition-level boss support. Boss phases, boss-specific UI, and
 
 ## Shipped showcase
 
-`Assets/_Project/Data/Waves/WaveSet_ArenaShowcase.asset` demonstrates guaranteed groups, weighted fill, per-wave zone IDs, charger/ranged/tank composition, and a final boss entry. `Assets/Scenes/ArenaShowcase.unity` wires that asset to three weighted SpawnZone components.
+`Assets/_Project/Data/Waves/WaveSet_ArenaShowcase.asset` demonstrates guaranteed groups, weighted fill, per-wave zone IDs, charger/ranged/tank composition, and a final boss entry. `Assets/_Project/Scenes/ArenaShowcase.unity` wires that asset to three weighted SpawnZone components.
 
 ## Backwards compatibility
 

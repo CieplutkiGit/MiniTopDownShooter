@@ -9,6 +9,7 @@ Use this checklist for every Asset Store upload.
 - [ ] EditMode tests pass.
 - [ ] PlayMode smoke tests pass.
 - [ ] GitHub Actions Unity CI passes.
+- [ ] Unity CI actually executes Unity tests/builds with valid Unity license secrets; a skipped Unity job is not release evidence.
 - [ ] No TODO/FIXME release blockers remain.
 - [ ] Public APIs used by examples are documented.
 - [ ] Backwards compatibility notes are current.
@@ -36,7 +37,8 @@ Use this checklist for every Asset Store upload.
 
 ## Package hygiene
 
-- [ ] Commercial export uses one product root.
+- [ ] Commercial export contains only `Assets/_Project` as the submitted root.
+- [ ] Development/template assets outside `Assets/_Project` are excluded from the submission (`Assets/TextMesh Pro`, `Assets/Settings`, `Assets/InputSystem_Actions.inputactions`, `Assets/Readme.asset`).
 - [ ] Only true runtime/editor dependencies are documented.
 - [ ] Development-only dependencies are excluded.
 - [ ] No destructive ProjectSettings takeover.
@@ -61,4 +63,5 @@ Use this checklist for every Asset Store upload.
 - [ ] Store copy lists only verified features/dependencies.
 - [ ] Documentation links work.
 - [ ] Support contact is correct.
+- [ ] Publisher Portal AI description accurately discloses AI-assisted functional content and the tools used.
 - [ ] Final package file has been re-imported and smoke-tested.

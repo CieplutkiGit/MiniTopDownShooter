@@ -46,6 +46,7 @@
 
 ### Changed
 
+- Demo scenes and baked NavMesh moved under `Assets/_Project/Scenes` so the commercial package can be exported from one root.
 - Removed unused Collab, Rider, Visual Studio, Multiplayer Center, Timeline, Visual Scripting and VContainer direct dependencies
 - Version 1.0 support target is pinned to Unity 6000.3.10f1 until other Unity releases are explicitly tested
 - `Gun` can use a Weapon Definition while preserving existing inline serialized values as backwards-compatible defaults

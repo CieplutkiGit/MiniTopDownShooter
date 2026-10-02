@@ -37,15 +37,19 @@ The package focuses on a small, understandable runtime rather than taking over a
 
 Developed with Unity 6000.3.10f1.
 
+## Commercial package root
+
+The Asset Store submission target is `Assets/_Project` only. Root-level template/development assets outside that folder are not part of the commercial export.
+
 ## Demo scenes
 
-- `Assets/Scenes/SampleScene.unity`: minimal/legacy learning path.
-- `Assets/Scenes/ArenaShowcase.unity`: authored WeaponDefinition, WaveSet, archetype enemies, boss entry, and spawn zones.
-- `Assets/Scenes/MobileDemo.unity`: Arena showcase plus generated safe-area dual-stick touch controls.
+- `Assets/_Project/Scenes/SampleScene.unity`: minimal/legacy learning path.
+- `Assets/_Project/Scenes/ArenaShowcase.unity`: authored WeaponDefinition, WaveSet, archetype enemies, boss entry, and spawn zones.
+- `Assets/_Project/Scenes/MobileDemo.unity`: Arena showcase plus generated safe-area dual-stick touch controls.
 
 ## First steps
 
-1. Open `Assets/Scenes/ArenaShowcase.unity` for the full framework showcase, or `SampleScene.unity` for the smallest learning scene.
+1. Open `Assets/_Project/Scenes/ArenaShowcase.unity` for the full framework showcase, or `SampleScene.unity` for the smallest learning scene.
 2. Open **Tools > Mini Top Down Shooter > Setup & Validation**.
 3. Click **Validate Open Scene**.
 4. Enter Play Mode.

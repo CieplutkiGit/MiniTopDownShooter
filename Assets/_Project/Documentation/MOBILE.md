@@ -2,7 +2,7 @@
 
 The mobile input layer feeds the same player state and weapon APIs as keyboard, mouse, and gamepad input. No mobile-only gameplay controller is required.
 
-Open `Assets/Scenes/MobileDemo.unity` for a working showcase. Its demo bootstrap creates a safe-area dual-stick layout before the player initializes; production projects can author the same reusable controls directly in a Canvas.
+Open `Assets/_Project/Scenes/MobileDemo.unity` for a working showcase. Its demo bootstrap creates a safe-area dual-stick layout before the player initializes; production projects can author the same reusable controls directly in a Canvas.
 
 ## Components
 

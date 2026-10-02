@@ -4,6 +4,8 @@ This file records third-party content currently visible in the repository and th
 
 The **final commercial export must be audited again**, because this repository contains development/demo resources that may intentionally be excluded from the sold package.
 
+For version 1.0, the intended commercial export root is `Assets/_Project`. Root-level template/development content such as `Assets/TextMesh Pro`, `Assets/Settings`, `Assets/InputSystem_Actions.inputactions`, and `Assets/Readme.asset` is not part of the submission unless it is deliberately re-audited and moved into the product root.
+
 ## Liberation Sans
 
 Repository files include:
