@@ -26,7 +26,8 @@ MonoBehaviour:
       GuaranteedCount: 2
       Weight: 3
       DelayBefore: 0.5
-    SpawnZoneIds: []
+    SpawnZoneIds:
+    - North
     BossPrefab: {fileID: 0}
     BossCount: 0
     BossDelay: 0
@@ -47,7 +48,9 @@ MonoBehaviour:
       GuaranteedCount: 1
       Weight: 1
       DelayBefore: 1
-    SpawnZoneIds: []
+    SpawnZoneIds:
+    - West
+    - East
     BossPrefab: {fileID: 0}
     BossCount: 0
     BossDelay: 0
@@ -68,7 +71,10 @@ MonoBehaviour:
       GuaranteedCount: 2
       Weight: 2
       DelayBefore: 0
-    SpawnZoneIds: []
+    SpawnZoneIds:
+    - North
+    - West
+    - East
     BossPrefab: {fileID: 0}
     BossCount: 0
     BossDelay: 0
@@ -85,7 +91,9 @@ MonoBehaviour:
       GuaranteedCount: 2
       Weight: 2
       DelayBefore: 0.75
-    SpawnZoneIds: []
+    SpawnZoneIds:
+    - North
+    - East
     BossPrefab: {fileID: 1491644836695588414, guid: 1c948fbe267a4a519cc91c9a9685ae62, type: 3}
     BossCount: 1
     BossDelay: 1.5
