@@ -1,7 +1,7 @@
-using Application;
+using Cieplutki.MiniTopDownShooter.Application;
 using UnityEngine;
 
-namespace Game
+namespace Cieplutki.MiniTopDownShooter.Runtime
 {
     [CreateAssetMenu(fileName = "EnemyStats", menuName = "Game/Enemy Stats")]
     public class EnemyStats : ScriptableObject, IEnemyStats

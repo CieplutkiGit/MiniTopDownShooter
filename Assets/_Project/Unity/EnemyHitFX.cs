@@ -1,7 +1,7 @@
-using Core;
+using Cieplutki.MiniTopDownShooter.Core;
 using UnityEngine;
 
-namespace Game
+namespace Cieplutki.MiniTopDownShooter.Runtime
 {
     public class EnemyHitFX : MonoBehaviour, IEffectPoolUser
     {

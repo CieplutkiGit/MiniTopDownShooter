@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
-using Application;
+using Cieplutki.MiniTopDownShooter.Application;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Pool;
 
-namespace Game
+namespace Cieplutki.MiniTopDownShooter.Runtime
 {
     public class EnemySpawner : MonoBehaviour, ISpawner
     {

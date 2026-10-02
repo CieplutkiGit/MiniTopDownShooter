@@ -72,6 +72,8 @@ using UnityEngine.InputSystem.Utilities;
 /// }
 /// </code>
 /// </example>
+namespace Cieplutki.MiniTopDownShooter.Input
+{
 public partial class @GameInput: IInputActionCollection2, IDisposable
 {
     /// <summary>
@@ -508,4 +510,5 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnPause(InputAction.CallbackContext context);
     }
+}
 }

@@ -1,9 +1,9 @@
-using Application;
+using Cieplutki.MiniTopDownShooter.Application;
 using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.Rendering;
 
-namespace Game
+namespace Cieplutki.MiniTopDownShooter.Runtime
 {
     public class EnemyDeathDebris : MonoBehaviour
     {

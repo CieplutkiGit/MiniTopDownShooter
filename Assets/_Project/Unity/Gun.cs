@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
-using Application;
-using Core;
+using Cieplutki.MiniTopDownShooter.Application;
+using Cieplutki.MiniTopDownShooter.Core;
 using UnityEngine;
 using UnityEngine.Pool;
 
-namespace Game
+namespace Cieplutki.MiniTopDownShooter.Runtime
 {
     public class Gun : MonoBehaviour, IGunEvents
     {
