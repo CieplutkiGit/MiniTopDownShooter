@@ -23,6 +23,7 @@ REQUIRED_DOCS = [
     "THIRD_PARTY_NOTICES.md",
     "RELEASE_CHECKLIST.md",
     "CI.md",
+    "STORE_SUBMISSION.md",
 ]
 
 REQUIRED_SCENES = [

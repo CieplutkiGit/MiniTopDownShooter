@@ -56,7 +56,7 @@ The Asset Store submission target is `Assets/_Project` only. Root-level template
 5. Create reusable weapon data with **Create Weapon Definition** and assign the asset to a `Gun`.
 6. Create reusable wave composition with **Create Wave Set** and optionally add `SpawnZone` components.
 
-See `QUICK_START.md` for setup, `WEAPONS.md` for weapon authoring, `WAVES.md` for wave composition, `ENEMIES.md` for archetypes, `MOBILE.md` for touch controls, `API.md` for extension points, `UPGRADING.md` for migrations, `CLEAN_IMPORT.md` for package verification, `REPLACE_ART.md` for presentation swaps, `RELEASE_CHECKLIST.md` for publishing, and `CI.md` for automated verification.
+See `STORE_SUBMISSION.md` for version 1.0 store copy/media planning, `QUICK_START.md` for setup, `WEAPONS.md` for weapon authoring, `WAVES.md` for wave composition, `ENEMIES.md` for archetypes, `MOBILE.md` for touch controls, `API.md` for extension points, `UPGRADING.md` for migrations, `CLEAN_IMPORT.md` for package verification, `REPLACE_ART.md` for presentation swaps, `RELEASE_CHECKLIST.md` for publishing, and `CI.md` for automated verification.
 
 ## Design goal
 

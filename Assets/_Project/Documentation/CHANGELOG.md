@@ -44,6 +44,7 @@
 - GitHub Actions Unity CI with test execution and Linux player smoke build
 - License-free Asset Store preflight for package root, meta/GUID hygiene, path limits, release markers, assembly names, and dependency regression checks
 - Buyer-facing quick start, weapon, wave, dependency, extension, licensing, API, upgrade, clean-import, art-replacement, CI and release-checklist documentation
+- Asset Store submission sheet with store copy, requirements, limitations, AI disclosure draft, keywords, and screenshot plan
 
 ### Changed
 

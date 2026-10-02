@@ -59,6 +59,7 @@ Use this checklist for every Asset Store upload.
 - [ ] Version number finalized.
 - [ ] Changelog updated.
 - [ ] Upgrade guide updated.
+- [ ] `STORE_SUBMISSION.md` is current against the final export.
 - [ ] Screenshots match the current package.
 - [ ] Store copy lists only verified features/dependencies.
 - [ ] Documentation links work.
