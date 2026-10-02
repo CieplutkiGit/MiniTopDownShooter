@@ -23,6 +23,7 @@ namespace Game
         }
 
         private bool _isManagerSubscribed;
+        private bool _isGameplaySubscribed;
 
         public GameStateController()
         {
@@ -40,14 +41,7 @@ namespace Game
 
         public void Initialize(PlayerController player, WaveController waves)
         {
-            if (_player != null)
-            {
-                _player.Died -= HandlePlayerDied;
-            }
-            if (_waves != null)
-            {
-                _waves.AllWavesCompleted -= HandleAllWavesCompleted;
-            }
+            UnsubscribeGameplayEvents();
 
             _playerRef = player;
             _waveRef = waves;
@@ -56,14 +50,7 @@ namespace Game
 
             if (isActiveAndEnabled)
             {
-                if (_player != null)
-                {
-                    _player.Died += HandlePlayerDied;
-                }
-                if (_waves != null)
-                {
-                    _waves.AllWavesCompleted += HandleAllWavesCompleted;
-                }
+                SubscribeGameplayEvents();
             }
         }
 
@@ -85,6 +72,18 @@ namespace Game
 
         private void OnEnable()
         {
+            SubscribeGameplayEvents();
+        }
+
+        private void OnDisable()
+        {
+            UnsubscribeGameplayEvents();
+        }
+
+        private void SubscribeGameplayEvents()
+        {
+            if (_isGameplaySubscribed || (_player == null && _waves == null)) return;
+
             if (_player != null)
             {
                 _player.Died += HandlePlayerDied;
@@ -94,10 +93,14 @@ namespace Game
             {
                 _waves.AllWavesCompleted += HandleAllWavesCompleted;
             }
+
+            _isGameplaySubscribed = true;
         }
 
-        private void OnDisable()
+        private void UnsubscribeGameplayEvents()
         {
+            if (!_isGameplaySubscribed) return;
+
             if (_player != null)
             {
                 _player.Died -= HandlePlayerDied;
@@ -107,6 +110,8 @@ namespace Game
             {
                 _waves.AllWavesCompleted -= HandleAllWavesCompleted;
             }
+
+            _isGameplaySubscribed = false;
         }
 
         private void Start()
@@ -124,6 +129,8 @@ namespace Game
 
         private void OnDestroy()
         {
+            UnsubscribeGameplayEvents();
+
             if (_manager != null)
             {
                 _manager.OnStateChanged -= HandleStateChanged;
@@ -180,7 +187,14 @@ namespace Game
                 Debug.Log($"GameState {oldState} -> {newState}");
             }
 
-            OnStateChanged?.Invoke(oldState, newState);
+            if (OnStateChanged == null) return;
+
+            foreach (Action<GameState, GameState> listener in OnStateChanged.GetInvocationList())
+            {
+                // A listener may terminate an invalid wave while handling Playing.
+                if (_manager.CurrentState != newState) break;
+                listener(oldState, newState);
+            }
         }
     }
 }

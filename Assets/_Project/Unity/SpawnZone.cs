@@ -57,59 +57,10 @@ namespace Game
 
             for (int attempt = 0; attempt < Mathf.Max(1, _attempts); attempt++)
             {
-                if (!TryCreateCandidate(out Vector3 candidate))
+                if (!TryCreateCandidate(out Vector3 candidate) ||
+                    !TrySampleReachablePosition(candidate, player, _navMeshSampleRadius, out Vector3 samplePos))
                 {
                     continue;
-                }
-
-                if (!PassesPlayerDistance(candidate, player))
-                {
-                    continue;
-                }
-
-                Vector3 samplePos = candidate;
-                if (NavMesh.CalculateTriangulation().vertices.Length > 0)
-                {
-                    if (!NavMesh.SamplePosition(
-                            candidate,
-                            out NavMeshHit hit,
-                            _navMeshSampleRadius,
-                            NavMesh.AllAreas))
-                    {
-                        continue;
-                    }
-
-                    samplePos = hit.position;
-
-                    // Recheck player distance after NavMesh projection
-                    if (!PassesPlayerDistance(samplePos, player))
-                    {
-                        continue;
-                    }
-
-                    // Ensure projected position didn't snap outside zone boundaries
-                    if (!IsPositionInZone(samplePos))
-                    {
-                        continue;
-                    }
-
-                    // Validate that a reachable path exists to player if player is available
-                    if (player != null)
-                    {
-                        NavMeshPath path = new NavMeshPath();
-                        if (!NavMesh.CalculatePath(samplePos, player.position, NavMesh.AllAreas, path) ||
-                            path.status != NavMeshPathStatus.PathComplete)
-                        {
-                            continue;
-                        }
-                    }
-                }
-                else
-                {
-                    if (!IsPositionInZone(samplePos))
-                    {
-                        continue;
-                    }
                 }
 
                 if (_requireOffscreen &&
@@ -134,87 +85,43 @@ namespace Game
         {
             for (int attempt = 0; attempt < Mathf.Max(1, _attempts); attempt++)
             {
-                if (!TryCreateCandidate(out Vector3 candidate))
+                if (TryCreateCandidate(out Vector3 candidate) &&
+                    TrySampleReachablePosition(candidate, player, _navMeshSampleRadius * 2f, out position))
                 {
-                    continue;
-                }
-
-                if (!PassesPlayerDistance(candidate, player))
-                {
-                    continue;
-                }
-
-                if (!IsPositionInZone(candidate))
-                {
-                    continue;
-                }
-
-                if (NavMesh.CalculateTriangulation().vertices.Length > 0)
-                {
-                    if (!NavMesh.SamplePosition(
-                            candidate,
-                            out NavMeshHit hit,
-                            _navMeshSampleRadius * 2f,
-                            NavMesh.AllAreas))
-                    {
-                        continue;
-                    }
-
-                    if (!IsPositionInZone(hit.position))
-                    {
-                        continue;
-                    }
-
-                    if (player != null)
-                    {
-                        NavMeshPath path = new NavMeshPath();
-                        if (!NavMesh.CalculatePath(hit.position, player.position, NavMesh.AllAreas, path) ||
-                            path.status != NavMeshPathStatus.PathComplete)
-                        {
-                            continue;
-                        }
-                    }
-
-                    position = hit.position;
-                    return true;
-                }
-                else
-                {
-                    position = candidate;
                     return true;
                 }
             }
 
-            // Final fallback within zone: check zone transform position
-            if (PassesPlayerDistance(transform.position, player) && IsPositionInZone(transform.position))
-            {
-                if (NavMesh.CalculateTriangulation().vertices.Length == 0)
-                {
-                    position = transform.position;
-                    return true;
-                }
+            return TrySampleReachablePosition(transform.position, player, _navMeshSampleRadius * 4f, out position);
+        }
 
-                if (NavMesh.SamplePosition(transform.position, out NavMeshHit centerHit, _navMeshSampleRadius * 4f, NavMesh.AllAreas) &&
-                    IsPositionInZone(centerHit.position))
-                {
-                    if (player == null)
-                    {
-                        position = centerHit.position;
-                        return true;
-                    }
-
-                    NavMeshPath path = new NavMeshPath();
-                    if (NavMesh.CalculatePath(centerHit.position, player.position, NavMesh.AllAreas, path) &&
-                        path.status == NavMeshPathStatus.PathComplete)
-                    {
-                        position = centerHit.position;
-                        return true;
-                    }
-                }
-            }
-
+        private bool TrySampleReachablePosition(
+            Vector3 candidate,
+            Transform player,
+            float sampleRadius,
+            out Vector3 position)
+        {
             position = Vector3.zero;
-            return false;
+            if (!PassesPlayerDistance(candidate, player) ||
+                !NavMesh.SamplePosition(candidate, out NavMeshHit hit, sampleRadius, NavMesh.AllAreas) ||
+                !IsPositionInZone(hit.position) ||
+                !PassesPlayerDistance(hit.position, player))
+            {
+                return false;
+            }
+
+            if (player != null)
+            {
+                NavMeshPath path = new NavMeshPath();
+                if (!NavMesh.CalculatePath(hit.position, player.position, NavMesh.AllAreas, path) ||
+                    path.status != NavMeshPathStatus.PathComplete)
+                {
+                    return false;
+                }
+            }
+
+            position = hit.position;
+            return true;
         }
 
         public bool IsPositionInZone(Vector3 position, float tolerance = 1.5f)
