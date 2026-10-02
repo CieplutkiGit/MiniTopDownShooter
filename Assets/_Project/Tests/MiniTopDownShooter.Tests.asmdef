@@ -3,7 +3,8 @@
     "rootNamespace": "MiniTopDownShooter.Tests",
     "references": [
         "GUID:2c7b87ce2634cf140905f8d3f56c7098",
-        "GUID:d2ab2add2c2367a42826eec9447f4502"
+        "GUID:d2ab2add2c2367a42826eec9447f4502",
+        "GUID:08e3313e38282a6273cf9e6d07cdd20861e1768c"
     ],
     "includePlatforms": [
         "Editor"
