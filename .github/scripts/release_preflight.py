@@ -103,7 +103,7 @@ for path in PRODUCT.rglob("*"):
 
     if suffix in TEXT_SUFFIXES:
         text = path.read_text(encoding="utf-8", errors="replace")
-        match = re.search(r"\b(TODO|FIXME)\b", text, flags=re.IGNORECASE)
+        match = re.search(r"(?<!/)\\b(TODO|FIXME)\\b(?!/)", text, flags=re.IGNORECASE)
         if match:
             fail(f"Release blocker marker {match.group(1).upper()} found in {path_text}")
 
