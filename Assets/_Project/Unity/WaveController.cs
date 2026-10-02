@@ -69,31 +69,20 @@ namespace Game
 
         public int CurrentWaveNumber => _runner != null ? _runner.CurrentWaveNumber : 0;
 
+        private bool _isSubscribed;
+
         public void Initialize(EnemySpawner spawner, GameStateController gameState)
         {
-            if (_gameState != null && enabled)
-            {
-                _gameState.OnStateChanged -= HandleStateChanged;
-            }
-
-            if (_spawner != null && enabled)
-            {
-                _spawner.EnemyKilled -= HandleEnemyKilled;
-            }
+            UnsubscribeEvents();
 
             _spawnerRef = spawner;
             _gameStateRef = gameState;
             _spawner = spawner;
             _gameState = gameState;
 
-            if (_gameState != null && enabled)
+            if (isActiveAndEnabled)
             {
-                _gameState.OnStateChanged += HandleStateChanged;
-            }
-
-            if (_spawner != null && enabled)
-            {
-                _spawner.EnemyKilled += HandleEnemyKilled;
+                SubscribeEvents();
             }
         }
 
@@ -122,6 +111,21 @@ namespace Game
 
         private void OnEnable()
         {
+            SubscribeEvents();
+        }
+
+        private void OnDisable()
+        {
+            UnsubscribeEvents();
+        }
+
+        private void SubscribeEvents()
+        {
+            if (_isSubscribed)
+            {
+                return;
+            }
+
             if (_gameState != null)
             {
                 _gameState.OnStateChanged += HandleStateChanged;
@@ -131,10 +135,17 @@ namespace Game
             {
                 _spawner.EnemyKilled += HandleEnemyKilled;
             }
+
+            _isSubscribed = true;
         }
 
-        private void OnDisable()
+        private void UnsubscribeEvents()
         {
+            if (!_isSubscribed)
+            {
+                return;
+            }
+
             if (_gameState != null)
             {
                 _gameState.OnStateChanged -= HandleStateChanged;
@@ -144,6 +155,8 @@ namespace Game
             {
                 _spawner.EnemyKilled -= HandleEnemyKilled;
             }
+
+            _isSubscribed = false;
         }
 
         private void OnDestroy()
@@ -307,20 +320,25 @@ namespace Game
         {
             if (newState == GameState.Playing)
             {
+                if (_runner == null)
+                {
+                    ResetWaves();
+                }
+
                 if (oldState == GameState.Paused)
                 {
-                    _runner.Resume();
+                    _runner?.Resume();
                 }
                 else
                 {
                     _pendingSpawnEntry = null;
                     _pendingSpawnDelay = 0f;
-                    _runner.StartWaves();
+                    _runner?.StartWaves();
                 }
             }
             else
             {
-                _runner.StopWaves();
+                _runner?.StopWaves();
             }
         }
 
@@ -407,11 +425,18 @@ namespace Game
             }
 
             // If spawner permanently exhausted retries due to invalid configuration:
-            if (entry.RetryCount > MaxSpawnEntryRetries * 3)
+            if (result == SpawnResult.InvalidConfiguration && entry.RetryCount > MaxSpawnEntryRetries * 3)
             {
                 // Visible failure path: NEVER count an unspawned required enemy/boss as killed!
                 Debug.LogError($"[WaveController] Fatal spawn failure: could not spawn enemy '{(entry.Prefab != null ? entry.Prefab.name : "null")}' after {entry.RetryCount} retries. Reason: {result}. Preserving integrity without granting false kill.");
-                _spawnPlanIndex++;
+                if (_gameStateRef != null)
+                {
+                    _gameStateRef.EndGame();
+                }
+                else if (_gameState is IGameStateController stateCtrl)
+                {
+                    stateCtrl.EndGame();
+                }
             }
         }
 

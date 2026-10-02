@@ -134,6 +134,11 @@ namespace Game
             _manager.TriggerVictory();
         }
 
+        public void EndGame()
+        {
+            _manager.EndGame();
+        }
+
         private void HandlePlayerDied()
         {
             _manager.EndGame();

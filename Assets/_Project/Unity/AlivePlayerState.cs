@@ -27,11 +27,16 @@ namespace Game
 
         public void Enter()
         {
-            _input.ResetGameplayTransientState();
+            _input?.ResetGameplayTransientState();
         }
 
         public void Update()
         {
+            if (_input == null)
+            {
+                return;
+            }
+
             Vector2 moveDirection = _input.MoveDirection;
             Vector2 lookDirection = _input.LookDirection;
 
@@ -60,7 +65,7 @@ namespace Game
         public void Exit()
         {
             _movement.Move(Vector2.zero);
-            _input.ResetGameplayTransientState();
+            _input?.ResetGameplayTransientState();
         }
     }
 }

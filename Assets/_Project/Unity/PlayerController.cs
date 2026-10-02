@@ -235,10 +235,13 @@ namespace Game
                 _input.ClearQueuedActions();
             }
 
-            if (_aliveState != null)
+            if (_aliveState == null)
             {
-                ChangeState(_aliveState);
+                _aliveState = new AlivePlayerState(_input, _movement, _rotation, _shoot, _shootThreshold);
+                _deadState = new DeadPlayerState(_movement);
             }
+
+            ChangeState(_aliveState);
         }
 
         public void ApplySettings(GameSettingsData settings)

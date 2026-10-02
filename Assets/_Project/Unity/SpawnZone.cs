@@ -154,6 +154,25 @@ namespace Game
                 return true;
             }
 
+            // Final fallback within zone: check zone transform position
+            if (NavMesh.SamplePosition(transform.position, out NavMeshHit centerHit, _navMeshSampleRadius * 4f, NavMesh.AllAreas) &&
+                IsPositionInZone(centerHit.position))
+            {
+                if (player == null)
+                {
+                    position = centerHit.position;
+                    return true;
+                }
+
+                NavMeshPath path = new NavMeshPath();
+                if (NavMesh.CalculatePath(centerHit.position, player.position, NavMesh.AllAreas, path) &&
+                    path.status == NavMeshPathStatus.PathComplete)
+                {
+                    position = centerHit.position;
+                    return true;
+                }
+            }
+
             position = Vector3.zero;
             return false;
         }

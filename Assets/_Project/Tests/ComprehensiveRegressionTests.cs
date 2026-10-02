@@ -109,6 +109,83 @@ namespace MiniTopDownShooter.Tests
         }
 
         [Test]
+        public void BurstFiring_RapidWeaponSwitching_CancelsBurstAndAmmoMatchesRoundsFired()
+        {
+            GameObject playerGo = new GameObject("PlayerWithLoadout");
+            _spawnedObjects.Add(playerGo);
+
+            GameObject gunGo1 = new GameObject("BurstGun");
+            gunGo1.transform.SetParent(playerGo.transform);
+            _spawnedObjects.Add(gunGo1);
+            Gun burstGun = gunGo1.AddComponent<Gun>();
+
+            GameObject spawnGo1 = new GameObject("Spawn1");
+            spawnGo1.transform.SetParent(gunGo1.transform);
+            _spawnedObjects.Add(spawnGo1);
+
+            WeaponRuntimeConfig burstConfig = new WeaponRuntimeConfig
+            {
+                FireMode = Application.WeaponFireMode.Burst,
+                FireInterval = 0.5f,
+                BurstCount = 3,
+                BurstInterval = 0.1f,
+                MagazineSize = 12,
+                StartingReserveAmmo = 36,
+                MaxReserveAmmo = 60,
+                InfiniteAmmo = false
+            };
+            burstGun.ConfigureForTesting(new WeaponRuntime(burstConfig), null, spawnGo1.transform);
+
+            GameObject gunGo2 = new GameObject("PistolGun");
+            gunGo2.transform.SetParent(playerGo.transform);
+            _spawnedObjects.Add(gunGo2);
+            Gun pistolGun = gunGo2.AddComponent<Gun>();
+
+            GameObject spawnGo2 = new GameObject("Spawn2");
+            spawnGo2.transform.SetParent(gunGo2.transform);
+            _spawnedObjects.Add(spawnGo2);
+
+            WeaponRuntimeConfig pistolConfig = new WeaponRuntimeConfig
+            {
+                FireMode = Application.WeaponFireMode.SemiAutomatic,
+                FireInterval = 0.2f,
+                MagazineSize = 10,
+                StartingReserveAmmo = 30,
+                MaxReserveAmmo = 50,
+                InfiniteAmmo = false
+            };
+            pistolGun.ConfigureForTesting(new WeaponRuntime(pistolConfig), null, spawnGo2.transform);
+
+            WeaponLoadout loadout = playerGo.AddComponent<WeaponLoadout>();
+            loadout.AddWeapon(burstGun, equipImmediately: true);
+            loadout.AddWeapon(pistolGun, equipImmediately: false);
+
+            Assert.AreSame(burstGun, loadout.ActiveGun);
+            Assert.AreEqual(12, burstGun.AmmoInMagazine);
+
+            // Fire burst round 1 programmatically
+            burstGun.Shoot(Vector3.forward);
+            Assert.AreEqual(11, burstGun.AmmoInMagazine, "Shot 1 consumes 1 round");
+            Assert.AreEqual(2, burstGun.Runtime.BurstShotsRemaining);
+
+            // Rapidly switch weapon before remaining burst rounds fire
+            bool switched = loadout.EquipNext();
+            Assert.IsTrue(switched);
+            Assert.AreSame(pistolGun, loadout.ActiveGun);
+
+            // Verify burst on previous weapon was cancelled
+            Assert.AreEqual(0, burstGun.Runtime.BurstShotsRemaining, "Unequipping must cancel pending burst shots");
+            Assert.IsFalse(burstGun.IsEquipped);
+            Assert.AreEqual(11, burstGun.AmmoInMagazine, "Cancelled shots must not consume magazine ammo");
+
+            // Switch back to burst gun
+            loadout.EquipPrevious();
+            Assert.AreSame(burstGun, loadout.ActiveGun);
+            Assert.AreEqual(0, burstGun.Runtime.BurstShotsRemaining);
+            Assert.AreEqual(11, burstGun.AmmoInMagazine);
+        }
+
+        [Test]
         public void Gun_AutomaticWeapon_FiresViaShootMethod()
         {
             GameObject gunGo = new GameObject("TestAutoGun");
@@ -142,22 +219,47 @@ namespace MiniTopDownShooter.Tests
         }
 
         [Test]
-        public void Shotgun_IndependentPelletSpreadSampling_ProducesDistinctDirections()
+        public void Shotgun_ProjectileWeaponDelivery_SamplesIndependentPelletSpreadAngles()
         {
-            int pelletCount = 6;
-            float spreadAngle = 15f;
-            Vector3 baseDir = Vector3.forward;
+            GameObject prefabGo = new GameObject("PelletPrefab");
+            _spawnedObjects.Add(prefabGo);
+            Projectile prefab = prefabGo.AddComponent<Projectile>();
 
+            GameObject spawnPoint = new GameObject("SpawnPoint");
+            _spawnedObjects.Add(spawnPoint);
+
+            int pelletsPerShot = 8;
+            float spreadAngle = 20f;
+
+            ProjectileWeaponDelivery delivery = new ProjectileWeaponDelivery(
+                prefab,
+                defaultPoolSize: pelletsPerShot * 2,
+                maxPoolSize: pelletsPerShot * 4,
+                projectilesPerShot: pelletsPerShot);
+
+            delivery.Deliver(
+                spawnPoint.transform,
+                Vector3.forward,
+                10,
+                null,
+                null,
+                null,
+                spreadAngle);
+
+            Projectile[] spawned = Object.FindObjectsByType<Projectile>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
             HashSet<int> distinctAngles = new HashSet<int>();
-            for (int i = 0; i < pelletCount; i++)
+
+            for (int i = 0; i < spawned.Length; i++)
             {
-                float sampledAngle = Random.Range(-spreadAngle, spreadAngle);
-                Vector3 pelletDir = Quaternion.AngleAxis(sampledAngle, Vector3.up) * baseDir;
-                int hash = Mathf.RoundToInt(pelletDir.x * 1000f);
+                if (spawned[i] == prefab) continue;
+                Vector3 dir = spawned[i].transform.forward;
+                int hash = Mathf.RoundToInt(dir.x * 1000f);
                 distinctAngles.Add(hash);
             }
 
-            Assert.Greater(distinctAngles.Count, 1, "Pellets must sample independent spread angles");
+            Assert.Greater(distinctAngles.Count, 1, "Shotgun pellets delivered via ProjectileWeaponDelivery must sample independent spread directions");
+
+            delivery.Dispose();
         }
 
         [Test]
@@ -200,7 +302,7 @@ namespace MiniTopDownShooter.Tests
         }
 
         [Test]
-        public void WorldResetManager_Restart_FullRestoration()
+        public void WorldResetManager_RepeatedRestarts_FullRestoration()
         {
             // 1. Setup GameStateController
             GameObject stateGo = new GameObject("StateController");
@@ -219,39 +321,46 @@ namespace MiniTopDownShooter.Tests
             WorldResetManager resetManager = resetGo.AddComponent<WorldResetManager>();
             resetManager.Initialize(player, null, gameState, null, null, null);
 
-            // 4. Setup Debris Chunk
-            GameObject debrisGo = new GameObject("DebrisChunk");
-            _spawnedObjects.Add(debrisGo);
-            DebrisChunk debris = debrisGo.AddComponent<DebrisChunk>();
-            debris.Initialize(Vector3.up, Vector3.zero, 5f, 9.8f, 0.3f, 0f);
+            for (int cycle = 0; cycle < 3; cycle++)
+            {
+                // Play and take damage
+                gameState.StartGame();
+                Assert.AreEqual(GameState.Playing, gameState.CurrentState);
 
-            // 5. Setup Weapon Pickup
-            GameObject pickupGo = new GameObject("WeaponPickup");
-            _spawnedObjects.Add(pickupGo);
-            WeaponPickup pickup = pickupGo.AddComponent<WeaponPickup>();
+                playerHealth.TakeDamage(40);
+                Assert.AreEqual(60, playerHealth.CurrentHealth);
 
-            // Start game, then damage player and transition to GameOver
-            gameState.StartGame();
-            Assert.AreEqual(GameState.Playing, gameState.CurrentState);
+                // Add pickup and debris
+                GameObject debrisGo = new GameObject($"DebrisChunk_{cycle}");
+                _spawnedObjects.Add(debrisGo);
+                DebrisChunk debris = debrisGo.AddComponent<DebrisChunk>();
+                debris.Initialize(Vector3.up, Vector3.zero, 5f, 9.8f, 0.3f, 0f);
 
-            playerHealth.TakeDamage(50);
-            Assert.AreEqual(50, playerHealth.CurrentHealth);
+                GameObject pickupGo = new GameObject($"WeaponPickup_{cycle}");
+                _spawnedObjects.Add(pickupGo);
+                pickupGo.AddComponent<WeaponPickup>();
 
-            gameState.ReturnToMenu();
-            Assert.AreEqual(GameState.Menu, gameState.CurrentState);
+                // End run via GameOver or Victory
+                if (cycle % 2 == 0)
+                {
+                    gameState.EndGame();
+                    Assert.AreEqual(GameState.GameOver, gameState.CurrentState);
+                }
+                else
+                {
+                    gameState.TriggerVictory();
+                    Assert.AreEqual(GameState.Victory, gameState.CurrentState);
+                }
 
-            // Execute World Reset
-            resetManager.Restart();
+                // Restart
+                resetManager.Restart();
 
-            // Verify:
-            // 1) Game State is Playing
-            Assert.AreEqual(GameState.Playing, gameState.CurrentState);
-            // 2) Player health restored
-            Assert.AreEqual(playerHealth.MaxHealth, playerHealth.CurrentHealth);
-            // 3) Debris chunk deactivated
-            Assert.IsFalse(debrisGo.activeInHierarchy, "Active debris chunks must be cleared on restart");
-            // 4) Pickup destroyed
-            Assert.IsTrue(pickupGo == null || !pickupGo.activeInHierarchy, "Pickups must be cleared on restart");
+                // Assert state restored
+                Assert.AreEqual(GameState.Playing, gameState.CurrentState);
+                Assert.AreEqual(playerHealth.MaxHealth, playerHealth.CurrentHealth);
+                Assert.IsFalse(debrisGo.activeInHierarchy, "Debris must be cleared on restart");
+                Assert.IsTrue(pickupGo == null || !pickupGo.activeInHierarchy, "Pickups must be cleared on restart");
+            }
         }
 
         [Test]
@@ -273,9 +382,14 @@ namespace MiniTopDownShooter.Tests
             _spawnedObjects.Add(settingsGo);
             SettingsUI settingsUI = settingsGo.AddComponent<SettingsUI>();
 
+            GameObject highScoreGo = new GameObject("HighScoreController");
+            _spawnedObjects.Add(highScoreGo);
+            HighScoreController highScoreController = highScoreGo.AddComponent<HighScoreController>();
+
             // Initialize UI components
             victoryUI.Initialize(stateController);
             settingsUI.Initialize(player);
+            highScoreController.Initialize(null, stateController);
 
             // Cycle active state multiple times
             for (int i = 0; i < 3; i++)
@@ -285,11 +399,15 @@ namespace MiniTopDownShooter.Tests
 
                 settingsGo.SetActive(false);
                 settingsGo.SetActive(true);
+
+                highScoreGo.SetActive(false);
+                highScoreGo.SetActive(true);
             }
 
             // Re-initialize (idempotency check)
             victoryUI.Initialize(stateController);
             settingsUI.Initialize(player);
+            highScoreController.Initialize(null, stateController);
 
             // Trigger state transitions without throwing exceptions or duplicate handlers
             stateController.StartGame();
@@ -306,63 +424,153 @@ namespace MiniTopDownShooter.Tests
         }
 
         [Test]
-        public void BossPhase_TelegraphAndRecoveryDefaults_AreConfigured()
+        public void BossPhase_DeathDuringShockwaveWindup_CancelsAttackAndPreventsDamage()
         {
-            BossPhase phase = new BossPhase
+            GameObject bossGo = new GameObject("TestBoss");
+            _spawnedObjects.Add(bossGo);
+
+            HealthComponent bossHealth = bossGo.AddComponent<HealthComponent>();
+            bossHealth.SetMaxHealth(100);
+
+            BossPhaseController phaseController = bossGo.AddComponent<BossPhaseController>();
+            GameObject telegraphGo = new GameObject("TelegraphObj");
+            telegraphGo.transform.SetParent(bossGo.transform);
+            _spawnedObjects.Add(telegraphGo);
+            telegraphGo.SetActive(false);
+
+            BossPhase enragePhase = new BossPhase
             {
                 PhaseName = "Enrage",
                 EnterAtHealthFraction = 0.5f,
-                MovementSpeedMultiplier = 1.3f,
-                AttackCooldownMultiplier = 0.7f,
-                BonusDamage = 10,
                 TriggerShockwaveOnEnter = true,
                 ShockwaveRadius = 6f,
-                ShockwaveDamage = 20,
-                ShockwaveWindup = 0.8f,
-                ShockwaveRecovery = 0.4f
+                ShockwaveDamage = 50,
+                ShockwaveWindup = 2.0f,
+                ShockwaveRecovery = 0.5f,
+                ShockwaveTelegraph = telegraphGo
             };
 
-            Assert.AreEqual(0.8f, phase.ShockwaveWindup, 0.001f);
-            Assert.AreEqual(0.4f, phase.ShockwaveRecovery, 0.001f);
-            Assert.AreEqual(6f, phase.ShockwaveRadius, 0.001f);
-            Assert.AreEqual(20, phase.ShockwaveDamage);
+            // Inject phase into serialized array via reflection
+            var phasesField = typeof(BossPhaseController).GetField("_phases", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            phasesField.SetValue(phaseController, new BossPhase[] { enragePhase });
+
+            phaseController.Initialize(bossHealth);
+
+            // Damage boss to trigger phase 2 windup
+            bossHealth.TakeDamage(60); // Health: 40/100 (<= 0.5)
+            Assert.AreEqual(0, phaseController.ActivePhaseIndex);
+            Assert.IsTrue(telegraphGo.activeSelf, "Telegraph should be active during shockwave windup");
+
+            // Kill boss during windup
+            bossHealth.TakeDamage(40); // Health: 0 (dead)
+            Assert.AreEqual(0, bossHealth.CurrentHealth);
+
+            // Telegraph must be immediately deactivated and attack cancelled on boss death
+            Assert.IsFalse(telegraphGo.activeSelf, "Telegraph must be cancelled immediately when boss dies");
         }
 
         [Test]
-        public void SaveManager_ValidateAndMigrate_PreservesLegacyHighScoreAndSanitizesData()
+        public void WaveController_BossSpawnFailure_NeverCountsAsKilled()
         {
-            // Test UserProfileData migration
-            UserProfileData profile = new UserProfileData
+            GameObject stateGo = new GameObject("GameStateController");
+            _spawnedObjects.Add(stateGo);
+            GameStateController gameState = stateGo.AddComponent<GameStateController>();
+
+            GameObject spawnerGo = new GameObject("MockEnemySpawner");
+            _spawnedObjects.Add(spawnerGo);
+            EnemySpawner spawner = spawnerGo.AddComponent<EnemySpawner>();
+
+            GameObject waveGo = new GameObject("WaveController");
+            _spawnedObjects.Add(waveGo);
+            WaveController waveController = waveGo.AddComponent<WaveController>();
+
+            GameObject bossPrefabGo = new GameObject("BossPrefab");
+            _spawnedObjects.Add(bossPrefabGo);
+            EnemyController bossPrefab = bossPrefabGo.AddComponent<EnemyController>();
+
+            WaveConfig bossWave = new WaveConfig
             {
-                TotalRuns = -5,
-                TotalWins = -2,
-                TotalLosses = -3,
-                HighScore = 500
+                EnemyCount = 1,
+                SpawnInterval = 0.1f,
+                InitialDelay = 0f,
+                DelayAfter = 0f,
+                BossPrefab = bossPrefab,
+                BossCount = 1,
+                BossDelay = 0f,
+                SpawnZoneIds = new List<string> { "NonExistentZone" }
             };
 
-            profile.ValidateAndMigrate();
+            // Set inline waves via reflection
+            var wavesField = typeof(WaveController).GetField("_waves", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            wavesField.SetValue(waveController, new List<WaveConfig> { bossWave });
 
-            Assert.AreEqual(0, profile.TotalRuns, "Negative runs must be clamped to 0");
-            Assert.AreEqual(0, profile.TotalWins, "Negative wins must be clamped to 0");
-            Assert.AreEqual(0, profile.TotalLosses, "Negative losses must be clamped to 0");
-            Assert.AreEqual(500, profile.HighScore, "Legacy high score must be strictly preserved");
+            waveController.Initialize(spawner, gameState);
 
-            // Test GameSettingsData migration
-            GameSettingsData settings = new GameSettingsData
+            bool victoryTriggered = false;
+            waveController.AllWavesCompleted += () => victoryTriggered = true;
+
+            // Start wave
+            gameState.StartGame();
+
+            // Simulate frames where boss cannot spawn because zone does not exist
+            var updateMethod = typeof(WaveController).GetMethod("Update", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            for (int i = 0; i < 20; i++)
             {
-                MasterVolume = 2.5f,
-                MusicVolume = -0.5f,
-                SFXVolume = 1.0f,
-                AimSensitivity = 15f,
-                TouchControlScale = 0.2f
+                updateMethod.Invoke(waveController, null);
+            }
+
+            // Unspawned boss must NEVER be counted as killed!
+            Assert.IsFalse(victoryTriggered, "Unspawned boss must NEVER trigger victory or be counted as killed");
+            Assert.AreNotEqual(GameState.Victory, gameState.CurrentState, "Game state must not transition to Victory on unspawned boss");
+        }
+
+        [Test]
+        public void SaveManager_SaveRecovery_RecoversCorruptedFileFromBackupAndMigrates()
+        {
+            string saveFile = Path.Combine(_tempDir, "test_profile.json");
+            string backupFile = saveFile + ".bak";
+
+            UserProfileData initialProfile = new UserProfileData
+            {
+                HighScore = 250,
+                TotalRuns = 5,
+                TotalWins = 3,
+                TotalLosses = 2
             };
 
-            settings.ValidateAndMigrate();
+            // 1. Initial valid save
+            Assert.IsTrue(SaveManager.SaveToFile(saveFile, initialProfile));
+            Assert.IsTrue(File.Exists(saveFile));
 
-            Assert.AreEqual(1f, settings.MasterVolume, 0.001f, "Volume > 1 must be clamped to 1");
-            Assert.AreEqual(0f, settings.MusicVolume, 0.001f, "Volume < 0 must be clamped to 0");
-            Assert.AreEqual(10f, settings.AimSensitivity, 0.001f, "Sensitivity > 10 must be clamped to 10");
-            Assert.AreEqual(0.5f, settings.TouchControlScale, 0.001f, "Touch scale < 0.5 must be clamped to 0.5");
+            // 2. Second valid save (creates .bak of initial profile)
+            UserProfileData updatedProfile = new UserProfileData
+            {
+                HighScore = 500,
+                TotalRuns = 10,
+                TotalWins = 6,
+                TotalLosses = 4
+            };
+            Assert.IsTrue(SaveManager.SaveToFile(saveFile, updatedProfile));
+            Assert.IsTrue(File.Exists(backupFile), "Backup file must exist after subsequent save");
+
+            // 3. Corrupt primary file with broken JSON garbage
+            File.WriteAllText(saveFile, "{ corrupted JSON text ### <<< invalid !!");
+
+            // 4. Load from file: must detect corruption, recover from backup, and restore primary
+            UserProfileData recovered = SaveManager.LoadFromFile<UserProfileData>(saveFile);
+            Assert.IsNotNull(recovered, "Must successfully recover from backup when primary file is corrupt");
+            Assert.AreEqual(250, recovered.HighScore, "Recovered data must match backup content");
+            Assert.AreEqual(5, recovered.TotalRuns);
+
+            // 5. Verify primary file was restored with valid JSON
+            string restoredContent = File.ReadAllText(saveFile);
+            Assert.IsFalse(restoredContent.Contains("corrupted JSON"), "Primary corrupt file must be replaced with recovered data");
+
+            // 6. Test both files corrupt returns null safely without throwing exception
+            File.WriteAllText(saveFile, "garbage1");
+            File.WriteAllText(backupFile, "garbage2");
+            UserProfileData fallback = SaveManager.LoadFromFile<UserProfileData>(saveFile);
+            Assert.IsNull(fallback, "When both primary and backup are corrupt, return null safely");
         }
     }
 }

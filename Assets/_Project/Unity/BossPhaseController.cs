@@ -79,6 +79,30 @@ namespace Game
             }
         }
 
+        public void Initialize(HealthComponent health, EnemyMovement movement = null, EnemyAttack attack = null)
+        {
+            if (_health != null)
+            {
+                _health.OnHealthChanged -= HandleHealthChanged;
+                _health.OnDead -= HandleDead;
+            }
+
+            _health = health;
+            if (movement != null) _movement = movement;
+            if (attack != null)
+            {
+                _attack = attack;
+                _baseDamage = _attack.Damage;
+                _baseCooldown = _attack.AttackCooldown;
+            }
+
+            if (isActiveAndEnabled && _health != null)
+            {
+                _health.OnHealthChanged += HandleHealthChanged;
+                _health.OnDead += HandleDead;
+            }
+        }
+
         private void OnEnable()
         {
             _activePhaseIndex = int.MinValue;
@@ -86,6 +110,7 @@ namespace Game
             if (_health != null)
             {
                 _health.OnHealthChanged += HandleHealthChanged;
+                _health.OnDead += HandleDead;
             }
         }
 
@@ -94,10 +119,16 @@ namespace Game
             if (_health != null)
             {
                 _health.OnHealthChanged -= HandleHealthChanged;
+                _health.OnDead -= HandleDead;
             }
 
             ResetPhasePresentation();
             _activePhaseIndex = int.MinValue;
+        }
+
+        private void HandleDead()
+        {
+            ResetPhasePresentation();
         }
 
         private void HandleHealthChanged(int current, int max)

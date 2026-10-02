@@ -21,21 +21,20 @@ namespace Game
             get { return _highScore; }
         }
 
+        private bool _isSubscribed;
+
         public void Initialize(ScoreController score, GameStateController gameState)
         {
-            if (_gameState != null && enabled)
-            {
-                _gameState.OnStateChanged -= HandleStateChanged;
-            }
+            UnsubscribeEvents();
 
             _scoreRef = score;
             _gameStateRef = gameState;
             _score = score;
             _gameState = gameState;
 
-            if (_gameState != null && enabled)
+            if (isActiveAndEnabled)
             {
-                _gameState.OnStateChanged += HandleStateChanged;
+                SubscribeEvents();
             }
         }
 
@@ -68,18 +67,34 @@ namespace Game
 
         private void OnEnable()
         {
-            if (_gameState != null)
-            {
-                _gameState.OnStateChanged += HandleStateChanged;
-            }
+            SubscribeEvents();
         }
 
         private void OnDisable()
         {
-            if (_gameState != null)
+            UnsubscribeEvents();
+        }
+
+        private void SubscribeEvents()
+        {
+            if (_isSubscribed || _gameState == null)
             {
-                _gameState.OnStateChanged -= HandleStateChanged;
+                return;
             }
+
+            _gameState.OnStateChanged += HandleStateChanged;
+            _isSubscribed = true;
+        }
+
+        private void UnsubscribeEvents()
+        {
+            if (!_isSubscribed || _gameState == null)
+            {
+                return;
+            }
+
+            _gameState.OnStateChanged -= HandleStateChanged;
+            _isSubscribed = false;
         }
 
         private void HandleStateChanged(GameState oldState, GameState newState)

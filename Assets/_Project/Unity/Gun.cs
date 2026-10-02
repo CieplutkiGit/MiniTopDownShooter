@@ -78,9 +78,56 @@ namespace Game
             RaiseAmmoChanged();
         }
 
+        private void OnEnable()
+        {
+            if (_gameState != null)
+            {
+                _gameState.OnStateChanged += HandleGameStateChanged;
+            }
+        }
+
+        private void OnDisable()
+        {
+            if (_gameState != null)
+            {
+                _gameState.OnStateChanged -= HandleGameStateChanged;
+            }
+            CancelBurst();
+            CancelReload();
+        }
+
+        private void HandleGameStateChanged(GameState oldState, GameState newState)
+        {
+            if (newState != GameState.Playing)
+            {
+                // Explicit pause/resume behavior: cancel pending burst so no unintended rounds discharge while paused or upon unpausing
+                CancelBurst();
+
+                if (newState == GameState.GameOver || newState == GameState.Victory || newState == GameState.Menu)
+                {
+                    CancelReload();
+                }
+            }
+        }
+
         private void Update()
         {
-            if (_runtime == null)
+            if (_runtime == null || !_isEquipped)
+            {
+                return;
+            }
+
+            if (_gameState == null && _gameStateRef == null)
+            {
+                _gameStateRef = FindFirstObjectByType<GameStateController>();
+                _gameState = _gameStateRef;
+                if (_gameState != null && enabled)
+                {
+                    _gameState.OnStateChanged += HandleGameStateChanged;
+                }
+            }
+
+            if (_gameState != null && _gameState.CurrentState != GameState.Playing)
             {
                 return;
             }
@@ -97,6 +144,10 @@ namespace Game
 
         private void OnDestroy()
         {
+            if (_gameState != null)
+            {
+                _gameState.OnStateChanged -= HandleGameStateChanged;
+            }
             _delivery?.Dispose();
         }
 

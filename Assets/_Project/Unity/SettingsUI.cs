@@ -52,6 +52,7 @@ namespace Game
 
         private void Awake()
         {
+            SetPanelActive(false);
             _currentSettings = SaveManager.LoadSettings();
             ApplySettingsToUI(_currentSettings);
             ApplySettingsToGame(_currentSettings);

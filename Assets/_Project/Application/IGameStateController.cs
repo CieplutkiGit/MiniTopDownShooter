@@ -7,5 +7,6 @@ namespace Application
         void Resume();
         void ReturnToMenu();
         void TriggerVictory();
+        void EndGame();
     }
 }
