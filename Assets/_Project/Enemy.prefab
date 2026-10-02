@@ -20,6 +20,7 @@ GameObject:
   - component: {fileID: 7111111111111111111}
   - component: {fileID: 7444444444444444444}
   - component: {fileID: 7777777777777777777}
+  - component: {fileID: 8111111111111111111}
   m_Layer: 7
   m_Name: Enemy
   m_TagString: Untagged
@@ -249,3 +250,19 @@ MonoBehaviour:
   _gravity: 20
   _bounce: 0.4
   _floorY: 0
+
+--- !u!114 &8111111111111111111
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4874851253939397579}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f8a0eaa6f814cf89ab1a43e01da2e64, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Unity::Game.DamageAffiliation
+  _team: 2
+  _allowFriendlyFire: 0
+  _ignoreFriendlyCollisions: 1
