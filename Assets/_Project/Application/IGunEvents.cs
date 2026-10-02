@@ -1,6 +1,6 @@
 using System;
 
-namespace Application
+namespace Cieplutki.MiniTopDownShooter.Application
 {
     public interface IGunEvents
     {
