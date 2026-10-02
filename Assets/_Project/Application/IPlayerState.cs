@@ -1,4 +1,4 @@
-namespace Application
+namespace Cieplutki.MiniTopDownShooter.Application
 {
     public interface IPlayerState
     {
