@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Application;
 using UnityEngine;
+using UnityEngine.AI;
 
 namespace Game
 {
@@ -63,6 +64,7 @@ namespace Game
         public event System.Action AllWavesCompleted;
 
         public WaveSet WaveSet => _waveSet;
+        public string SpawnErrorReason { get; private set; }
 
         public IReadOnlyList<WaveConfig> ConfiguredWaves =>
             _waveSet != null ? _waveSet.Waves : _waves;
@@ -304,6 +306,7 @@ namespace Game
 
         public void ResetWaves()
         {
+            SpawnErrorReason = null;
             if (_runner != null)
             {
                 _runner.SpawnRequested -= HandleSpawnRequested;
@@ -347,6 +350,7 @@ namespace Game
                 }
                 else
                 {
+                    SpawnErrorReason = null;
                     _pendingSpawnEntry = null;
                     _pendingSpawnDelay = 0f;
                     _runner?.StartWaves();
@@ -435,7 +439,7 @@ namespace Game
             if (result == SpawnResult.InvalidConfiguration)
             {
                 Debug.LogError($"[WaveController] Fatal spawn error: Invalid configuration for enemy '{prefabName}' (requested zones: [{zoneStr}]). Terminating wave.");
-                TerminateWithSpawnError();
+                TerminateWithSpawnError("Enemy setup is incomplete. Please return to the menu.");
                 return;
             }
 
@@ -456,13 +460,14 @@ namespace Game
             if (entry.RetryCount >= MaxPositionAttempts)
             {
                 Debug.LogError($"[WaveController] Fatal spawn error: Unable to find valid spawn position for enemy '{prefabName}' (requested zones: [{zoneStr}]) after {entry.RetryCount} attempts. Terminating wave.");
-                TerminateWithSpawnError();
+                TerminateWithSpawnError("No safe enemy spawn position was found. Please retry.");
                 return;
             }
         }
 
-        private void TerminateWithSpawnError()
+        private void TerminateWithSpawnError(string reason)
         {
+            SpawnErrorReason = reason;
             _activePlan = null;
             _pendingSpawnEntry = null;
             _pendingSpawnDelay = 0f;
@@ -495,6 +500,12 @@ namespace Game
             if (_activePlan == null || _activePlan.Count == 0)
             {
                 return true;
+            }
+
+            if (_spawnerRef != null && NavMesh.CalculateTriangulation().vertices.Length == 0)
+            {
+                errorReason = "Arena navigation data is missing";
+                return false;
             }
 
             for (int i = 0; i < _activePlan.Count; i++)
@@ -555,7 +566,7 @@ namespace Game
             if (!ValidateActiveWave(waveNumber, out string errorReason))
             {
                 Debug.LogError($"[WaveController] Wave {waveNumber} configuration invalid: {errorReason}. Terminating wave.");
-                TerminateWithSpawnError();
+                TerminateWithSpawnError($"This wave could not start: {errorReason}.");
                 return;
             }
 

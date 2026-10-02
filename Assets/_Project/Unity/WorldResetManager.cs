@@ -59,8 +59,7 @@ namespace Game
             AmmoPickup[] ammo = FindObjectsByType<AmmoPickup>(FindObjectsInactive.Include, FindObjectsSortMode.None);
             for (int i = 0; i < ammo.Length; i++)
             {
-                if (ammo[i] == null) continue;
-                ammo[i].IsRuntimeDrop = false;
+                if (ammo[i] == null || ammo[i].IsRuntimeDrop) continue;
                 _authoredAmmo.Add(new AuthoredAmmoData
                 {
                     Component = ammo[i],
@@ -76,8 +75,7 @@ namespace Game
             WeaponPickup[] weapons = FindObjectsByType<WeaponPickup>(FindObjectsInactive.Include, FindObjectsSortMode.None);
             for (int i = 0; i < weapons.Length; i++)
             {
-                if (weapons[i] == null) continue;
-                weapons[i].IsRuntimeDrop = false;
+                if (weapons[i] == null || weapons[i].IsRuntimeDrop) continue;
                 _authoredWeapons.Add(new AuthoredWeaponData
                 {
                     Component = weapons[i],

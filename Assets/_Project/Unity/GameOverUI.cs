@@ -26,6 +26,7 @@ namespace Game
         private IHighScoreProvider _highScore;
         private IWaveProvider _waves;
         private bool _isSubscribed;
+        private TMP_Text _spawnErrorLabel;
 
         public void Initialize(GameStateController gameState, WorldResetManager resetManager, ScoreController score = null, HighScoreController highScore = null, WaveController waves = null)
         {
@@ -176,6 +177,35 @@ namespace Game
 
         private void UpdateResultsDisplay()
         {
+            string spawnError = _waveRef != null ? _waveRef.SpawnErrorReason : null;
+            bool hasSpawnError = !string.IsNullOrEmpty(spawnError);
+            if (hasSpawnError && _spawnErrorLabel == null)
+            {
+                TMP_Text template = _panel.GetComponentInChildren<TMP_Text>(true);
+                if (template != null)
+                {
+                    _spawnErrorLabel = Instantiate(template, _panel.transform);
+                    _spawnErrorLabel.name = "SpawnErrorText";
+                    _spawnErrorLabel.raycastTarget = false;
+                    _spawnErrorLabel.richText = false;
+                    _spawnErrorLabel.alignment = TextAlignmentOptions.Center;
+                    _spawnErrorLabel.enableAutoSizing = true;
+                    _spawnErrorLabel.fontSizeMin = 16f;
+                    _spawnErrorLabel.fontSizeMax = 22f;
+                    RectTransform rect = _spawnErrorLabel.rectTransform;
+                    rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+                    rect.pivot = new Vector2(0.5f, 0.5f);
+                    rect.anchoredPosition = new Vector2(0f, 130f);
+                    rect.sizeDelta = new Vector2(600f, 80f);
+                }
+            }
+
+            if (_spawnErrorLabel != null)
+            {
+                _spawnErrorLabel.text = spawnError ?? string.Empty;
+                _spawnErrorLabel.gameObject.SetActive(hasSpawnError);
+            }
+
             if (_scoreLabel != null && _score != null)
             {
                 _scoreLabel.text = $"Final Score: {_score.Score}";

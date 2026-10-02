@@ -55,6 +55,10 @@ namespace Game
             SetPanelActive(false);
             _currentSettings = SaveManager.LoadSettings();
             ApplySettingsToUI(_currentSettings);
+        }
+
+        private void Start()
+        {
             ApplySettingsToGame(_currentSettings);
         }
 
@@ -292,9 +296,9 @@ namespace Game
                 string musicParam = !string.IsNullOrEmpty(_musicVolumeParam) ? _musicVolumeParam : "MusicVolume";
                 string sfxParam = !string.IsNullOrEmpty(_sfxVolumeParam) ? _sfxVolumeParam : "SFXVolume";
 
-                _audioMixer.SetFloat(masterParam, VolumeToDecibels(data.MasterVolume));
-                _audioMixer.SetFloat(musicParam, VolumeToDecibels(data.MusicVolume));
-                _audioMixer.SetFloat(sfxParam, VolumeToDecibels(data.SFXVolume));
+                SetMixerVolume(masterParam, data.MasterVolume);
+                SetMixerVolume(musicParam, data.MusicVolume);
+                SetMixerVolume(sfxParam, data.SFXVolume);
             }
             else
             {
@@ -321,6 +325,14 @@ namespace Game
             if (_player != null)
             {
                 _player.ApplySettings(data);
+            }
+        }
+
+        private void SetMixerVolume(string parameter, float volume)
+        {
+            if (!_audioMixer.SetFloat(parameter, VolumeToDecibels(volume)))
+            {
+                Debug.LogWarning($"[SettingsUI] Could not apply mixer parameter '{parameter}'.");
             }
         }
 
