@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Game
+namespace Cieplutki.MiniTopDownShooter.Runtime
 {
     public enum MobileInputAction
     {

@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using Core;
+using Cieplutki.MiniTopDownShooter.Core;
 using UnityEngine;
 
-namespace Game
+namespace Cieplutki.MiniTopDownShooter.Runtime
 {
     public class HealthComponent : MonoBehaviour, IDamageable, IHealthReadable
     {

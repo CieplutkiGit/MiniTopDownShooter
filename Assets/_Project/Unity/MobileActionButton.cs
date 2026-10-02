@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-namespace Game
+namespace Cieplutki.MiniTopDownShooter.Runtime
 {
     public class MobileActionButton :
         MonoBehaviour,

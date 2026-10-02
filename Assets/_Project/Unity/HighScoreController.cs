@@ -1,8 +1,8 @@
 using System;
-using Application;
+using Cieplutki.MiniTopDownShooter.Application;
 using UnityEngine;
 
-namespace Game
+namespace Cieplutki.MiniTopDownShooter.Runtime
 {
     public class HighScoreController : MonoBehaviour, IHighScoreProvider
     {

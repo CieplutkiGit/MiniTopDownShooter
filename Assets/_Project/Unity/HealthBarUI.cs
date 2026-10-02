@@ -1,8 +1,8 @@
-using Core;
+using Cieplutki.MiniTopDownShooter.Core;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Game
+namespace Cieplutki.MiniTopDownShooter.Runtime
 {
     public class HealthBarUI : MonoBehaviour
     {

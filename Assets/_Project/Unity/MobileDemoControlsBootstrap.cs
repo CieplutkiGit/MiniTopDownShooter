@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Game
+namespace Cieplutki.MiniTopDownShooter.Runtime
 {
     [DefaultExecutionOrder(-1000)]
     [DisallowMultipleComponent]

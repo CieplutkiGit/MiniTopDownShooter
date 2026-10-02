@@ -2,7 +2,9 @@ using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace Game
+using Cieplutki.MiniTopDownShooter.Input;
+
+namespace Cieplutki.MiniTopDownShooter.Runtime
 {
     public class InputReader : IDisposable
     {
