@@ -59,6 +59,52 @@ public class MiniTopDownShooterWindow : EditorWindow
             }
         }
 
+        EditorGUILayout.Space(4);
+        EditorGUILayout.LabelField("Quick setup", EditorStyles.boldLabel);
+
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            if (GUILayout.Button("Create Player"))
+            {
+                MiniTopDownShooterSetupCommands.CreatePlayer();
+            }
+
+            if (GUILayout.Button("Create Enemy"))
+            {
+                MiniTopDownShooterSetupCommands.CreateEnemy();
+            }
+
+            if (GUILayout.Button("Create Gun"))
+            {
+                MiniTopDownShooterSetupCommands.CreateGun();
+            }
+
+            if (GUILayout.Button("Create Spawn Zone"))
+            {
+                MiniTopDownShooterSetupCommands.CreateSpawnZone();
+            }
+        }
+
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            if (GUILayout.Button("Create Arena"))
+            {
+                MiniTopDownShooterSetupCommands.CreateArena();
+            }
+
+            if (GUILayout.Button("Create Wave Controller"))
+            {
+                MiniTopDownShooterSetupCommands.CreateWaveController();
+            }
+
+            if (GUILayout.Button("Fix Common Setup Issues"))
+            {
+                MiniTopDownShooterSetupCommands.FixCommonSetupIssues();
+                _lastReport = BuildValidationReport(out int errors, out int warnings);
+                LogReport(_lastReport, errors, warnings);
+            }
+        }
+
         if (GUILayout.Button("Open Documentation"))
         {
             Object documentation = AssetDatabase.LoadAssetAtPath<Object>(DocumentationPath);
