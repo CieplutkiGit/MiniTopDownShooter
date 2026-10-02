@@ -4,6 +4,7 @@ using Game;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 
 public class MiniTopDownShooterWindow : EditorWindow
@@ -133,12 +134,34 @@ public class MiniTopDownShooterWindow : EditorWindow
             FindObjectsSortMode.None);
 
         bool hasGlobalEnemyFallback = false;
+        HashSet<int> validatedEnemyPrefabs = new HashSet<int>();
 
         foreach (EnemySpawner spawner in spawners)
         {
             SerializedObject serializedSpawner = new SerializedObject(spawner);
             SerializedProperty player = serializedSpawner.FindProperty("_player");
+            SerializedProperty prefabs = serializedSpawner.FindProperty("_prefabs");
             hasGlobalEnemyFallback |= spawner.HasFallbackPrefabs;
+
+            if (prefabs != null)
+            {
+                for (int prefabIndex = 0; prefabIndex < prefabs.arraySize; prefabIndex++)
+                {
+                    SerializedProperty entry = prefabs.GetArrayElementAtIndex(prefabIndex);
+                    SerializedProperty prefabProperty = entry.FindPropertyRelative("Prefab");
+                    EnemyController prefab =
+                        prefabProperty != null
+                            ? prefabProperty.objectReferenceValue as EnemyController
+                            : null;
+
+                    ValidateEnemyPrefab(
+                        prefab,
+                        validatedEnemyPrefabs,
+                        report,
+                        ref errors,
+                        ref warnings);
+                }
+            }
 
             if (!spawner.HasFallbackPrefabs)
             {
@@ -251,6 +274,15 @@ public class MiniTopDownShooterWindow : EditorWindow
                                     $"Wave {waveIndex + 1} enemy group {groupIndex + 1} has no prefab and will be ignored.",
                                     ref warnings);
                             }
+                            else if (group != null)
+                            {
+                                ValidateEnemyPrefab(
+                                    group.Prefab,
+                                    validatedEnemyPrefabs,
+                                    report,
+                                    ref errors,
+                                    ref warnings);
+                            }
                         }
                     }
 
@@ -285,9 +317,20 @@ public class MiniTopDownShooterWindow : EditorWindow
                             $"Wave {waveIndex + 1} has Boss Count {wave.BossCount} but no Boss Prefab.",
                             ref warnings);
                     }
+                    else if (wave.BossPrefab != null)
+                    {
+                        ValidateEnemyPrefab(
+                            wave.BossPrefab,
+                            validatedEnemyPrefabs,
+                            report,
+                            ref errors,
+                            ref warnings);
+                    }
                 }
             }
         }
+
+        ValidateMobileControls(report, ref errors, ref warnings);
 
         NavMeshTriangulation triangulation = NavMesh.CalculateTriangulation();
         if (triangulation.vertices == null || triangulation.vertices.Length == 0)
@@ -327,6 +370,172 @@ public class MiniTopDownShooterWindow : EditorWindow
         {
             report.AppendLine($"[OK] {displayName}");
         }
+    }
+
+    private static void ValidateEnemyPrefab(
+        EnemyController enemy,
+        HashSet<int> validatedEnemyPrefabs,
+        StringBuilder report,
+        ref int errors,
+        ref int warnings)
+    {
+        if (enemy == null || !validatedEnemyPrefabs.Add(enemy.GetInstanceID()))
+        {
+            return;
+        }
+
+        EnemyBehaviorBase behavior = enemy.Behavior;
+
+        if (behavior is RangedEnemyBehavior ranged && ranged.Gun == null)
+        {
+            AddError(
+                report,
+                $"Ranged enemy prefab '{enemy.name}' has no Gun assigned.",
+                ref errors);
+        }
+
+        BossPhaseController boss = enemy.GetComponent<BossPhaseController>();
+
+        if (boss != null && boss.PhaseCount == 0)
+        {
+            AddWarning(
+                report,
+                $"Boss enemy prefab '{enemy.name}' has a BossPhaseController with no phases.",
+                ref warnings);
+        }
+    }
+
+    private static void ValidateMobileControls(
+        StringBuilder report,
+        ref int errors,
+        ref int warnings)
+    {
+        MobileInputState[] inputStates = Object.FindObjectsByType<MobileInputState>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None);
+
+        if (inputStates.Length == 0)
+        {
+            return;
+        }
+
+        if (inputStates.Length > 1)
+        {
+            AddWarning(
+                report,
+                $"Found {inputStates.Length} MobileInputState components. A player should normally use one.",
+                ref warnings);
+        }
+
+        MobileJoystick[] joysticks = Object.FindObjectsByType<MobileJoystick>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None);
+
+        MobileActionButton[] buttons = Object.FindObjectsByType<MobileActionButton>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None);
+
+        SafeAreaFitter[] safeAreas = Object.FindObjectsByType<SafeAreaFitter>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None);
+
+        EventSystem[] eventSystems = Object.FindObjectsByType<EventSystem>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None);
+
+        for (int stateIndex = 0; stateIndex < inputStates.Length; stateIndex++)
+        {
+            MobileInputState state = inputStates[stateIndex];
+            bool hasMove = false;
+            bool hasLook = false;
+            bool hasAimFire = false;
+            bool hasFireButton = false;
+            bool hasPauseButton = false;
+
+            for (int i = 0; i < joysticks.Length; i++)
+            {
+                MobileJoystick joystick = joysticks[i];
+
+                if (joystick.Input != state)
+                {
+                    continue;
+                }
+
+                if (joystick.Channel == MobileJoystickChannel.Move)
+                {
+                    hasMove = true;
+                }
+                else
+                {
+                    hasLook = true;
+                    hasAimFire |= joystick.FireWhileAiming;
+                }
+            }
+
+            for (int i = 0; i < buttons.Length; i++)
+            {
+                MobileActionButton button = buttons[i];
+
+                if (button.Input != state)
+                {
+                    continue;
+                }
+
+                hasFireButton |= button.Action == MobileInputAction.Fire;
+                hasPauseButton |= button.Action == MobileInputAction.Pause;
+            }
+
+            if (!hasMove)
+            {
+                AddError(
+                    report,
+                    $"MobileInputState '{state.name}' has no movement joystick.",
+                    ref errors);
+            }
+
+            if (!hasLook)
+            {
+                AddError(
+                    report,
+                    $"MobileInputState '{state.name}' has no aim joystick.",
+                    ref errors);
+            }
+
+            if (!hasAimFire && !hasFireButton)
+            {
+                AddError(
+                    report,
+                    $"MobileInputState '{state.name}' has no touch fire path. Enable aim-to-fire or add a Fire button.",
+                    ref errors);
+            }
+
+            if (!hasPauseButton)
+            {
+                AddWarning(
+                    report,
+                    $"MobileInputState '{state.name}' has no Pause action button.",
+                    ref warnings);
+            }
+        }
+
+        if (safeAreas.Length == 0)
+        {
+            AddWarning(
+                report,
+                "Mobile controls are present but no SafeAreaFitter was found.",
+                ref warnings);
+        }
+
+        if (eventSystems.Length == 0)
+        {
+            AddError(
+                report,
+                "Mobile controls are present but the scene has no EventSystem.",
+                ref errors);
+        }
+
+        report.AppendLine(
+            $"[OK] Mobile controls: {inputStates.Length} input state(s), {joysticks.Length} joystick(s), {buttons.Length} action button(s).");
     }
 
     private static void ValidateGun(
