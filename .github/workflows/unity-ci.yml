@@ -16,10 +16,25 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  preflight:
+    name: Asset Store preflight
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run release preflight
+        run: python3 .github/scripts/release_preflight.py
+
   test:
     name: EditMode + PlayMode tests
+    needs: preflight
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    outputs:
+      unity_available: ${{ steps.license.outputs.available }}
     env:
       UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
       UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
@@ -30,15 +45,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Validate Unity license secrets
+      - name: Detect Unity license configuration
+        id: license
         shell: bash
         run: |
-          if [[ -z "$UNITY_LICENSE" && -z "$UNITY_SERIAL" ]]; then
-            echo "::error::Configure UNITY_LICENSE for a personal license or UNITY_SERIAL with UNITY_EMAIL/UNITY_PASSWORD for a professional license."
-            exit 1
+          if [[ -n "$UNITY_LICENSE" ]]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+            echo "Unity personal/manual license secret detected."
+          elif [[ -n "$UNITY_SERIAL" && -n "$UNITY_EMAIL" && -n "$UNITY_PASSWORD" ]]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+            echo "Unity serial license credentials detected."
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Unity license secrets are not fully configured. Static Asset Store preflight ran, but Unity tests and the player build are skipped."
           fi
 
       - name: Cache Unity Library
+        if: steps.license.outputs.available == 'true'
         uses: actions/cache@v4
         with:
           path: Library
@@ -47,6 +70,7 @@ jobs:
             Library-${{ runner.os }}-
 
       - name: Run Unity tests
+        if: steps.license.outputs.available == 'true'
         id: unityTests
         uses: game-ci/unity-test-runner@v4
         env:
@@ -60,7 +84,7 @@ jobs:
           githubToken: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload test results
-        if: ${{ always() && steps.unityTests.outcome != 'skipped' }}
+        if: ${{ always() && steps.license.outputs.available == 'true' && steps.unityTests.outcome != 'skipped' }}
         uses: actions/upload-artifact@v4
         with:
           name: unity-test-results
@@ -69,7 +93,10 @@ jobs:
 
   build:
     name: Linux player smoke build
-    needs: test
+    needs:
+      - preflight
+      - test
+    if: needs.test.outputs.unity_available == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
