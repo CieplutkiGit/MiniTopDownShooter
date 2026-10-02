@@ -12,6 +12,11 @@ namespace Game
 
         private void Awake()
         {
+            if (_waveRef == null)
+            {
+                _waveRef = FindFirstObjectByType<WaveController>();
+            }
+
             _waves = _waveRef;
         }
 

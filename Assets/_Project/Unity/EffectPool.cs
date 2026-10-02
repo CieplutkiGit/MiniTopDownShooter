@@ -35,10 +35,19 @@ namespace Game
             return created;
         }
 
+        public void ClearAllActive()
+        {
+            foreach (var kvp in _pools)
+            {
+                kvp.Value.ClearActive();
+            }
+        }
+
         private class Pool
         {
             private readonly ParticleBurst _prefab;
             private readonly ObjectPool<ParticleBurst> _pool;
+            private readonly List<ParticleBurst> _active = new List<ParticleBurst>();
 
             public Pool(ParticleSystem prefab, int defaultSize, int maxSize)
             {
@@ -51,6 +60,20 @@ namespace Game
                 return _pool.Get();
             }
 
+            public void ClearActive()
+            {
+                for (int i = _active.Count - 1; i >= 0; i--)
+                {
+                    ParticleBurst b = _active[i];
+                    if (b != null)
+                    {
+                        b.Stop();
+                        _pool.Release(b);
+                    }
+                }
+                _active.Clear();
+            }
+
             private ParticleBurst Create()
             {
                 ParticleBurst burst = Object.Instantiate(_prefab);
@@ -60,21 +83,25 @@ namespace Game
 
             private void Release(ParticleBurst burst)
             {
+                _active.Remove(burst);
                 _pool.Release(burst);
             }
 
             private void OnGet(ParticleBurst burst)
             {
+                _active.Add(burst);
                 burst.gameObject.SetActive(true);
             }
 
             private void OnRelease(ParticleBurst burst)
             {
+                _active.Remove(burst);
                 burst.gameObject.SetActive(false);
             }
 
             private void OnDestroyBurst(ParticleBurst burst)
             {
+                _active.Remove(burst);
                 Object.Destroy(burst.gameObject);
             }
         }

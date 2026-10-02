@@ -21,11 +21,41 @@ namespace Game
             get { return _highScore; }
         }
 
+        public void Initialize(ScoreController score, GameStateController gameState)
+        {
+            if (_gameState != null && enabled)
+            {
+                _gameState.OnStateChanged -= HandleStateChanged;
+            }
+
+            _scoreRef = score;
+            _gameStateRef = gameState;
+            _score = score;
+            _gameState = gameState;
+
+            if (_gameState != null && enabled)
+            {
+                _gameState.OnStateChanged += HandleStateChanged;
+            }
+        }
+
         private void Awake()
         {
+            if (_scoreRef == null)
+            {
+                _scoreRef = FindFirstObjectByType<ScoreController>();
+            }
+
+            if (_gameStateRef == null)
+            {
+                _gameStateRef = FindFirstObjectByType<GameStateController>();
+            }
+
             _score = _scoreRef;
             _gameState = _gameStateRef;
-            _highScore = PlayerPrefs.GetInt(_prefsKey, 0);
+
+            UserProfileData profile = SaveManager.LoadProfile();
+            _highScore = profile != null ? profile.HighScore : PlayerPrefs.GetInt(_prefsKey, 0);
         }
 
         private void OnEnable()
@@ -46,26 +76,37 @@ namespace Game
 
         private void HandleStateChanged(GameState oldState, GameState newState)
         {
-            if (newState != GameState.GameOver)
+            if (newState != GameState.GameOver && newState != GameState.Victory)
             {
                 return;
             }
 
-            if (_score == null)
+            UserProfileData profile = SaveManager.LoadProfile() ?? new UserProfileData();
+            profile.TotalRuns++;
+
+            if (newState == GameState.Victory)
             {
-                return;
+                profile.TotalWins++;
+            }
+            else if (newState == GameState.GameOver)
+            {
+                profile.TotalLosses++;
             }
 
-            int finalScore = _score.Score;
-            if (finalScore <= _highScore)
+            if (_score != null)
             {
-                return;
+                int finalScore = _score.Score;
+                if (finalScore > _highScore)
+                {
+                    _highScore = finalScore;
+                    profile.HighScore = _highScore;
+                    PlayerPrefs.SetInt(_prefsKey, _highScore);
+                    PlayerPrefs.Save();
+                    OnHighScoreChanged?.Invoke(_highScore);
+                }
             }
 
-            _highScore = finalScore;
-            PlayerPrefs.SetInt(_prefsKey, _highScore);
-            PlayerPrefs.Save();
-            OnHighScoreChanged?.Invoke(_highScore);
+            SaveManager.SaveProfile(profile);
         }
     }
 }

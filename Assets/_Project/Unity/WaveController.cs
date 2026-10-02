@@ -69,6 +69,34 @@ namespace Game
 
         public int CurrentWaveNumber => _runner != null ? _runner.CurrentWaveNumber : 0;
 
+        public void Initialize(EnemySpawner spawner, GameStateController gameState)
+        {
+            if (_gameState != null && enabled)
+            {
+                _gameState.OnStateChanged -= HandleStateChanged;
+            }
+
+            if (_spawner != null && enabled)
+            {
+                _spawner.EnemyKilled -= HandleEnemyKilled;
+            }
+
+            _spawnerRef = spawner;
+            _gameStateRef = gameState;
+            _spawner = spawner;
+            _gameState = gameState;
+
+            if (_gameState != null && enabled)
+            {
+                _gameState.OnStateChanged += HandleStateChanged;
+            }
+
+            if (_spawner != null && enabled)
+            {
+                _spawner.EnemyKilled += HandleEnemyKilled;
+            }
+        }
+
         private void Awake()
         {
             Wave[] data = BuildWaveData();
@@ -77,6 +105,17 @@ namespace Game
             _runner.WaveStarted += HandleWaveStarted;
             _runner.WaveCompleted += HandleWaveCompleted;
             _runner.AllWavesCompleted += HandleAllWavesCompleted;
+
+            if (_gameStateRef == null)
+            {
+                _gameStateRef = FindFirstObjectByType<GameStateController>();
+            }
+
+            if (_spawnerRef == null)
+            {
+                _spawnerRef = FindFirstObjectByType<EnemySpawner>();
+            }
+
             _gameState = _gameStateRef;
             _spawner = _spawnerRef;
         }
@@ -189,121 +228,79 @@ namespace Game
 
         private static List<WaveSpawnEntry> BuildSpawnPlan(WaveConfig config)
         {
-            List<WaveSpawnEntry> plan = new List<WaveSpawnEntry>();
-            List<WaveEnemyGroup> groups = GetValidGroups(config.EnemyGroups);
-            HashSet<WaveEnemyGroup> delayApplied = new HashSet<WaveEnemyGroup>();
-            int baseEnemyCount = Mathf.Max(1, config.EnemyCount);
-
-            if (groups.Count == 0)
+            WavePlanConfig<EnemyController> planConfig = new WavePlanConfig<EnemyController>
             {
-                for (int i = 0; i < baseEnemyCount; i++)
-                {
-                    plan.Add(new WaveSpawnEntry(null, config.SpawnZoneIds, 0f));
-                }
-            }
-            else
-            {
-                for (int groupIndex = 0; groupIndex < groups.Count; groupIndex++)
-                {
-                    WaveEnemyGroup group = groups[groupIndex];
+                EnemyCount = config.EnemyCount,
+                SpawnInterval = config.SpawnInterval,
+                InitialDelay = config.InitialDelay,
+                DelayAfter = config.DelayAfter,
+                SpawnZoneIds = config.SpawnZoneIds,
+                BossPrefab = config.BossPrefab,
+                BossCount = config.BossCount,
+                BossDelay = config.BossDelay
+            };
 
-                    for (int i = 0; i < Mathf.Max(0, group.GuaranteedCount); i++)
+            if (config.EnemyGroups != null)
+            {
+                for (int i = 0; i < config.EnemyGroups.Count; i++)
+                {
+                    WaveEnemyGroup g = config.EnemyGroups[i];
+                    if (g != null)
                     {
-                        float delay = 0f;
-
-                        if (!delayApplied.Contains(group))
+                        planConfig.EnemyGroups.Add(new SpawnGroupData<EnemyController>
                         {
-                            delay = Mathf.Max(0f, group.DelayBefore);
-                            delayApplied.Add(group);
-                        }
-
-                        plan.Add(new WaveSpawnEntry(
-                            group.Prefab,
-                            config.SpawnZoneIds,
-                            delay));
+                            Prefab = g.Prefab,
+                            GuaranteedCount = g.GuaranteedCount,
+                            Weight = g.Weight,
+                            DelayBefore = g.DelayBefore
+                        });
                     }
                 }
-
-                while (plan.Count < baseEnemyCount)
-                {
-                    WaveEnemyGroup group = PickWeightedGroup(groups);
-                    float delay = 0f;
-
-                    if (!delayApplied.Contains(group))
-                    {
-                        delay = Mathf.Max(0f, group.DelayBefore);
-                        delayApplied.Add(group);
-                    }
-
-                    plan.Add(new WaveSpawnEntry(
-                        group.Prefab,
-                        config.SpawnZoneIds,
-                        delay));
-                }
             }
 
-            if (config.BossPrefab != null && config.BossCount > 0)
+            List<SpawnPlanItem<EnemyController>> items =
+                WaveSpawnPlanner.BuildSpawnPlan(planConfig, new UnityRandomProvider());
+
+            List<WaveSpawnEntry> result = new List<WaveSpawnEntry>(items.Count);
+            for (int i = 0; i < items.Count; i++)
             {
-                for (int i = 0; i < config.BossCount; i++)
-                {
-                    float delay = i == 0 ? Mathf.Max(0f, config.BossDelay) : 0f;
-                    plan.Add(new WaveSpawnEntry(
-                        config.BossPrefab,
-                        config.SpawnZoneIds,
-                        delay));
-                }
-            }
-
-            return plan;
-        }
-
-        private static List<WaveEnemyGroup> GetValidGroups(
-            IReadOnlyList<WaveEnemyGroup> source)
-        {
-            List<WaveEnemyGroup> result = new List<WaveEnemyGroup>();
-
-            if (source == null)
-            {
-                return result;
-            }
-
-            for (int i = 0; i < source.Count; i++)
-            {
-                WaveEnemyGroup group = source[i];
-
-                if (group != null && group.Prefab != null)
-                {
-                    result.Add(group);
-                }
+                result.Add(new WaveSpawnEntry(
+                    items[i].Prefab,
+                    items[i].ZoneIds,
+                    items[i].DelayBefore));
             }
 
             return result;
         }
 
-        private static WaveEnemyGroup PickWeightedGroup(
-            IReadOnlyList<WaveEnemyGroup> groups)
+        public void ResetWaves()
         {
-            int totalWeight = 0;
-
-            for (int i = 0; i < groups.Count; i++)
+            if (_runner != null)
             {
-                totalWeight += Mathf.Max(1, groups[i].Weight);
+                _runner.SpawnRequested -= HandleSpawnRequested;
+                _runner.WaveStarted -= HandleWaveStarted;
+                _runner.WaveCompleted -= HandleWaveCompleted;
+                _runner.AllWavesCompleted -= HandleAllWavesCompleted;
             }
 
-            int roll = Random.Range(0, totalWeight);
-            int cumulative = 0;
+            _activePlan = null;
+            _pendingSpawnEntry = null;
+            _pendingSpawnDelay = 0f;
+            _spawnPlanIndex = 0;
 
-            for (int i = 0; i < groups.Count; i++)
-            {
-                cumulative += Mathf.Max(1, groups[i].Weight);
+            Wave[] data = BuildWaveData();
+            _runner = new WaveRunner(data);
+            _runner.SpawnRequested += HandleSpawnRequested;
+            _runner.WaveStarted += HandleWaveStarted;
+            _runner.WaveCompleted += HandleWaveCompleted;
+            _runner.AllWavesCompleted += HandleAllWavesCompleted;
+        }
 
-                if (roll < cumulative)
-                {
-                    return groups[i];
-                }
-            }
-
-            return groups[groups.Count - 1];
+        private sealed class UnityRandomProvider : IRandomProvider
+        {
+            public int Range(int minInclusive, int maxExclusive) => UnityEngine.Random.Range(minInclusive, maxExclusive);
+            public float Range(float minInclusive, float maxInclusive) => UnityEngine.Random.Range(minInclusive, maxInclusive);
+            public float Value => UnityEngine.Random.value;
         }
 
         private void HandleStateChanged(GameState oldState, GameState newState)
@@ -364,21 +361,47 @@ namespace Game
             return _activePlan[_spawnPlanIndex];
         }
 
+        private const int MaxSpawnEntryRetries = 5;
+
         private void TrySpawnEntry(WaveSpawnEntry entry)
         {
-            bool spawned;
+            bool spawned = false;
 
             if (_spawnerRef != null)
             {
                 spawned = _spawnerRef.SpawnOne(entry.Prefab, entry.ZoneIds);
+
+                // If zone-restricted spawn failed after retries, fallback to unconstrained zone sampling
+                if (!spawned && entry.RetryCount >= MaxSpawnEntryRetries && entry.ZoneIds != null && entry.ZoneIds.Count > 0)
+                {
+                    if (_debugLog)
+                    {
+                        Debug.LogWarning($"[WaveController] Zone spawn failed {entry.RetryCount} times for wave entry. Falling back to any valid zone.");
+                    }
+                    spawned = _spawnerRef.SpawnOne(entry.Prefab, null);
+                }
             }
-            else
+            else if (_spawner != null)
             {
                 spawned = _spawner.SpawnOne();
             }
 
             if (!spawned)
             {
+                entry.RetryCount++;
+
+                // If spawner permanently exhausted retries, advance plan to prevent indefinite wave soft-lock
+                if (entry.RetryCount > MaxSpawnEntryRetries * 2)
+                {
+                    if (_debugLog)
+                    {
+                        Debug.LogWarning($"[WaveController] Spawner permanently exhausted retries ({entry.RetryCount}). Advancing plan to prevent deadlock.");
+                    }
+                    _spawnPlanIndex++;
+                    _runner.NotifyEnemySpawned();
+                    _runner.NotifyEnemyKilled();
+                }
+
                 return;
             }
 
@@ -454,7 +477,7 @@ namespace Game
             }
         }
 
-        private sealed class WaveSpawnEntry
+        public sealed class WaveSpawnEntry
         {
             public WaveSpawnEntry(
                 EnemyController prefab,
@@ -470,6 +493,7 @@ namespace Game
             public IReadOnlyList<string> ZoneIds { get; }
             public float DelayBefore { get; }
             public bool DelayConsumed { get; set; }
+            public int RetryCount { get; set; }
         }
     }
 }

@@ -15,8 +15,35 @@ namespace Game
 
         private IGameStateProvider _gameState;
 
+        public void Initialize(GameStateController gameState, WorldResetManager resetManager)
+        {
+            if (_gameState != null && enabled)
+            {
+                _gameState.OnStateChanged -= HandleStateChanged;
+            }
+
+            _gameStateRef = gameState;
+            _resetManager = resetManager;
+            _gameState = gameState;
+
+            if (_gameState != null && enabled)
+            {
+                _gameState.OnStateChanged += HandleStateChanged;
+            }
+        }
+
         private void Awake()
         {
+            if (_gameStateRef == null)
+            {
+                _gameStateRef = FindFirstObjectByType<GameStateController>();
+            }
+
+            if (_resetManager == null)
+            {
+                _resetManager = FindFirstObjectByType<WorldResetManager>();
+            }
+
             _gameState = _gameStateRef;
         }
 

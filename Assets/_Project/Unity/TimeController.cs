@@ -9,8 +9,29 @@ namespace Game
 
         private IGameStateProvider _gameState;
 
+        public void Initialize(GameStateController gameState)
+        {
+            if (_gameState != null && enabled)
+            {
+                _gameState.OnStateChanged -= HandleStateChanged;
+            }
+
+            _gameStateRef = gameState;
+            _gameState = gameState;
+
+            if (_gameState != null && enabled)
+            {
+                _gameState.OnStateChanged += HandleStateChanged;
+                ApplyTimeScale(_gameState.CurrentState);
+            }
+        }
+
         private void Awake()
         {
+            if (_gameStateRef == null)
+            {
+                _gameStateRef = FindFirstObjectByType<GameStateController>();
+            }
             _gameState = _gameStateRef;
         }
 
@@ -19,6 +40,15 @@ namespace Game
             if (_gameState != null)
             {
                 _gameState.OnStateChanged += HandleStateChanged;
+                ApplyTimeScale(_gameState.CurrentState);
+            }
+        }
+
+        private void Start()
+        {
+            if (_gameState != null)
+            {
+                ApplyTimeScale(_gameState.CurrentState);
             }
         }
 
@@ -34,7 +64,12 @@ namespace Game
 
         private void HandleStateChanged(GameState oldState, GameState newState)
         {
-            if (newState == GameState.Paused || newState == GameState.Menu)
+            ApplyTimeScale(newState);
+        }
+
+        private void ApplyTimeScale(GameState state)
+        {
+            if (state == GameState.Paused || state == GameState.Menu || state == GameState.Victory)
             {
                 Time.timeScale = 0f;
             }

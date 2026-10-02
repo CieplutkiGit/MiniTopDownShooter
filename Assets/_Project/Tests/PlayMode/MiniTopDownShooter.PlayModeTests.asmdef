@@ -2,6 +2,8 @@
   "name": "MiniTopDownShooter.PlayModeTests",
   "rootNamespace": "MiniTopDownShooter.PlayModeTests",
   "references": [
+    "GUID:2c7b87ce2634cf140905f8d3f56c7098",
+    "GUID:d2ab2add2c2367a42826eec9447f4502",
     "GUID:06d81edd6ae3def45bc6a8c38a485e07"
   ],
   "includePlatforms": [],

@@ -39,6 +39,14 @@ namespace Game
             _system.Play();
         }
 
+        public void Stop()
+        {
+            if (_system != null)
+            {
+                _system.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            }
+        }
+
         public void SetReturnCallback(Action<ParticleBurst> callback)
         {
             _onFinished = callback;

@@ -17,6 +17,10 @@ namespace Game
         private void Awake()
         {
             _input = new GameInput();
+            if (_gameStateRef == null)
+            {
+                _gameStateRef = FindFirstObjectByType<GameStateController>();
+            }
             _gameState = _gameStateRef;
 
             if (_mobileInput == null)
@@ -30,12 +34,38 @@ namespace Game
         {
             _input.Enable();
             _input.Player.Pause.performed += OnPausePerformed;
+            InputSystem.onDeviceChange += HandleDeviceChange;
         }
 
         private void OnDisable()
         {
             _input.Player.Pause.performed -= OnPausePerformed;
+            InputSystem.onDeviceChange -= HandleDeviceChange;
             _input.Disable();
+        }
+
+        private void OnApplicationFocus(bool hasFocus)
+        {
+            if (!hasFocus && _gameState != null && _gameState.CurrentState == GameState.Playing)
+            {
+                _gameState.Pause();
+            }
+        }
+
+        private void OnApplicationPause(bool pauseStatus)
+        {
+            if (pauseStatus && _gameState != null && _gameState.CurrentState == GameState.Playing)
+            {
+                _gameState.Pause();
+            }
+        }
+
+        private void HandleDeviceChange(InputDevice device, InputDeviceChange change)
+        {
+            if (change == InputDeviceChange.Disconnected && _gameState != null && _gameState.CurrentState == GameState.Playing)
+            {
+                _gameState.Pause();
+            }
         }
 
         private void Update()

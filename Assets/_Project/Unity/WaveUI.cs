@@ -11,8 +11,19 @@ namespace Game
 
         private IWaveProvider _waves;
 
+        public void Initialize(WaveController waves)
+        {
+            _waveRef = waves;
+            _waves = waves;
+        }
+
         private void Awake()
         {
+            if (_waveRef == null)
+            {
+                _waveRef = FindFirstObjectByType<WaveController>();
+            }
+
             _waves = _waveRef;
         }
 
@@ -48,7 +59,7 @@ namespace Game
         {
             if (_label != null)
             {
-                _label.text = "Cleared";
+                _label.text = "Victory!";
             }
         }
 

@@ -40,6 +40,10 @@ namespace Game
         [Min(0.1f)]
         [SerializeField] private float _impactRange = 1.5f;
 
+        [Header("Telegraph")]
+        [SerializeField] private LineRenderer _telegraphLine;
+        [SerializeField] private ParticleSystem _windupEffect;
+
         private ChargeState _state;
         private float _stateEndTime;
         private Vector3 _chargeDestination;
@@ -79,11 +83,13 @@ namespace Game
 
         public override void OnDeath()
         {
+            UpdateTelegraphLine(false);
             Movement.SetSpeedMultiplier(1f);
         }
 
         public override void OnDespawn()
         {
+            UpdateTelegraphLine(false);
             Movement.SetSpeedMultiplier(1f);
         }
 
@@ -96,6 +102,7 @@ namespace Game
                 _state = ChargeState.Windup;
                 _stateEndTime = Time.time + _windupDuration;
                 Movement.Stop();
+                UpdateTelegraphLine(true);
                 return;
             }
 
@@ -112,10 +119,14 @@ namespace Game
         private void TickWindup()
         {
             Movement.Stop();
+            UpdateTelegraphLine(true);
+
             if (Time.time < _stateEndTime)
             {
                 return;
             }
+
+            UpdateTelegraphLine(false);
 
             Vector3 direction = DirectionToTarget();
 
@@ -136,10 +147,31 @@ namespace Game
 
         private void TickCharging()
         {
-            if (!_dealtChargeDamage && DistanceToTarget() <= _impactRange)
+            if (!_dealtChargeDamage)
             {
-                _dealtChargeDamage = true;
-                Attack.TryAttack(TargetDamageable);
+                if (DistanceToTarget() <= _impactRange)
+                {
+                    _dealtChargeDamage = true;
+                    Attack.TryAttack(TargetDamageable);
+                }
+                else
+                {
+                    Collider[] colliders = Physics.OverlapSphere(
+                        transform.position,
+                        _impactRange,
+                        ~0,
+                        QueryTriggerInteraction.Ignore);
+
+                    for (int i = 0; i < colliders.Length; i++)
+                    {
+                        if (colliders[i] != null && Target != null && colliders[i].transform.root == Target.root)
+                        {
+                            _dealtChargeDamage = true;
+                            Attack.TryAttack(TargetDamageable);
+                            break;
+                        }
+                    }
+                }
             }
 
             Movement.MoveToward(_chargeDestination);
@@ -150,7 +182,7 @@ namespace Game
                 return;
             }
 
-            Movement.SetSpeedMultiplier(1f);
+            Movement.SetSpeedMultiplier(0f);
             Movement.Stop();
             _state = ChargeState.Recovery;
             _stateEndTime = Time.time + _recoveryDuration;
@@ -158,9 +190,12 @@ namespace Game
 
         private void TickRecovery()
         {
+            UpdateTelegraphLine(false);
+            Movement.SetSpeedMultiplier(0f);
             Movement.Stop();
             if (Time.time >= _stateEndTime)
             {
+                Movement.SetSpeedMultiplier(1f);
                 _state = ChargeState.Approaching;
             }
         }
@@ -171,6 +206,34 @@ namespace Game
             _stateEndTime = 0f;
             _dealtChargeDamage = false;
             Movement.SetSpeedMultiplier(1f);
+            UpdateTelegraphLine(false);
+        }
+
+        private void UpdateTelegraphLine(bool active)
+        {
+            if (_telegraphLine != null)
+            {
+                _telegraphLine.enabled = active;
+                if (active && Target != null)
+                {
+                    Vector3 origin = transform.position + Vector3.up * 0.5f;
+                    Vector3 targetPos = Target.position + Vector3.up * 0.5f;
+                    _telegraphLine.SetPosition(0, origin);
+                    _telegraphLine.SetPosition(1, targetPos);
+                }
+            }
+
+            if (_windupEffect != null)
+            {
+                if (active && !_windupEffect.isPlaying)
+                {
+                    _windupEffect.Play();
+                }
+                else if (!active && _windupEffect.isPlaying)
+                {
+                    _windupEffect.Stop();
+                }
+            }
         }
 
         private void OnValidate()

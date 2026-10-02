@@ -17,5 +17,10 @@ namespace Game
             Quaternion targetRotation = Quaternion.LookRotation(lookDirection);
             transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, _rotationSpeed * Time.fixedDeltaTime);
         }
+
+        public void SetRotation(Quaternion rotation)
+        {
+            transform.rotation = rotation;
+        }
     }
 }

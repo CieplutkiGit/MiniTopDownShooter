@@ -58,6 +58,10 @@ namespace Game
             _previousWeaponAction.Enable();
         }
 
+        public float MoveDeadzone { get; set; } = 0.1f;
+        public float LookDeadzone { get; set; } = 0.1f;
+        public float AimSensitivity { get; set; } = 1.0f;
+
         public Vector2 MoveDirection
         {
             get
@@ -67,9 +71,16 @@ namespace Game
                     ? _mobileInput.MoveDirection
                     : Vector2.zero;
 
-                return mobile.sqrMagnitude > physical.sqrMagnitude
+                Vector2 raw = mobile.sqrMagnitude > physical.sqrMagnitude
                     ? mobile
                     : physical;
+
+                if (raw.magnitude < MoveDeadzone)
+                {
+                    return Vector2.zero;
+                }
+
+                return raw;
             }
         }
 
@@ -79,15 +90,15 @@ namespace Game
             {
                 Vector2 physicalLook = _input.Player.Look.ReadValue<Vector2>();
 
-                if (physicalLook.sqrMagnitude > 0.0001f)
+                if (physicalLook.magnitude >= LookDeadzone)
                 {
-                    return physicalLook;
+                    return physicalLook * AimSensitivity;
                 }
 
                 if (_mobileInput != null &&
-                    _mobileInput.LookDirection.sqrMagnitude > 0.0001f)
+                    _mobileInput.LookDirection.magnitude >= LookDeadzone)
                 {
-                    return _mobileInput.LookDirection;
+                    return _mobileInput.LookDirection * AimSensitivity;
                 }
 
                 if (TryGetPointerLookDirection(out Vector2 pointerLook))
@@ -174,6 +185,11 @@ namespace Game
             {
                 _mobileInput.ResetGameplayState();
             }
+        }
+
+        public void ClearQueuedActions()
+        {
+            ResetGameplayTransientState();
         }
 
         public InputActionRebindingExtensions.RebindingOperation BeginInteractiveRebind(

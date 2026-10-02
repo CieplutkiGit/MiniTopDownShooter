@@ -87,5 +87,13 @@ namespace Application
                 ReserveAmmo = _maxReserveAmmo;
             }
         }
+
+        public void ResetToInitial(int startingReserveAmmo)
+        {
+            InMagazine = _magazineSize;
+            ReserveAmmo = _infiniteAmmo
+                ? 0
+                : Math.Min(Math.Max(0, startingReserveAmmo), _maxReserveAmmo);
+        }
     }
 }

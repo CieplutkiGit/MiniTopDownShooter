@@ -27,10 +27,57 @@ namespace Game
             }
         }
 
+        public void ResetScore()
+        {
+            _tracker?.Reset();
+        }
+
+        public void Initialize(EnemySpawner spawner, GameStateController gameState)
+        {
+            if (_spawner != null && enabled)
+            {
+                _spawner.EnemyKilled -= HandleEnemyKilled;
+            }
+
+            if (_gameState != null && enabled)
+            {
+                _gameState.OnStateChanged -= HandleStateChanged;
+            }
+
+            _spawnerRef = spawner;
+            _gameStateRef = gameState;
+            _spawner = spawner;
+            _gameState = gameState;
+
+            if (_spawner != null && enabled)
+            {
+                _spawner.EnemyKilled += HandleEnemyKilled;
+            }
+
+            if (_gameState != null && enabled)
+            {
+                _gameState.OnStateChanged += HandleStateChanged;
+            }
+        }
+
         private void Awake()
         {
-            _tracker = new ScoreTracker();
-            _tracker.OnScoreChanged += HandleScoreChanged;
+            if (_tracker == null)
+            {
+                _tracker = new ScoreTracker();
+                _tracker.OnScoreChanged += HandleScoreChanged;
+            }
+
+            if (_gameStateRef == null)
+            {
+                _gameStateRef = FindFirstObjectByType<GameStateController>();
+            }
+
+            if (_spawnerRef == null)
+            {
+                _spawnerRef = FindFirstObjectByType<EnemySpawner>();
+            }
+
             _gameState = _gameStateRef;
             _spawner = _spawnerRef;
         }

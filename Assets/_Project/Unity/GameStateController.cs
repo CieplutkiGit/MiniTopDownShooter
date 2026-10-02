@@ -7,11 +7,13 @@ namespace Game
     public class GameStateController : MonoBehaviour, IGameStateProvider, IGameStateController
     {
         [SerializeField] private PlayerController _playerRef;
+        [SerializeField] private WaveController _waveRef;
         [SerializeField] private bool _autoStart = false;
         [SerializeField] private bool _debugLog = false;
 
         private readonly GameStateManager _manager = new GameStateManager();
         private IPlayerEvents _player;
+        private IWaveProvider _waves;
 
         public event Action<GameState, GameState> OnStateChanged;
 
@@ -20,10 +22,30 @@ namespace Game
             get { return _manager.CurrentState; }
         }
 
+        public bool IsPlaying => _manager.CurrentState == GameState.Playing;
+
+        public void Initialize(PlayerController player, WaveController waves)
+        {
+            _playerRef = player;
+            _waveRef = waves;
+            _player = player;
+            _waves = waves;
+        }
+
         private void Awake()
         {
             _manager.OnStateChanged += HandleStateChanged;
+            if (_playerRef == null)
+            {
+                _playerRef = FindFirstObjectByType<PlayerController>();
+            }
+            if (_waveRef == null)
+            {
+                _waveRef = FindFirstObjectByType<WaveController>();
+            }
+
             _player = _playerRef;
+            _waves = _waveRef;
         }
 
         private void OnEnable()
@@ -31,6 +53,11 @@ namespace Game
             if (_player != null)
             {
                 _player.Died += HandlePlayerDied;
+            }
+
+            if (_waves != null)
+            {
+                _waves.AllWavesCompleted += HandleAllWavesCompleted;
             }
         }
 
@@ -40,6 +67,11 @@ namespace Game
             {
                 _player.Died -= HandlePlayerDied;
             }
+
+            if (_waves != null)
+            {
+                _waves.AllWavesCompleted -= HandleAllWavesCompleted;
+            }
         }
 
         private void Start()
@@ -47,6 +79,11 @@ namespace Game
             if (_autoStart)
             {
                 _manager.StartGame();
+            }
+            else
+            {
+                // Apply initial state immediately to all listeners
+                OnStateChanged?.Invoke(GameState.Menu, _manager.CurrentState);
             }
         }
 
@@ -78,9 +115,22 @@ namespace Game
             _manager.ReturnToMenu();
         }
 
+        public void TriggerVictory()
+        {
+            _manager.TriggerVictory();
+        }
+
         private void HandlePlayerDied()
         {
             _manager.EndGame();
+        }
+
+        private void HandleAllWavesCompleted()
+        {
+            if (_manager.CurrentState == GameState.Playing)
+            {
+                _manager.TriggerVictory();
+            }
         }
 
         private void HandleStateChanged(GameState oldState, GameState newState)

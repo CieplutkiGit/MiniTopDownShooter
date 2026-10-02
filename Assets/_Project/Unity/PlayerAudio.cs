@@ -17,6 +17,16 @@ namespace Game
 
         private void Awake()
         {
+            if (_playerRef == null)
+            {
+                _playerRef = FindFirstObjectByType<PlayerController>();
+            }
+
+            if (_playerHealthRef == null && _playerRef != null)
+            {
+                _playerHealthRef = _playerRef.GetComponent<HealthComponent>();
+            }
+
             _playerHealth = _playerHealthRef;
             _player = _playerRef;
         }

@@ -16,10 +16,13 @@ namespace Game
         [Tooltip("Optional behavior module. Leave empty to use the original chase/melee state machine.")]
         [SerializeField] private EnemyBehaviorBase _behavior;
 
+        [SerializeField] private GameStateController _gameStateRef;
+
         private EnemyMovement _movement;
         private EnemyAttack _attack;
         private HealthComponent _health;
         private IEnemyStats _stats;
+        private IGameStateProvider _gameState;
 
         private IEnemyState _currentState;
         private ChaseState _chaseState;
@@ -46,6 +49,12 @@ namespace Game
 
         private void Awake()
         {
+            if (_gameStateRef == null)
+            {
+                _gameStateRef = FindFirstObjectByType<GameStateController>();
+            }
+            _gameState = _gameStateRef;
+
             _movement = GetComponent<EnemyMovement>();
             _attack = GetComponent<EnemyAttack>();
             _health = GetComponent<HealthComponent>();
@@ -118,6 +127,11 @@ namespace Game
 
         private void Think()
         {
+            if (_gameState != null && _gameState.CurrentState != GameState.Playing)
+            {
+                return;
+            }
+
             if (_target == null)
             {
                 return;

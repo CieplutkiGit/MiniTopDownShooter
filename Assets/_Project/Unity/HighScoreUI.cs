@@ -11,8 +11,19 @@ namespace Game
 
         private IHighScoreProvider _highScore;
 
+        public void Initialize(HighScoreController highScore)
+        {
+            _highScoreRef = highScore;
+            _highScore = highScore;
+        }
+
         private void Awake()
         {
+            if (_highScoreRef == null)
+            {
+                _highScoreRef = FindFirstObjectByType<HighScoreController>();
+            }
+
             _highScore = _highScoreRef;
         }
 

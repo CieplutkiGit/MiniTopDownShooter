@@ -76,6 +76,29 @@ namespace Game
                     continue;
                 }
 
+                // Recheck player distance after NavMesh projection
+                if (!PassesPlayerDistance(hit.position, player))
+                {
+                    continue;
+                }
+
+                // Ensure projected position didn't snap outside zone boundaries
+                if (!IsPositionInZone(hit.position))
+                {
+                    continue;
+                }
+
+                // Validate that a reachable path exists to player if player is available
+                if (player != null)
+                {
+                    NavMeshPath path = new NavMeshPath();
+                    if (!NavMesh.CalculatePath(hit.position, player.position, NavMesh.AllAreas, path) ||
+                        path.status != NavMeshPathStatus.PathComplete)
+                    {
+                        continue;
+                    }
+                }
+
                 if (_requireOffscreen &&
                     visibilityCamera != null &&
                     !IsOffscreen(hit.position, visibilityCamera))
@@ -89,6 +112,37 @@ namespace Game
 
             position = Vector3.zero;
             return false;
+        }
+
+        public bool IsPositionInZone(Vector3 position, float tolerance = 1.5f)
+        {
+            switch (_shape)
+            {
+                case SpawnZoneShape.PointGroup:
+                    if (_points == null || _points.Length == 0)
+                    {
+                        return Vector3.Distance(position, transform.position) <= _radius + tolerance;
+                    }
+                    for (int i = 0; i < _points.Length; i++)
+                    {
+                        if (_points[i] != null && Vector3.Distance(position, _points[i].position) <= _radius + tolerance)
+                        {
+                            return true;
+                        }
+                    }
+                    return false;
+
+                case SpawnZoneShape.Box:
+                    Vector3 local = transform.InverseTransformPoint(position);
+                    float halfX = _boxSize.x * 0.5f + tolerance;
+                    float halfZ = _boxSize.y * 0.5f + tolerance;
+                    return Mathf.Abs(local.x) <= halfX && Mathf.Abs(local.z) <= halfZ;
+
+                default: // Circle
+                    Vector3 diff = position - transform.position;
+                    diff.y = 0f;
+                    return diff.magnitude <= _radius + tolerance;
+            }
         }
 
         private bool TryCreateCandidate(out Vector3 candidate)

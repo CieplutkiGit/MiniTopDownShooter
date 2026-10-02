@@ -57,6 +57,7 @@ jobs:
         with:
           projectPath: .
           unityVersion: auto
+          testMode: all
           githubToken: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload test results
@@ -68,10 +69,16 @@ jobs:
           if-no-files-found: warn
 
   build:
-    name: Linux player smoke build
+    name: Build ${{ matrix.targetPlatform }}
     needs: test
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        targetPlatform:
+          - StandaloneLinux64
+          - StandaloneWindows64
     env:
       UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
       UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
@@ -82,16 +89,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Validate Unity license secrets
+        shell: bash
+        run: |
+          if [[ -z "$UNITY_LICENSE" && -z "$UNITY_SERIAL" ]]; then
+            echo "::error::Configure UNITY_LICENSE for a personal license or UNITY_SERIAL with UNITY_EMAIL/UNITY_PASSWORD for a professional license."
+            exit 1
+          fi
+
       - name: Cache Unity Library
         uses: actions/cache@v4
         with:
           path: Library
-          key: Library-build-${{ runner.os }}-${{ hashFiles('ProjectSettings/ProjectVersion.txt', 'Packages/manifest.json', 'Packages/packages-lock.json') }}
+          key: Library-build-${{ matrix.targetPlatform }}-${{ hashFiles('ProjectSettings/ProjectVersion.txt', 'Packages/manifest.json', 'Packages/packages-lock.json') }}
           restore-keys: |
-            Library-build-${{ runner.os }}-
+            Library-build-${{ matrix.targetPlatform }}-
             Library-${{ runner.os }}-
 
-      - name: Build Linux player
+      - name: Build player
         uses: game-ci/unity-builder@v5
         env:
           UNITY_LICENSE: ${{ env.UNITY_LICENSE }}
@@ -101,12 +116,12 @@ jobs:
         with:
           projectPath: .
           unityVersion: auto
-          targetPlatform: StandaloneLinux64
-          buildsPath: build
+          targetPlatform: ${{ matrix.targetPlatform }}
+          buildsPath: build/${{ matrix.targetPlatform }}
 
-      - name: Upload smoke build
+      - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: linux-smoke-build
-          path: build
+          name: player-build-${{ matrix.targetPlatform }}
+          path: build/${{ matrix.targetPlatform }}
           if-no-files-found: error

@@ -11,8 +11,19 @@ namespace Game
 
         private IScoreProvider _score;
 
+        public void Initialize(ScoreController score)
+        {
+            _scoreRef = score;
+            _score = score;
+        }
+
         private void Awake()
         {
+            if (_scoreRef == null)
+            {
+                _scoreRef = FindFirstObjectByType<ScoreController>();
+            }
+
             _score = _scoreRef;
         }
 

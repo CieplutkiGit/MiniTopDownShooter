@@ -12,6 +12,11 @@ namespace Game
 
         private void Awake()
         {
+            if (_spawnerRef == null)
+            {
+                _spawnerRef = FindFirstObjectByType<EnemySpawner>();
+            }
+
             _spawner = _spawnerRef;
         }
 

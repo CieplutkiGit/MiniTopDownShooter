@@ -20,7 +20,7 @@ namespace Application
 
         public void StartGame()
         {
-            if (_currentState == GameState.Menu || _currentState == GameState.GameOver)
+            if (_currentState == GameState.Menu || _currentState == GameState.GameOver || _currentState == GameState.Victory)
             {
                 ChangeState(GameState.Playing);
             }
@@ -47,6 +47,14 @@ namespace Application
             if (_currentState == GameState.Playing || _currentState == GameState.Paused)
             {
                 ChangeState(GameState.GameOver);
+            }
+        }
+
+        public void TriggerVictory()
+        {
+            if (_currentState == GameState.Playing)
+            {
+                ChangeState(GameState.Victory);
             }
         }
 

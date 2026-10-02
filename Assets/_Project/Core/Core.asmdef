@@ -1,5 +1,5 @@
 {
-    "name": "Core",
+    "name": "MiniTopDownShooter.Core",
     "rootNamespace": "Core",
     "references": [],
     "includePlatforms": [],

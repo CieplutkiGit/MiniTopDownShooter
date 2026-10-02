@@ -15,8 +15,29 @@ namespace Game
 
         private IGameStateController _gameState;
 
+        public void Initialize(GameStateController gameState)
+        {
+            if (_gameState != null && enabled)
+            {
+                _gameState.OnStateChanged -= HandleStateChanged;
+            }
+
+            _gameStateRef = gameState;
+            _gameState = gameState;
+
+            if (_gameState != null && enabled)
+            {
+                _gameState.OnStateChanged += HandleStateChanged;
+            }
+        }
+
         private void Awake()
         {
+            if (_gameStateRef == null)
+            {
+                _gameStateRef = FindFirstObjectByType<GameStateController>();
+            }
+
             _gameState = _gameStateRef;
         }
 

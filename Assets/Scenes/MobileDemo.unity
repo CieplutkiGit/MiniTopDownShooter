@@ -400,7 +400,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity::Game.GameStateAudio
   _source: {fileID: 98270667}
   _gameStateRef: {fileID: 1702298050}
-  _gameOverClip: {fileID: 0}
+  _gameOverClip: {fileID: 8300000, guid: a0110000000000000000000000000010, type: 3}
+  _victoryClip: {fileID: 8300000, guid: a0110000000000000000000000000009, type: 3}
 --- !u!1 &100432055
 GameObject:
   m_ObjectHideFlags: 0
@@ -2490,7 +2491,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity::Game.WaveAudio
   _source: {fileID: 662556700}
   _waveRef: {fileID: 1013629112}
-  _waveStartClip: {fileID: 0}
+  _waveStartClip: {fileID: 8300000, guid: a0110000000000000000000000000008, type: 3}
 --- !u!1 &685579624
 GameObject:
   m_ObjectHideFlags: 0
@@ -2824,8 +2825,8 @@ MonoBehaviour:
   _source: {fileID: 743142989}
   _playerHealthRef: {fileID: 646322122}
   _playerRef: {fileID: 646322113}
-  _hitClip: {fileID: 0}
-  _deathClip: {fileID: 0}
+  _hitClip: {fileID: 8300000, guid: a0110000000000000000000000000006, type: 3}
+  _deathClip: {fileID: 8300000, guid: a0110000000000000000000000000007, type: 3}
 --- !u!1 &790875011
 GameObject:
   m_ObjectHideFlags: 0
@@ -4349,7 +4350,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity::Game.EnemyAudio
   _source: {fileID: 1402051462}
   _spawnerRef: {fileID: 836420982}
-  _deathClip: {fileID: 0}
+  _deathClip: {fileID: 8300000, guid: a0110000000000000000000000000005, type: 3}
 --- !u!1 &1410771323
 GameObject:
   m_ObjectHideFlags: 0
@@ -6063,7 +6064,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity::Game.GunAudio
   _source: {fileID: 330585550}
   _gunRef: {fileID: 1932750514}
-  _shotClip: {fileID: 0}
+  _shotClip: {fileID: 8300000, guid: a0110000000000000000000000000001, type: 3}
 --- !u!1 &1932750512
 GameObject:
   m_ObjectHideFlags: 0

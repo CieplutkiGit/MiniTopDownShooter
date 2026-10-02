@@ -6,5 +6,6 @@ namespace Application
         void Pause();
         void Resume();
         void ReturnToMenu();
+        void TriggerVictory();
     }
 }

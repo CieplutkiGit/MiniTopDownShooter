@@ -25,8 +25,20 @@ namespace Game
         public Transform WeaponMount => _weaponMount != null ? _weaponMount : transform;
         public IReadOnlyList<Gun> Weapons => _weapons;
 
+        private List<Gun> _defaultWeapons;
+
+        private void Awake()
+        {
+            _defaultWeapons = new List<Gun>(_weapons);
+        }
+
         private void Start()
         {
+            if (_defaultWeapons == null)
+            {
+                _defaultWeapons = new List<Gun>(_weapons);
+            }
+
             for (int i = 0; i < _weapons.Count; i++)
             {
                 if (_weapons[i] != null)
@@ -35,6 +47,42 @@ namespace Game
                 }
             }
 
+            if (_weapons.Count > 0)
+            {
+                EquipSlot(Mathf.Clamp(_startingSlot, 0, _weapons.Count - 1));
+            }
+        }
+
+        public void ResetToDefault()
+        {
+            if (_defaultWeapons == null)
+            {
+                _defaultWeapons = new List<Gun>(_weapons);
+            }
+
+            for (int i = _weapons.Count - 1; i >= 0; i--)
+            {
+                Gun gun = _weapons[i];
+                if (gun != null && !_defaultWeapons.Contains(gun))
+                {
+                    gun.SetEquipped(false);
+                    Destroy(gun.gameObject);
+                }
+            }
+
+            _weapons.Clear();
+            _weapons.AddRange(_defaultWeapons);
+
+            for (int i = 0; i < _weapons.Count; i++)
+            {
+                if (_weapons[i] != null)
+                {
+                    _weapons[i].ResetRuntimeState();
+                    _weapons[i].SetEquipped(false);
+                }
+            }
+
+            _activeIndex = -1;
             if (_weapons.Count > 0)
             {
                 EquipSlot(Mathf.Clamp(_startingSlot, 0, _weapons.Count - 1));

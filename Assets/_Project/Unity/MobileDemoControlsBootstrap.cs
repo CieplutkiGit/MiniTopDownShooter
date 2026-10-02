@@ -22,7 +22,7 @@ namespace Game
 
         private void Awake()
         {
-            if (!Application.isMobilePlatform && !_showOnDesktop)
+            if (!UnityEngine.Application.isMobilePlatform && !_showOnDesktop)
             {
                 return;
             }

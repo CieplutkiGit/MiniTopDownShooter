@@ -27,6 +27,9 @@ namespace Game
         [Min(0.1f)]
         [SerializeField] private float _spawnRadius = 15f;
 
+        [Range(1, 10)]
+        [SerializeField] private int _maxSpawnRetries = 5;
+
         private Dictionary<EnemyController, VariantPool> _pools;
         private Dictionary<EnemyController, VariantPool> _instanceToPool;
         private IGameStateProvider _gameState;
@@ -59,8 +62,35 @@ namespace Game
             }
         }
 
+        public void Initialize(Transform player, GameStateController gameState, EffectPool effectPool)
+        {
+            _player = player;
+            _gameStateRef = gameState;
+            _gameState = gameState;
+            _effectPool = effectPool;
+        }
+
         private void Awake()
         {
+            if (_player == null)
+            {
+                PlayerController pc = FindFirstObjectByType<PlayerController>();
+                if (pc != null)
+                {
+                    _player = pc.transform;
+                }
+            }
+
+            if (_gameStateRef == null)
+            {
+                _gameStateRef = FindFirstObjectByType<GameStateController>();
+            }
+
+            if (_effectPool == null)
+            {
+                _effectPool = FindFirstObjectByType<EffectPool>();
+            }
+
             _gameState = _gameStateRef;
             _alive = new List<EnemyController>();
             _pools = new Dictionary<EnemyController, VariantPool>();
@@ -109,7 +139,19 @@ namespace Game
                 return false;
             }
 
-            if (!TryGetSpawnPosition(allowedZoneIds, out Vector3 position))
+            bool gotPosition = false;
+            Vector3 position = Vector3.zero;
+
+            for (int attempt = 0; attempt < Mathf.Max(1, _maxSpawnRetries); attempt++)
+            {
+                if (TryGetSpawnPosition(allowedZoneIds, out position))
+                {
+                    gotPosition = true;
+                    break;
+                }
+            }
+
+            if (!gotPosition)
             {
                 return false;
             }
@@ -145,6 +187,12 @@ namespace Game
                 }
 
                 enemy.Died -= OnEnemyDied;
+
+                EnemyAttack attack = enemy.GetComponent<EnemyAttack>();
+                if (attack != null)
+                {
+                    attack.ResetCooldown();
+                }
 
                 if (_instanceToPool.TryGetValue(enemy, out VariantPool pool))
                 {
@@ -231,6 +279,13 @@ namespace Game
                         return true;
                     }
                 }
+            }
+
+            if (allowedZoneIds != null && allowedZoneIds.Count > 0)
+            {
+                // Preserve zone restrictions: never sample legacy arbitrary position outside allowed zones
+                position = Vector3.zero;
+                return false;
             }
 
             return TryGetLegacySpawnPosition(out position);
@@ -406,11 +461,13 @@ namespace Game
 
             private void OnGet(EnemyController enemy)
             {
+                enemy.GetComponent<EnemyAttack>()?.ResetCooldown();
                 enemy.gameObject.SetActive(true);
             }
 
             private void OnRelease(EnemyController enemy)
             {
+                enemy.GetComponent<EnemyAttack>()?.ResetCooldown();
                 enemy.gameObject.SetActive(false);
             }
 

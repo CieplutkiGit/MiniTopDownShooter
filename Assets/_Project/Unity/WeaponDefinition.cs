@@ -1,19 +1,20 @@
+using Application;
 using UnityEngine;
 
 namespace Game
 {
     public enum WeaponFireMode
     {
-        SemiAutomatic,
-        Automatic,
-        Burst,
-        Shotgun
+        SemiAutomatic = 0,
+        Automatic = 1,
+        Burst = 2,
+        Shotgun = 3
     }
 
     public enum WeaponDeliveryMode
     {
-        Projectile,
-        Hitscan
+        Projectile = 0,
+        Hitscan = 1
     }
 
     [CreateAssetMenu(fileName = "WeaponDefinition", menuName = "Mini Top Down Shooter/Weapon Definition")]
@@ -138,6 +139,28 @@ namespace Game
 
             float normalizedDistance = Mathf.Clamp01(distance / _hitscanRange);
             return Mathf.Max(0f, _damageFalloff.Evaluate(normalizedDistance));
+        }
+
+        public WeaponRuntimeConfig CreateRuntimeConfig()
+        {
+            return new WeaponRuntimeConfig
+            {
+                FireMode = (Application.WeaponFireMode)_fireMode,
+                FireInterval = _fireInterval,
+                BurstCount = _burstCount,
+                BurstInterval = _burstInterval,
+                BaseSpreadAngle = _spreadAngle,
+                MaxSpreadAngle = _maxSpreadAngle,
+                SpreadPerShot = _spreadPerShot,
+                SpreadRecoveryPerSecond = _spreadRecoveryPerSecond,
+                ReloadDuration = _reloadDuration,
+                AutoReloadOnEmpty = _autoReloadOnEmpty,
+                CancelReloadOnFire = _cancelReloadOnFire,
+                InfiniteAmmo = _infiniteAmmo,
+                MagazineSize = _magazineSize,
+                StartingReserveAmmo = _startingReserveAmmo,
+                MaxReserveAmmo = _maxReserveAmmo
+            };
         }
 
         private void OnValidate()

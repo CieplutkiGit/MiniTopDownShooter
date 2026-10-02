@@ -7,11 +7,17 @@ namespace Game
     {
         [SerializeField] private GameStateController _gameStateRef;
         [SerializeField] private AudioClip _gameOverClip;
+        [SerializeField] private AudioClip _victoryClip;
 
         private IGameStateProvider _gameState;
 
         private void Awake()
         {
+            if (_gameStateRef == null)
+            {
+                _gameStateRef = FindFirstObjectByType<GameStateController>();
+            }
+
             _gameState = _gameStateRef;
         }
 
@@ -37,12 +43,14 @@ namespace Game
 
         private void HandleStateChanged(GameState oldState, GameState newState)
         {
-            if (newState != GameState.GameOver)
+            if (newState == GameState.GameOver)
             {
-                return;
+                PlayClip(_gameOverClip);
             }
-
-            PlayClip(_gameOverClip);
+            else if (newState == GameState.Victory)
+            {
+                PlayClip(_victoryClip);
+            }
         }
     }
 }

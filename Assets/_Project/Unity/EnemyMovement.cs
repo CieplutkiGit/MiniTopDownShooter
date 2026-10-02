@@ -73,6 +73,65 @@ namespace Game
             }
         }
 
+        [Header("Stuck Recovery")]
+        [SerializeField] private float _stuckTimeThreshold = 2.0f;
+        [SerializeField] private float _stuckVelocityThreshold = 0.05f;
+
+        private float _stuckTimer;
+
+        private void Update()
+        {
+            CheckAndRecoverStuck();
+        }
+
+        private void CheckAndRecoverStuck()
+        {
+            if (_agent == null || !_agent.isOnNavMesh || !_agent.hasPath)
+            {
+                _stuckTimer = 0f;
+                return;
+            }
+
+            if (_agent.remainingDistance > _agent.stoppingDistance &&
+                _agent.velocity.sqrMagnitude < _stuckVelocityThreshold * _stuckVelocityThreshold)
+            {
+                _stuckTimer += Time.deltaTime;
+
+                if (_stuckTimer >= _stuckTimeThreshold)
+                {
+                    _stuckTimer = 0f;
+                    RecoverStuck();
+                }
+            }
+            else
+            {
+                _stuckTimer = 0f;
+            }
+        }
+
+        private void RecoverStuck()
+        {
+            if (_agent == null || !_agent.isOnNavMesh)
+            {
+                return;
+            }
+
+            Vector3 destination = _agent.destination;
+            Vector3 dir = (destination - transform.position).normalized;
+            Vector3 candidate = transform.position + dir * 1.5f;
+
+            if (NavMesh.SamplePosition(candidate, out NavMeshHit hit, 2.5f, NavMesh.AllAreas))
+            {
+                _agent.Warp(hit.position);
+                _agent.SetDestination(destination);
+            }
+            else
+            {
+                _agent.ResetPath();
+                _agent.SetDestination(destination);
+            }
+        }
+
         private void ApplySpeed()
         {
             if (_agent != null)

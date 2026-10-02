@@ -20,12 +20,12 @@ namespace Game
         [SerializeField] private float _floorY = 0f;
 
         private IEnemyEvents _enemy;
-        private ObjectPool<DebrisChunk> _pool;
+        private UnityEngine.Pool.ObjectPool<DebrisChunk> _pool;
 
         private void Awake()
         {
             _enemy = _enemyRef;
-            _pool = new ObjectPool<DebrisChunk>(CreateChunk, OnGetChunk, OnReleaseChunk, OnDestroyChunk, true, _chunkCount, _chunkCount * 4);
+            _pool = new UnityEngine.Pool.ObjectPool<DebrisChunk>(CreateChunk, OnGetChunk, OnReleaseChunk, OnDestroyChunk, true, _chunkCount, _chunkCount * 4);
         }
 
         private void OnEnable()

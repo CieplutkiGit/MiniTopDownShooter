@@ -5,6 +5,7 @@ namespace Application
         Menu,
         Playing,
         Paused,
-        GameOver
+        GameOver,
+        Victory
     }
 }

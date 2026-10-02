@@ -18,6 +18,8 @@ namespace Game
 
         public int Current => _health == null ? _maxHealth : _health.Current;
         public int Max => _health == null ? _maxHealth : _health.Max;
+        public int CurrentHealth => Current;
+        public int MaxHealth => Max;
 
         private void Awake()
         {
@@ -35,6 +37,11 @@ namespace Game
             UnsubscribeHealth();
             CreateHealth(maxHealth);
             HandleHealthChanged(_health.Current, _health.Max);
+        }
+
+        public void TakeDamage(int damage)
+        {
+            TakeDamage(new DamageData(damage));
         }
 
         public void TakeDamage(DamageData data)

@@ -10,6 +10,9 @@ namespace Game
         [SerializeField] private float _lifetime = 3f;
         [SerializeField] private ParticleSystem _impactEffect;
 
+        [SerializeField] private float _collisionRadius = 0.15f;
+        [SerializeField] private LayerMask _collisionMask = ~0;
+
         private Vector3 _direction;
         private Action<Projectile> _returnToPool;
         private EffectPool _effectPool;
@@ -72,7 +75,31 @@ namespace Game
 
         private void Update()
         {
-            transform.position += _direction * _runtimeSpeed * Time.deltaTime;
+            float moveDistance = _runtimeSpeed * Time.deltaTime;
+            Vector3 startPosition = transform.position;
+
+            RaycastHit[] hits = Physics.SphereCastAll(
+                startPosition,
+                _collisionRadius,
+                _direction,
+                moveDistance,
+                _collisionMask,
+                QueryTriggerInteraction.Ignore);
+
+            if (hits != null && hits.Length > 0)
+            {
+                Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+
+                for (int i = 0; i < hits.Length; i++)
+                {
+                    if (ProcessHit(hits[i].collider, hits[i].point))
+                    {
+                        return;
+                    }
+                }
+            }
+
+            transform.position += _direction * moveDistance;
 
             if (Time.time - _spawnTime >= _runtimeLifetime)
             {
@@ -82,14 +109,19 @@ namespace Game
 
         private void OnTriggerEnter(Collider other)
         {
+            ProcessHit(other, transform.position);
+        }
+
+        private bool ProcessHit(Collider other, Vector3 hitPosition)
+        {
             if (other == null || _isReturning)
             {
-                return;
+                return false;
             }
 
             if (_sourceRoot != null && other.transform.root == _sourceRoot)
             {
-                return;
+                return false;
             }
 
             DamageAffiliation targetAffiliation = DamageAffiliation.Find(other);
@@ -105,7 +137,7 @@ namespace Game
                     targetAffiliation,
                     targetTeam))
             {
-                return;
+                return false;
             }
 
             if (DamageAffiliation.TryGetDamageable(
@@ -128,11 +160,18 @@ namespace Game
                     damageable.TakeDamage(new DamageData(_damage));
                 }
 
+                SpawnImpact(hitPosition);
                 Return();
-                return;
+                return true;
             }
 
-            SpawnImpact();
+            SpawnImpact(hitPosition);
+            Return();
+            return true;
+        }
+
+        public void ForceReturnToPool()
+        {
             Return();
         }
 
@@ -163,8 +202,10 @@ namespace Game
             return defaultLayer;
         }
 
-        private void SpawnImpact()
+        private void SpawnImpact(Vector3? position = null)
         {
+            Vector3 impactPos = position ?? transform.position;
+
             if (_impactEffect == null)
             {
                 return;
@@ -172,11 +213,11 @@ namespace Game
 
             if (_effectPool != null)
             {
-                _effectPool.Play(_impactEffect, transform.position);
+                _effectPool.Play(_impactEffect, impactPos);
                 return;
             }
 
-            Instantiate(_impactEffect, transform.position, Quaternion.identity);
+            Instantiate(_impactEffect, impactPos, Quaternion.identity);
         }
 
         private void Return()

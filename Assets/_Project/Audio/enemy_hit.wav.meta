@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: a0110000000000000000000000000004
+AudioImporter:
+  externalObjects: {}
+  serializedVersion: 6
+  defaultBitsPerSample: 16
+  format: 0
+  loadType: 0
+  preloadAudioData: 1
+  loadInBackground: 0
+  ambisonic: 0
+  3D: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

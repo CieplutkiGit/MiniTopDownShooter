@@ -11,8 +11,27 @@ namespace Game
 
         private IHealthReadable _health;
 
+        public void Initialize(HealthComponent health)
+        {
+            _healthRef = health;
+            _health = health;
+        }
+
         private void Awake()
         {
+            if (_healthRef == null)
+            {
+                _healthRef = GetComponentInParent<HealthComponent>();
+                if (_healthRef == null)
+                {
+                    PlayerController pc = FindFirstObjectByType<PlayerController>();
+                    if (pc != null)
+                    {
+                        _healthRef = pc.GetComponent<HealthComponent>();
+                    }
+                }
+            }
+
             _health = _healthRef;
         }
 

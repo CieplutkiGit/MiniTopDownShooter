@@ -17,17 +17,45 @@ namespace Game
         [Header("Mobile")]
         [SerializeField] private MobileInputState _mobileInput;
 
+        [Header("State")]
+        [SerializeField] private GameStateController _gameStateRef;
+
         private InputReader _input;
         private PlayerMovement _movement;
         private PlayerRotation _rotation;
         private PlayerShoot _shoot;
         private HealthComponent _health;
+        private IGameStateProvider _gameState;
 
         private IPlayerState _currentState;
         private AlivePlayerState _aliveState;
         private DeadPlayerState _deadState;
 
         public event Action Died;
+
+        public void Initialize(GameStateController gameState, Camera aimCamera = null, MobileInputState mobileInput = null)
+        {
+            if (_gameState != null && enabled)
+            {
+                _gameState.OnStateChanged -= HandleGameStateChanged;
+            }
+
+            _gameStateRef = gameState;
+            _gameState = gameState;
+            if (aimCamera != null)
+            {
+                _aimCamera = aimCamera;
+            }
+            if (mobileInput != null)
+            {
+                _mobileInput = mobileInput;
+            }
+
+            if (_gameState != null && enabled)
+            {
+                _gameState.OnStateChanged += HandleGameStateChanged;
+            }
+        }
 
         private void Awake()
         {
@@ -42,6 +70,12 @@ namespace Game
                     FindObjectsInactive.Include);
             }
 
+            if (_gameStateRef == null)
+            {
+                _gameStateRef = FindFirstObjectByType<GameStateController>();
+            }
+
+            _gameState = _gameStateRef;
             _input = new InputReader(_aimCamera, transform, _mobileInput);
             _movement = GetComponent<PlayerMovement>();
             _rotation = GetComponent<PlayerRotation>();
@@ -52,19 +86,48 @@ namespace Game
             _deadState = new DeadPlayerState(_movement);
         }
 
+        private void Start()
+        {
+            GameSettingsData settings = SaveManager.LoadSettings();
+            ApplySettings(settings);
+        }
+
         private void OnEnable()
         {
             _health.OnDead += HandleDead;
+            if (_gameState != null)
+            {
+                _gameState.OnStateChanged += HandleGameStateChanged;
+            }
             ChangeState(_aliveState);
         }
 
         private void OnDisable()
         {
             _health.OnDead -= HandleDead;
+            if (_gameState != null)
+            {
+                _gameState.OnStateChanged -= HandleGameStateChanged;
+            }
+        }
+
+        private void HandleGameStateChanged(GameState oldState, GameState newState)
+        {
+            if (newState != GameState.Playing)
+            {
+                _movement?.Move(Vector2.zero);
+                _input?.ClearQueuedActions();
+            }
         }
 
         private void FixedUpdate()
         {
+            if (_gameState != null && _gameState.CurrentState != GameState.Playing)
+            {
+                _movement?.Move(Vector2.zero);
+                return;
+            }
+
             if (_currentState != null)
             {
                 _currentState.Update();
@@ -90,9 +153,40 @@ namespace Game
 
         public void Respawn(Vector3 position)
         {
+            ResetToSpawn(position, transform.rotation);
+        }
+
+        public void ResetToSpawn()
+        {
+            ResetToSpawn(transform.position, transform.rotation);
+        }
+
+        public void ResetToSpawn(Vector3 position, Quaternion rotation)
+        {
             _movement.Warp(position);
+            _rotation.SetRotation(rotation);
             _health.ResetHealth();
+
+            WeaponLoadout loadout = GetComponent<WeaponLoadout>();
+            if (loadout != null)
+            {
+                loadout.ResetToDefault();
+            }
+
+            _input.ResetGameplayTransientState();
+            _input.ClearQueuedActions();
+
             ChangeState(_aliveState);
+        }
+
+        public void ApplySettings(GameSettingsData settings)
+        {
+            if (_input != null && settings != null)
+            {
+                _input.AimSensitivity = settings.AimSensitivity;
+                _input.MoveDeadzone = settings.Deadzone;
+                _input.LookDeadzone = settings.Deadzone;
+            }
         }
 
         public void BeginInputRebind(string actionName, int bindingIndex)

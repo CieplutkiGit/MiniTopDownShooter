@@ -1,5 +1,5 @@
 {
-    "name": "Unity",
+    "name": "MiniTopDownShooter.Unity",
     "rootNamespace": "Game",
     "references": [
         "GUID:2c7b87ce2634cf140905f8d3f56c7098",

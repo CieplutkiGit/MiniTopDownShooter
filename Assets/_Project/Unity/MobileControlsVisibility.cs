@@ -20,7 +20,7 @@ namespace Game
                 return;
             }
 
-            bool visible = _forceVisible || Application.isMobilePlatform;
+            bool visible = _forceVisible || UnityEngine.Application.isMobilePlatform;
 
 #if UNITY_EDITOR
             visible |= _forceVisibleInEditor;
