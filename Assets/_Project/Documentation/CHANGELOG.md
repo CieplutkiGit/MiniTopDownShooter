@@ -42,10 +42,14 @@
 - EditMode tests for `Health`, `WaveRunner`, weapon ammo state, mobile input state, enemy armor, and combat affiliation
 - PlayMode smoke tests for all three demo scenes
 - GitHub Actions Unity CI with test execution and Linux player smoke build
+- License-free Asset Store preflight for package root, meta/GUID hygiene, path limits, release markers, assembly names, and dependency regression checks
 - Buyer-facing quick start, weapon, wave, dependency, extension, licensing, API, upgrade, clean-import, art-replacement, CI and release-checklist documentation
+- Asset Store submission sheet with store copy, requirements, limitations, AI disclosure draft, keywords, and screenshot plan
 
 ### Changed
 
+- Demo scenes and baked NavMesh moved under `Assets/_Project/Scenes` so the commercial package can be exported from one root.
+- Core, application, and runtime assemblies now use collision-safe product-prefixed assembly names.
 - Removed unused Collab, Rider, Visual Studio, Multiplayer Center, Timeline, Visual Scripting and VContainer direct dependencies
 - Version 1.0 support target is pinned to Unity 6000.3.10f1 until other Unity releases are explicitly tested
 - `Gun` can use a Weapon Definition while preserving existing inline serialized values as backwards-compatible defaults

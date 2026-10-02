@@ -2,7 +2,7 @@
 
 ## Open and validate the demo
 
-Open `Assets/Scenes/ArenaShowcase.unity` for the full showcase, `MobileDemo.unity` for touch controls, or `SampleScene.unity` for the minimal legacy path. Then choose:
+Open `Assets/_Project/Scenes/ArenaShowcase.unity` for the full showcase, `MobileDemo.unity` for touch controls, or `SampleScene.unity` for the minimal legacy path. Then choose:
 
 **Tools > Mini Top Down Shooter > Setup & Validation**
 
@@ -94,7 +94,7 @@ Concrete example prefabs are shipped as `Enemy_Fast`, `Enemy_Tank`, `Enemy_Range
 7. Use MobileControlsVisibility if the same scene supports desktop and mobile.
 8. Run scene validation.
 
-Open `Assets/Scenes/MobileDemo.unity` for a working touch-control showcase. See MOBILE.md for the recommended hierarchy and testing checklist.
+Open `Assets/_Project/Scenes/MobileDemo.unity` for a working touch-control showcase. See MOBILE.md for the recommended hierarchy and testing checklist.
 
 ## Create reusable waves
 

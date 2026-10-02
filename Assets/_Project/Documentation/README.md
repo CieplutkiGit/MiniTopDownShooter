@@ -37,22 +37,26 @@ The package focuses on a small, understandable runtime rather than taking over a
 
 Developed with Unity 6000.3.10f1.
 
+## Commercial package root
+
+The Asset Store submission target is `Assets/_Project` only. Root-level template/development assets outside that folder are not part of the commercial export.
+
 ## Demo scenes
 
-- `Assets/Scenes/SampleScene.unity`: minimal/legacy learning path.
-- `Assets/Scenes/ArenaShowcase.unity`: authored WeaponDefinition, WaveSet, archetype enemies, boss entry, and spawn zones.
-- `Assets/Scenes/MobileDemo.unity`: Arena showcase plus generated safe-area dual-stick touch controls.
+- `Assets/_Project/Scenes/SampleScene.unity`: minimal/legacy learning path.
+- `Assets/_Project/Scenes/ArenaShowcase.unity`: authored WeaponDefinition, WaveSet, archetype enemies, boss entry, and spawn zones.
+- `Assets/_Project/Scenes/MobileDemo.unity`: Arena showcase plus generated safe-area dual-stick touch controls.
 
 ## First steps
 
-1. Open `Assets/Scenes/ArenaShowcase.unity` for the full framework showcase, or `SampleScene.unity` for the smallest learning scene.
+1. Open `Assets/_Project/Scenes/ArenaShowcase.unity` for the full framework showcase, or `SampleScene.unity` for the smallest learning scene.
 2. Open **Tools > Mini Top Down Shooter > Setup & Validation**.
 3. Click **Validate Open Scene**.
 4. Enter Play Mode.
 5. Create reusable weapon data with **Create Weapon Definition** and assign the asset to a `Gun`.
 6. Create reusable wave composition with **Create Wave Set** and optionally add `SpawnZone` components.
 
-See `QUICK_START.md` for setup, `WEAPONS.md` for weapon authoring, `WAVES.md` for wave composition, `ENEMIES.md` for archetypes, `MOBILE.md` for touch controls, `API.md` for extension points, `UPGRADING.md` for migrations, `CLEAN_IMPORT.md` for package verification, `REPLACE_ART.md` for presentation swaps, `RELEASE_CHECKLIST.md` for publishing, and `CI.md` for automated verification.
+See `STORE_SUBMISSION.md` for version 1.0 store copy/media planning, `QUICK_START.md` for setup, `WEAPONS.md` for weapon authoring, `WAVES.md` for wave composition, `ENEMIES.md` for archetypes, `MOBILE.md` for touch controls, `API.md` for extension points, `UPGRADING.md` for migrations, `CLEAN_IMPORT.md` for package verification, `REPLACE_ART.md` for presentation swaps, `RELEASE_CHECKLIST.md` for publishing, and `CI.md` for automated verification.
 
 ## Design goal
 
