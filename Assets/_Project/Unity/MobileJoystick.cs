@@ -94,7 +94,8 @@ namespace Game
 
             Rect rect = _background.rect;
             float radius = Mathf.Max(1f, Mathf.Min(rect.width, rect.height) * 0.5f);
-            Vector2 normalized = Vector2.ClampMagnitude(localPoint / radius, 1f);
+            Vector2 centeredPoint = localPoint - rect.center;
+            Vector2 normalized = Vector2.ClampMagnitude(centeredPoint / radius, 1f);
             normalized = ApplyDeadZone(normalized);
 
             if (_handle != null)
