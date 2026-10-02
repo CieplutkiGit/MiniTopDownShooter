@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Core;
 using UnityEngine;
 
@@ -10,72 +11,89 @@ namespace Game
         [SerializeField] private bool _debugLog = false;
 
         private Health _health;
+        private readonly List<IDamageModifier> _damageModifiers = new List<IDamageModifier>();
 
         public event Action OnDead;
         public event Action<int, int> OnHealthChanged;
 
-        public int Current
-        {
-            get
-            {
-                if (_health == null)
-                {
-                    return _maxHealth;
-                }
-                return _health.Current;
-            }
-        }
-
-        public int Max
-        {
-            get
-            {
-                if (_health == null)
-                {
-                    return _maxHealth;
-                }
-                return _health.Max;
-            }
-        }
+        public int Current => _health == null ? _maxHealth : _health.Current;
+        public int Max => _health == null ? _maxHealth : _health.Max;
 
         private void Awake()
         {
-            _health = new Health(_maxHealth);
-            _health.OnDead += HandleDead;
-            _health.OnHealthChanged += HandleHealthChanged;
+            CacheDamageModifiers();
+            CreateHealth(_maxHealth);
         }
 
         private void OnDestroy()
         {
-            if (_health != null)
-            {
-                _health.OnDead -= HandleDead;
-                _health.OnHealthChanged -= HandleHealthChanged;
-            }
+            UnsubscribeHealth();
         }
 
         public void SetMaxHealth(int maxHealth)
         {
-            if (_health != null)
-            {
-                _health.OnDead -= HandleDead;
-                _health.OnHealthChanged -= HandleHealthChanged;
-            }
-
-            _health = new Health(maxHealth);
-            _health.OnDead += HandleDead;
-            _health.OnHealthChanged += HandleHealthChanged;
+            UnsubscribeHealth();
+            CreateHealth(maxHealth);
             HandleHealthChanged(_health.Current, _health.Max);
         }
 
         public void TakeDamage(DamageData data)
         {
-            _health.TakeDamage(data);
+            DamageData resolved = data;
+
+            for (int i = 0; i < _damageModifiers.Count; i++)
+            {
+                resolved = _damageModifiers[i].ModifyDamage(resolved);
+            }
+
+            if (resolved.Damage <= 0)
+            {
+                return;
+            }
+
+            _health.TakeDamage(resolved);
         }
 
         public void ResetHealth()
         {
             _health.Reset();
+        }
+
+        public void RefreshDamageModifiers()
+        {
+            CacheDamageModifiers();
+        }
+
+        private void CreateHealth(int maxHealth)
+        {
+            _health = new Health(Mathf.Max(1, maxHealth));
+            _health.OnDead += HandleDead;
+            _health.OnHealthChanged += HandleHealthChanged;
+        }
+
+        private void UnsubscribeHealth()
+        {
+            if (_health == null)
+            {
+                return;
+            }
+
+            _health.OnDead -= HandleDead;
+            _health.OnHealthChanged -= HandleHealthChanged;
+        }
+
+        private void CacheDamageModifiers()
+        {
+            _damageModifiers.Clear();
+            MonoBehaviour[] behaviours = GetComponents<MonoBehaviour>();
+
+            for (int i = 0; i < behaviours.Length; i++)
+            {
+                if (behaviours[i] is IDamageModifier modifier)
+                {
+                    _damageModifiers.Add(modifier);
+                }
+            }
         }
 
         private void HandleDead()
