@@ -13,6 +13,8 @@ namespace Game
         [SerializeField] private float _thinkInterval = 0.2f;
         [SerializeField] private EnemyStats _statsRef;
         [SerializeField] private int _fallbackScore = 10;
+        [Tooltip("Optional behavior module. Leave empty to use the original chase/melee state machine.")]
+        [SerializeField] private EnemyBehaviorBase _behavior;
 
         private EnemyMovement _movement;
         private EnemyAttack _attack;
@@ -29,17 +31,10 @@ namespace Game
 
         public event Action<EnemyController> Died;
 
-        public int ScoreValue
-        {
-            get
-            {
-                if (_stats != null)
-                {
-                    return _stats.ScoreValue;
-                }
-                return _fallbackScore;
-            }
-        }
+        public int ScoreValue => _stats != null ? _stats.ScoreValue : _fallbackScore;
+        public EnemyBehaviorBase Behavior =>
+            _behavior != null ? _behavior : GetComponent<EnemyBehaviorBase>();
+        public EnemyStats Stats => _statsRef;
 
         private Action _diedObservers;
 
@@ -56,6 +51,11 @@ namespace Game
             _health = GetComponent<HealthComponent>();
             _deadState = new DeadState(_movement);
             _stats = _statsRef;
+
+            if (_behavior == null)
+            {
+                _behavior = GetComponent<EnemyBehaviorBase>();
+            }
         }
 
         private void OnEnable()
@@ -67,11 +67,18 @@ namespace Game
         {
             _health.OnDead -= HandleDead;
             CancelInvoke();
+
+            if (_behavior != null)
+            {
+                _behavior.OnDespawn();
+            }
         }
 
         public void Spawn(Vector3 position, Transform target)
         {
+            CancelInvoke();
             _movement.Warp(position);
+            _movement.SetSpeedMultiplier(1f);
 
             if (_stats != null)
             {
@@ -85,20 +92,44 @@ namespace Game
             }
 
             _target = target;
-            _targetDamageable = target.GetComponent<IDamageable>();
+            _targetDamageable = target != null ? target.GetComponent<IDamageable>() : null;
 
-            _chaseState = new ChaseState(_movement, _target);
-            _attackState = new AttackState(_attack, _targetDamageable);
+            if (_behavior != null)
+            {
+                _currentState = null;
+                _behavior.Initialize(
+                    this,
+                    _movement,
+                    _attack,
+                    _health,
+                    _target,
+                    _targetDamageable);
+            }
+            else
+            {
+                _chaseState = new ChaseState(_movement, _target);
+                _attackState = new AttackState(_attack, _targetDamageable);
+                ChangeState(_chaseState);
+            }
 
-            ChangeState(_chaseState);
-
-            float startDelay = UnityEngine.Random.Range(0f, _thinkInterval);
-            InvokeRepeating(nameof(Think), startDelay, _thinkInterval);
+            float startDelay = UnityEngine.Random.Range(0f, Mathf.Max(0.01f, _thinkInterval));
+            InvokeRepeating(nameof(Think), startDelay, Mathf.Max(0.01f, _thinkInterval));
         }
 
         private void Think()
         {
-            if (_currentState == null || _target == null)
+            if (_target == null)
+            {
+                return;
+            }
+
+            if (_behavior != null)
+            {
+                _behavior.Tick();
+                return;
+            }
+
+            if (_currentState == null || _targetDamageable == null)
             {
                 return;
             }
@@ -126,15 +157,31 @@ namespace Game
             }
 
             _currentState = newState;
-            _currentState.Enter();
+
+            if (_currentState != null)
+            {
+                _currentState.Enter();
+            }
         }
 
         private void HandleDead()
         {
             CancelInvoke();
+
+            if (_behavior != null)
+            {
+                _behavior.OnDeath();
+            }
+
             ChangeState(_deadState);
             _diedObservers?.Invoke();
             Died?.Invoke(this);
+        }
+
+        private void OnValidate()
+        {
+            _thinkInterval = Mathf.Max(0.01f, _thinkInterval);
+            _fallbackScore = Mathf.Max(0, _fallbackScore);
         }
     }
 }

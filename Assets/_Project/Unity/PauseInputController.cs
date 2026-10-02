@@ -9,6 +9,7 @@ namespace Game
     {
         [FormerlySerializedAs("_gameState")]
         [SerializeField] private GameStateController _gameStateRef;
+        [SerializeField] private MobileInputState _mobileInput;
 
         private GameInput _input;
         private IGameStateController _gameState;
@@ -17,6 +18,12 @@ namespace Game
         {
             _input = new GameInput();
             _gameState = _gameStateRef;
+
+            if (_mobileInput == null)
+            {
+                _mobileInput = FindFirstObjectByType<MobileInputState>(
+                    FindObjectsInactive.Include);
+            }
         }
 
         private void OnEnable()
@@ -31,6 +38,15 @@ namespace Game
             _input.Disable();
         }
 
+        private void Update()
+        {
+            if (_mobileInput != null &&
+                _mobileInput.ConsumePausePressed())
+            {
+                TogglePause();
+            }
+        }
+
         private void OnDestroy()
         {
             if (_input != null)
@@ -40,6 +56,11 @@ namespace Game
         }
 
         private void OnPausePerformed(InputAction.CallbackContext context)
+        {
+            TogglePause();
+        }
+
+        private void TogglePause()
         {
             if (_gameState == null)
             {

@@ -19,7 +19,11 @@ For a stat variant:
 3. Assign the stats to the enemy.
 4. Add the prefab to the `EnemySpawner` weighted list.
 
-For fundamentally different behavior, add a focused state or controller rather than growing a single controller with many mode flags.
+For fundamentally different behavior, derive a focused component from EnemyBehaviorBase rather than growing EnemyController with mode flags.
+
+EnemyController automatically keeps the legacy chase/melee path when no custom behavior is present. Custom behavior modules receive movement, attack, health, target, and damageable context on every pooled spawn.
+
+See ENEMIES.md for ranged, rusher, charger, armor/tank, and boss-phase examples.
 
 ## Add feedback
 

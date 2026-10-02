@@ -21,10 +21,19 @@
 - Per-wave spawn-zone selection
 - Point, circle, and box `SpawnZone` components with player-distance, off-screen, and NavMesh validation
 - Optional per-wave boss entries
+- Modular EnemyBehaviorBase extension path while preserving the original melee state machine
+- RangedEnemyBehavior that reuses the Gun/WeaponDefinition framework
+- RusherEnemyBehavior and ChargerEnemyBehavior examples
+- EnemyArmor and IDamageModifier support for tank/bruiser variants
+- BossPhaseController with pooled phase reset and phase-change events
+- MobileInputState shared touch input model
+- Dual MobileJoystick controls with dead zones, multi-touch ownership, and optional aim-to-fire
+- MobileActionButton for fire, reload, weapon switching, and pause
+- SafeAreaFitter and MobileControlsVisibility
 - Mouse aiming with left-click firing
 - Asset Store setup and validation editor window
 - Open-scene checks for core gameplay objects, gun setup, camera fallback, enemy spawning, waves, spawn zones, and NavMesh
-- EditMode tests for `Health`, `WaveRunner`, and weapon ammo state
+- EditMode tests for `Health`, `WaveRunner`, weapon ammo state, mobile input state, and enemy armor
 - Buyer-facing quick start, weapon, wave, dependency, extension, and licensing documentation
 
 ### Changed
@@ -39,7 +48,9 @@
 - `WaveRunner` supports an optional initial delay without taking a dependency on Unity
 - `PlayerController` uses an assigned aim camera or falls back to `Camera.main`
 - Gun startup reports missing delivery configuration clearly
-- Editor validation understands hitscan weapons and explicit-only wave compositions
+- Editor validation understands hitscan weapons, explicit-only wave compositions, enemy archetype requirements, and mobile control setup
+- `InputReader` merges touch input with existing mouse, keyboard, and gamepad input
+- `HealthComponent` resolves optional `IDamageModifier` components before applying damage
 
 ## 1.0.0
 
