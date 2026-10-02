@@ -81,26 +81,48 @@ namespace Game
             ApplyColor(_flashColor);
         }
 
+        [SerializeField] private Renderer[] _additionalRenderers;
+
         private void ApplyColor(Color color)
         {
-            if (_renderer == null)
+            _block.SetColor(_propertyId, color);
+
+            if (_renderer != null)
             {
-                return;
+                _renderer.SetPropertyBlock(_block);
             }
 
-            _block.SetColor(_propertyId, color);
-            _renderer.SetPropertyBlock(_block);
+            if (_additionalRenderers != null)
+            {
+                for (int i = 0; i < _additionalRenderers.Length; i++)
+                {
+                    if (_additionalRenderers[i] != null)
+                    {
+                        _additionalRenderers[i].SetPropertyBlock(_block);
+                    }
+                }
+            }
         }
 
         private void ClearColor()
         {
-            if (_renderer == null)
+            _block.Clear();
+
+            if (_renderer != null)
             {
-                return;
+                _renderer.SetPropertyBlock(_block);
             }
 
-            _block.Clear();
-            _renderer.SetPropertyBlock(_block);
+            if (_additionalRenderers != null)
+            {
+                for (int i = 0; i < _additionalRenderers.Length; i++)
+                {
+                    if (_additionalRenderers[i] != null)
+                    {
+                        _additionalRenderers[i].SetPropertyBlock(_block);
+                    }
+                }
+            }
         }
     }
 }

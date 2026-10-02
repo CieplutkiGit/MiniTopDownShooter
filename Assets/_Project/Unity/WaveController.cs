@@ -502,7 +502,7 @@ namespace Game
                 return true;
             }
 
-            if (_spawnerRef != null && NavMesh.CalculateTriangulation().vertices.Length == 0)
+            if (_spawnerRef != null && UnityEngine.Application.isPlaying && NavMesh.CalculateTriangulation().vertices.Length == 0)
             {
                 errorReason = "Arena navigation data is missing";
                 return false;
