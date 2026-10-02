@@ -28,7 +28,8 @@ The package focuses on a small, understandable runtime rather than taking over a
 - Pause, menu, game-over, and HUD logic
 - Audio hooks
 - Screen shake, hit flash, muzzle flash, projectile trails, impact FX, and death FX
-- Editor setup and validation tools
+- Editor setup/validation tools with one-click Player, Enemy, Gun, Arena, Spawn Zone, Wave Controller and repair actions
+- Custom inspectors for WeaponDefinition, WaveSet, EnemyStats and EnemySpawner
 - EditMode tests plus PlayMode smoke coverage for SampleScene, ArenaShowcase, and MobileDemo
 - GitHub Actions CI for Unity tests and a Linux smoke build
 
@@ -51,7 +52,7 @@ Developed with Unity 6000.3.10f1.
 5. Create reusable weapon data with **Create Weapon Definition** and assign the asset to a `Gun`.
 6. Create reusable wave composition with **Create Wave Set** and optionally add `SpawnZone` components.
 
-See `QUICK_START.md` for setup, `WEAPONS.md` for weapon authoring, `WAVES.md` for wave composition, `ENEMIES.md` for archetypes, `MOBILE.md` for touch controls, and `CI.md` for automated verification.
+See `QUICK_START.md` for setup, `WEAPONS.md` for weapon authoring, `WAVES.md` for wave composition, `ENEMIES.md` for archetypes, `MOBILE.md` for touch controls, `API.md` for extension points, `UPGRADING.md` for migrations, `CLEAN_IMPORT.md` for package verification, `REPLACE_ART.md` for presentation swaps, `RELEASE_CHECKLIST.md` for publishing, and `CI.md` for automated verification.
 
 ## Design goal
 
