@@ -14,6 +14,8 @@ or:
 
 Assign the asset to a `Gun`. A single definition contains firing behavior, ammo rules, accuracy tuning, delivery settings, and pool sizing.
 
+Shipped presets are available under `Assets/_Project/Data/Weapons/`, with matching drag-and-drop Gun prefabs under `Assets/_Project/Weapons/`.
+
 ## Fire modes
 
 ### Semi Automatic
@@ -50,6 +52,19 @@ Hitscan settings include:
 - optional distance-based damage falloff curve
 
 `Projectiles Per Shot` also applies to hitscan, so a shotgun can use several hitscan rays.
+
+## Combat affiliation
+
+Projectile and hitscan weapons share the same `DamageAffiliation` rules.
+
+- Player, Enemy, and Neutral teams are supported.
+- The shooter root is ignored.
+- Same-team damage is disabled by default.
+- Friendly collisions can either be ignored or treated as blocking.
+- Friendly fire can be enabled per source affiliation.
+- Legacy setups can fall back to the existing `Player` and `Enemy` layers when no explicit affiliation component is present.
+
+Player demos and shipped enemy prefabs use explicit affiliations. Enemy projectiles reuse the same projectile prefab and automatically switch to a collision-capable runtime layer when needed.
 
 ## Damage and accuracy
 

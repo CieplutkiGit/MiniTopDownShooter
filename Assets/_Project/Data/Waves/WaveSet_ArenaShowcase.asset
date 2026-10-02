@@ -1,0 +1,99 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b17e64e9a9f64cc99c2634d690df1abe, type: 3}
+  m_Name: WaveSet_ArenaShowcase
+  m_EditorClassIdentifier: Unity::Game.WaveSet
+  _waves:
+  - EnemyCount: 8
+    SpawnInterval: 0.8
+    InitialDelay: 1
+    DelayAfter: 2
+    EnemyGroups:
+    - Prefab: {fileID: 1491644836695588414, guid: 8e457981d3ae14b4a948ed5ae1f8771f, type: 3}
+      GuaranteedCount: 3
+      Weight: 4
+      DelayBefore: 0
+    - Prefab: {fileID: 1491644836695588414, guid: bc8a0c0604014e87859c57d1de20d564, type: 3}
+      GuaranteedCount: 2
+      Weight: 3
+      DelayBefore: 0.5
+    SpawnZoneIds:
+    - North
+    BossPrefab: {fileID: 0}
+    BossCount: 0
+    BossDelay: 0
+  - EnemyCount: 12
+    SpawnInterval: 0.65
+    InitialDelay: 1
+    DelayAfter: 2.5
+    EnemyGroups:
+    - Prefab: {fileID: 1491644836695588414, guid: 8f0527ae7a8541c98df0338ef73ea7d6, type: 3}
+      GuaranteedCount: 3
+      Weight: 3
+      DelayBefore: 0
+    - Prefab: {fileID: 1491644836695588414, guid: bc8a0c0604014e87859c57d1de20d564, type: 3}
+      GuaranteedCount: 3
+      Weight: 4
+      DelayBefore: 0
+    - Prefab: {fileID: 1491644836695588414, guid: 8d5471049d044ab5af4a5d9a748f4384, type: 3}
+      GuaranteedCount: 1
+      Weight: 1
+      DelayBefore: 1
+    SpawnZoneIds:
+    - West
+    - East
+    BossPrefab: {fileID: 0}
+    BossCount: 0
+    BossDelay: 0
+  - EnemyCount: 14
+    SpawnInterval: 0.55
+    InitialDelay: 1
+    DelayAfter: 3
+    EnemyGroups:
+    - Prefab: {fileID: 1491644836695588414, guid: d8ec32ce54e14b8ca02b51c3f4fbd99a, type: 3}
+      GuaranteedCount: 2
+      Weight: 2
+      DelayBefore: 0.5
+    - Prefab: {fileID: 1491644836695588414, guid: 8f0527ae7a8541c98df0338ef73ea7d6, type: 3}
+      GuaranteedCount: 3
+      Weight: 3
+      DelayBefore: 0
+    - Prefab: {fileID: 1491644836695588414, guid: 8d5471049d044ab5af4a5d9a748f4384, type: 3}
+      GuaranteedCount: 2
+      Weight: 2
+      DelayBefore: 0
+    SpawnZoneIds:
+    - North
+    - West
+    - East
+    BossPrefab: {fileID: 0}
+    BossCount: 0
+    BossDelay: 0
+  - EnemyCount: 10
+    SpawnInterval: 0.5
+    InitialDelay: 1.5
+    DelayAfter: 0
+    EnemyGroups:
+    - Prefab: {fileID: 1491644836695588414, guid: 8f0527ae7a8541c98df0338ef73ea7d6, type: 3}
+      GuaranteedCount: 2
+      Weight: 2
+      DelayBefore: 0
+    - Prefab: {fileID: 1491644836695588414, guid: d8ec32ce54e14b8ca02b51c3f4fbd99a, type: 3}
+      GuaranteedCount: 2
+      Weight: 2
+      DelayBefore: 0.75
+    SpawnZoneIds:
+    - North
+    - East
+    BossPrefab: {fileID: 1491644836695588414, guid: 1c948fbe267a4a519cc91c9a9685ae62, type: 3}
+    BossCount: 1
+    BossDelay: 1.5

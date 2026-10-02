@@ -2,7 +2,7 @@
 
 ## Open and validate the demo
 
-Open `Assets/Scenes/SampleScene.unity`, then choose:
+Open `Assets/Scenes/ArenaShowcase.unity` for the full showcase, `MobileDemo.unity` for touch controls, or `SampleScene.unity` for the minimal legacy path. Then choose:
 
 **Tools > Mini Top Down Shooter > Setup & Validation**
 
@@ -53,6 +53,8 @@ Runtime rebinding hooks are exposed by `PlayerController`; see `WEAPONS.md`.
 
 Existing guns remain backwards-compatible. If no Weapon Definition is assigned, `Gun` uses its original inline projectile, damage, fire-rate, and pool settings with infinite ammo.
 
+Ready-made examples live under `Assets/_Project/Data/Weapons/` and `Assets/_Project/Weapons/` for pistol, rifle, SMG, shotgun, and launcher configurations.
+
 ## Add weapon switching
 
 1. Add `WeaponLoadout` to the player.
@@ -79,7 +81,7 @@ The default EnemyController with no custom behavior remains the melee chase enem
 - Charger: add ChargerEnemyBehavior and tune windup/charge/recovery.
 - Boss: add BossPhaseController and configure health-threshold phases.
 
-See ENEMIES.md for setup and pooling rules.
+Concrete example prefabs are shipped as `Enemy_Fast`, `Enemy_Tank`, `Enemy_Ranged`, `Enemy_Charger`, and `Enemy_Boss`. See ENEMIES.md for setup, affiliation, and pooling rules.
 
 ## Add mobile controls
 
@@ -92,7 +94,7 @@ See ENEMIES.md for setup and pooling rules.
 7. Use MobileControlsVisibility if the same scene supports desktop and mobile.
 8. Run scene validation.
 
-See MOBILE.md for the recommended hierarchy and testing checklist.
+Open `Assets/Scenes/MobileDemo.unity` for a working touch-control showcase. See MOBILE.md for the recommended hierarchy and testing checklist.
 
 ## Create reusable waves
 
@@ -125,5 +127,6 @@ See `WAVES.md` for composition rules and fallback behavior.
 - Test mouse, keyboard, gamepad, and multi-touch input.
 - Test safe areas and mobile UI on multiple aspect ratios.
 - Test saved rebinding and reset-to-default.
-- Run the included EditMode tests.
+- Run the included EditMode and PlayMode tests.
+- Configure the GitHub Actions Unity license secrets documented in CI.md and require the Unity CI checks on main.
 - Replace or license all sample presentation content appropriately.

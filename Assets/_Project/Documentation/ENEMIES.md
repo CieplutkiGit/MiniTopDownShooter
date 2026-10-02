@@ -4,6 +4,8 @@ The original melee chase enemy remains the default behavior. EnemyController onl
 
 This keeps the existing prefab path backwards-compatible while allowing focused behavior modules for enemies that need different combat logic.
 
+Shipped examples include `Enemy_Fast` (rusher), `Enemy_Tank` (armor), `Enemy_Ranged`, `Enemy_Charger`, and `Enemy_Boss`.
+
 ## Melee / chase
 
 Use the base EnemyController with no custom behavior component.
@@ -14,7 +16,7 @@ EnemyStats controls move speed, max health, melee damage, attack range, attack c
 
 Add RangedEnemyBehavior and assign a Gun.
 
-The behavior approaches when outside preferred range, stops near preferred range, retreats when the player is too close, and fires through the same Gun, WeaponDefinition, projectile/hitscan, damage, pooling, and feedback system used by the player.
+The behavior approaches when outside preferred range, stops near preferred range, retreats when the player is too close, and fires through the same Gun, WeaponDefinition, projectile/hitscan, damage, pooling, combat-affiliation, and feedback systems used by the player.
 
 Recommended setup:
 
@@ -56,6 +58,12 @@ Each phase has a health-fraction threshold, movement speed multiplier, objects t
 Phase objects can enable extra Guns, alternate VFX, weak points, shields, phase-specific helpers, or different visuals.
 
 BossPhaseController resets phase presentation when a pooled boss is disabled, so reused boss instances do not retain the previous run's phase objects.
+
+## Combat affiliation
+
+Enemy example prefabs include `DamageAffiliation` configured as Enemy. The player demos use Player affiliation.
+
+Projectile and hitscan weapons ignore same-team actors by default, preventing ranged enemies from damaging other enemies unless friendly fire is explicitly enabled.
 
 ## Pooling rules
 

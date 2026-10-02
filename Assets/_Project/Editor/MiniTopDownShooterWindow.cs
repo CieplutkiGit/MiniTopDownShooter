@@ -110,6 +110,24 @@ public class MiniTopDownShooterWindow : EditorWindow
                     $"PlayerController '{player.name}' has no aim camera and no Main Camera is available. Mouse aiming will be disabled.",
                     ref warnings);
             }
+
+            DamageAffiliation playerAffiliation =
+                player.GetComponent<DamageAffiliation>();
+
+            if (playerAffiliation == null)
+            {
+                AddWarning(
+                    report,
+                    $"PlayerController '{player.name}' has no DamageAffiliation and relies on the legacy Player layer fallback.",
+                    ref warnings);
+            }
+            else if (playerAffiliation.Team != CombatTeam.Player)
+            {
+                AddError(
+                    report,
+                    $"PlayerController '{player.name}' DamageAffiliation is {playerAffiliation.Team}, expected Player.",
+                    ref errors);
+            }
         }
 
         Gun[] guns = Object.FindObjectsByType<Gun>(
@@ -382,6 +400,24 @@ public class MiniTopDownShooterWindow : EditorWindow
         if (enemy == null || !validatedEnemyPrefabs.Add(enemy.GetInstanceID()))
         {
             return;
+        }
+
+        DamageAffiliation affiliation =
+            enemy.GetComponent<DamageAffiliation>();
+
+        if (affiliation == null)
+        {
+            AddWarning(
+                report,
+                $"Enemy prefab '{enemy.name}' has no DamageAffiliation and relies on the legacy Enemy layer fallback.",
+                ref warnings);
+        }
+        else if (affiliation.Team != CombatTeam.Enemy)
+        {
+            AddError(
+                report,
+                $"Enemy prefab '{enemy.name}' DamageAffiliation is {affiliation.Team}, expected Enemy.",
+                ref errors);
         }
 
         EnemyBehaviorBase behavior = enemy.Behavior;

@@ -97,6 +97,10 @@ This is spawn/composition-level boss support. Boss phases, boss-specific UI, and
 
 `EnemySpawner` remains responsible for pooling and valid world placement.
 
+## Shipped showcase
+
+`Assets/_Project/Data/Waves/WaveSet_ArenaShowcase.asset` demonstrates guaranteed groups, weighted fill, per-wave zone IDs, charger/ranged/tank composition, and a final boss entry. `Assets/Scenes/ArenaShowcase.unity` wires that asset to three weighted SpawnZone components.
+
 ## Backwards compatibility
 
 `WaveController` still supports its original inline wave list.

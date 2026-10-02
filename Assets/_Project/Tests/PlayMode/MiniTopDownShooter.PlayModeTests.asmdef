@@ -1,0 +1,21 @@
+{
+  "name": "MiniTopDownShooter.PlayModeTests",
+  "rootNamespace": "MiniTopDownShooter.PlayModeTests",
+  "references": [
+    "GUID:06d81edd6ae3def45bc6a8c38a485e07"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [
+    "UNITY_INCLUDE_TESTS"
+  ],
+  "versionDefines": [],
+  "noEngineReferences": false,
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}

@@ -38,6 +38,26 @@ namespace Game
         public MobileJoystickChannel Channel => _channel;
         public bool FireWhileAiming => _fireWhileAiming;
 
+        public void Configure(
+            MobileInputState input,
+            MobileJoystickChannel channel,
+            RectTransform background,
+            RectTransform handle,
+            float deadZone = 0.15f,
+            float handleTravel = 0.7f,
+            bool fireWhileAiming = true,
+            float fireThreshold = 0.2f)
+        {
+            _input = input;
+            _channel = channel;
+            _background = background;
+            _handle = handle;
+            _deadZone = Mathf.Clamp(deadZone, 0f, 0.95f);
+            _handleTravel = Mathf.Clamp(handleTravel, 0.25f, 1f);
+            _fireWhileAiming = fireWhileAiming;
+            _fireThreshold = Mathf.Clamp01(fireThreshold);
+        }
+
         private void Awake()
         {
             if (_background == null)
