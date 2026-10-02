@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
 
-namespace Game
+namespace Cieplutki.MiniTopDownShooter.Runtime
 {
     public class EffectPool : MonoBehaviour
     {

@@ -1,6 +1,6 @@
-using Application;
+using Cieplutki.MiniTopDownShooter.Application;
 
-namespace Game
+namespace Cieplutki.MiniTopDownShooter.Runtime
 {
     public class DeadState : IEnemyState
     {

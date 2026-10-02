@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace Game
+namespace Cieplutki.MiniTopDownShooter.Runtime
 {
     public class BulletTrail : MonoBehaviour
     {

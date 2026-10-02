@@ -1,7 +1,7 @@
-using Application;
-using Core;
+using Cieplutki.MiniTopDownShooter.Application;
+using Cieplutki.MiniTopDownShooter.Core;
 
-namespace Game
+namespace Cieplutki.MiniTopDownShooter.Runtime
 {
     public class AttackState : IEnemyState
     {
