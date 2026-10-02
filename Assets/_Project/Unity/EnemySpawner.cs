@@ -9,14 +9,23 @@ namespace Game
 {
     public class EnemySpawner : MonoBehaviour, ISpawner
     {
+        [Header("Enemy Pool")]
         [SerializeField] private WeightedPrefab[] _prefabs;
-        [SerializeField] private Transform _player;
-        [SerializeField] private GameStateController _gameStateRef;
-        [SerializeField] private int _maxAlive = 100;
-        [SerializeField] private float _spawnRadius = 15f;
         [SerializeField] private int _defaultPoolSize = 50;
         [SerializeField] private int _maxPoolSize = 150;
+        [SerializeField] private int _maxAlive = 100;
+
+        [Header("Scene References")]
+        [SerializeField] private Transform _player;
+        [SerializeField] private GameStateController _gameStateRef;
         [SerializeField] private EffectPool _effectPool;
+
+        [Header("Spawn Position")]
+        [Tooltip("Optional reusable zones. If none can produce a valid position, the legacy radius is used.")]
+        [SerializeField] private SpawnZone[] _spawnZones;
+        [SerializeField] private Camera _spawnCamera;
+        [Min(0.1f)]
+        [SerializeField] private float _spawnRadius = 15f;
 
         private Dictionary<EnemyController, VariantPool> _pools;
         private Dictionary<EnemyController, VariantPool> _instanceToPool;
@@ -27,12 +36,24 @@ namespace Game
 
         public event Action<int> EnemyKilled;
 
+        public IReadOnlyList<SpawnZone> SpawnZones => _spawnZones;
+
         private void Awake()
         {
             _gameState = _gameStateRef;
             _alive = new List<EnemyController>();
             _pools = new Dictionary<EnemyController, VariantPool>();
             _instanceToPool = new Dictionary<EnemyController, VariantPool>();
+
+            if (_spawnCamera == null)
+            {
+                _spawnCamera = Camera.main;
+            }
+
+            if (_prefabs == null)
+            {
+                return;
+            }
 
             for (int i = 0; i < _prefabs.Length; i++)
             {
@@ -43,16 +64,19 @@ namespace Game
                     continue;
                 }
 
-                _totalWeight += _prefabs[i].Weight;
-
-                if (!_pools.ContainsKey(prefab))
-                {
-                    _pools[prefab] = new VariantPool(prefab, _defaultPoolSize, _maxPoolSize, _effectPool);
-                }
+                _totalWeight += Mathf.Max(1, _prefabs[i].Weight);
+                EnsurePool(prefab);
             }
         }
 
         public bool SpawnOne()
+        {
+            return SpawnOne(null, null);
+        }
+
+        public bool SpawnOne(
+            EnemyController requestedPrefab,
+            IReadOnlyList<string> allowedZoneIds)
         {
             if (_gameState != null && _gameState.CurrentState != GameState.Playing)
             {
@@ -64,19 +88,21 @@ namespace Game
                 return false;
             }
 
-            if (!TryGetSpawnPosition(out Vector3 position))
+            if (!TryGetSpawnPosition(allowedZoneIds, out Vector3 position))
             {
                 return false;
             }
 
-            EnemyController prefab = PickPrefab();
+            EnemyController prefab = requestedPrefab != null
+                ? requestedPrefab
+                : PickPrefab();
 
             if (prefab == null)
             {
                 return false;
             }
 
-            VariantPool pool = _pools[prefab];
+            VariantPool pool = EnsurePool(prefab);
             EnemyController enemy = pool.Get();
             _instanceToPool[enemy] = pool;
             enemy.Died += OnEnemyDied;
@@ -91,6 +117,12 @@ namespace Game
             for (int i = _alive.Count - 1; i >= 0; i--)
             {
                 EnemyController enemy = _alive[i];
+
+                if (enemy == null)
+                {
+                    continue;
+                }
+
                 enemy.Died -= OnEnemyDied;
 
                 if (_instanceToPool.TryGetValue(enemy, out VariantPool pool))
@@ -104,6 +136,22 @@ namespace Game
             _aliveCount = 0;
         }
 
+        private VariantPool EnsurePool(EnemyController prefab)
+        {
+            if (!_pools.TryGetValue(prefab, out VariantPool pool))
+            {
+                pool = new VariantPool(
+                    prefab,
+                    Mathf.Max(1, _defaultPoolSize),
+                    Mathf.Max(_defaultPoolSize, _maxPoolSize),
+                    _effectPool);
+
+                _pools[prefab] = pool;
+            }
+
+            return pool;
+        }
+
         private EnemyController PickPrefab()
         {
             if (_prefabs == null || _prefabs.Length == 0 || _totalWeight <= 0)
@@ -113,6 +161,7 @@ namespace Game
 
             int roll = UnityEngine.Random.Range(0, _totalWeight);
             int cumulative = 0;
+            EnemyController lastValid = null;
 
             for (int i = 0; i < _prefabs.Length; i++)
             {
@@ -121,7 +170,8 @@ namespace Game
                     continue;
                 }
 
-                cumulative += _prefabs[i].Weight;
+                lastValid = _prefabs[i].Prefab;
+                cumulative += Mathf.Max(1, _prefabs[i].Weight);
 
                 if (roll < cumulative)
                 {
@@ -129,10 +179,108 @@ namespace Game
                 }
             }
 
-            return _prefabs[_prefabs.Length - 1].Prefab;
+            return lastValid;
         }
 
-        private bool TryGetSpawnPosition(out Vector3 position)
+        private bool TryGetSpawnPosition(
+            IReadOnlyList<string> allowedZoneIds,
+            out Vector3 position)
+        {
+            if (_spawnZones != null && _spawnZones.Length > 0)
+            {
+                SpawnZone selected = PickSpawnZone(allowedZoneIds);
+
+                if (selected != null &&
+                    selected.TryGetSpawnPosition(_player, _spawnCamera, out position))
+                {
+                    return true;
+                }
+
+                for (int i = 0; i < _spawnZones.Length; i++)
+                {
+                    SpawnZone zone = _spawnZones[i];
+
+                    if (zone == null || zone == selected || !IsZoneAllowed(zone, allowedZoneIds))
+                    {
+                        continue;
+                    }
+
+                    if (zone.TryGetSpawnPosition(_player, _spawnCamera, out position))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return TryGetLegacySpawnPosition(out position);
+        }
+
+        private SpawnZone PickSpawnZone(IReadOnlyList<string> allowedZoneIds)
+        {
+            int totalWeight = 0;
+
+            for (int i = 0; i < _spawnZones.Length; i++)
+            {
+                SpawnZone zone = _spawnZones[i];
+
+                if (zone != null && IsZoneAllowed(zone, allowedZoneIds))
+                {
+                    totalWeight += zone.Weight;
+                }
+            }
+
+            if (totalWeight <= 0)
+            {
+                return null;
+            }
+
+            int roll = UnityEngine.Random.Range(0, totalWeight);
+            int cumulative = 0;
+
+            for (int i = 0; i < _spawnZones.Length; i++)
+            {
+                SpawnZone zone = _spawnZones[i];
+
+                if (zone == null || !IsZoneAllowed(zone, allowedZoneIds))
+                {
+                    continue;
+                }
+
+                cumulative += zone.Weight;
+
+                if (roll < cumulative)
+                {
+                    return zone;
+                }
+            }
+
+            return null;
+        }
+
+        private static bool IsZoneAllowed(
+            SpawnZone zone,
+            IReadOnlyList<string> allowedZoneIds)
+        {
+            if (allowedZoneIds == null || allowedZoneIds.Count == 0)
+            {
+                return true;
+            }
+
+            for (int i = 0; i < allowedZoneIds.Count; i++)
+            {
+                if (string.Equals(
+                        zone.Id,
+                        allowedZoneIds[i],
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private bool TryGetLegacySpawnPosition(out Vector3 position)
         {
             if (_player == null)
             {
@@ -141,7 +289,7 @@ namespace Game
             }
 
             float angle = UnityEngine.Random.value * Mathf.PI * 2f;
-            Vector3 direction = new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle));
+            Vector3 direction = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle));
             Vector3 candidate = _player.position + direction * _spawnRadius;
 
             if (NavMesh.SamplePosition(candidate, out NavMeshHit hit, 2f, NavMesh.AllAreas))
@@ -160,7 +308,7 @@ namespace Game
 
             enemy.Died -= OnEnemyDied;
             _alive.Remove(enemy);
-            _aliveCount--;
+            _aliveCount = Mathf.Max(0, _aliveCount - 1);
 
             if (_instanceToPool.TryGetValue(enemy, out VariantPool pool))
             {
@@ -171,18 +319,36 @@ namespace Game
             EnemyKilled?.Invoke(scoreValue);
         }
 
+        private void OnValidate()
+        {
+            _maxAlive = Mathf.Max(1, _maxAlive);
+            _spawnRadius = Mathf.Max(0.1f, _spawnRadius);
+            _defaultPoolSize = Mathf.Max(1, _defaultPoolSize);
+            _maxPoolSize = Mathf.Max(_defaultPoolSize, _maxPoolSize);
+        }
+
         private class VariantPool
         {
             private readonly EnemyController _prefab;
             private readonly EffectPool _effectPool;
             private readonly ObjectPool<EnemyController> _pool;
 
-            public VariantPool(EnemyController prefab, int defaultSize, int maxSize, EffectPool effectPool)
+            public VariantPool(
+                EnemyController prefab,
+                int defaultSize,
+                int maxSize,
+                EffectPool effectPool)
             {
                 _prefab = prefab;
                 _effectPool = effectPool;
                 _pool = new ObjectPool<EnemyController>(
-                    Create, OnGet, OnRelease, OnDestroyEnemy, true, defaultSize, maxSize);
+                    Create,
+                    OnGet,
+                    OnRelease,
+                    OnDestroyEnemy,
+                    true,
+                    defaultSize,
+                    maxSize);
             }
 
             public EnemyController Get()
