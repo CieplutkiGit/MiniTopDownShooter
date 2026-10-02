@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 39b4eff789b74ea5bd7944b3304f53ad, type: 3}
   m_Name: EnemyStats_Charger
-  m_EditorClassIdentifier: Unity::Game.EnemyStats
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.EnemyStats
   _moveSpeed: 3.2
   _maxHealth: 140
   _damage: 24

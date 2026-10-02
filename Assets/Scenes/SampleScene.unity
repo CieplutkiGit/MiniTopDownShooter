@@ -397,7 +397,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 669c53a082413704c8c2fbd19ab2a91e, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Unity::Game.GameStateAudio
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.GameStateAudio
   _source: {fileID: 98270667}
   _gameStateRef: {fileID: 1702298050}
   _gameOverClip: {fileID: 0}
@@ -996,7 +996,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 87e843297a81990419f6198127fc4c85, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Unity::Game.CameraFollow
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.CameraFollow
   _target: {fileID: 646322117}
   _smoothTime: 0
   _offset: {x: 0, y: 10, z: -6.84}
@@ -1012,7 +1012,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5147e0e08c96e7346a6b1d0036f3f37e, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Unity::Game.ScreenShake
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.ScreenShake
   _playerHealthRef: {fileID: 646322122}
   _duration: 0.15
   _magnitude: 0.3
@@ -1395,7 +1395,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe6dd90a2c2329643a30bfc74d02ec4e, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Unity::Game.PauseInputController
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.PauseInputController
   _gameState: {fileID: 1702298050}
 --- !u!1 &428082515
 GameObject:
@@ -2046,7 +2046,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5c0f270fc4dcde54095b260f2c3be431, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Unity::Game.PlayerController
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.PlayerController
   _shootThreshold: 0.1
 --- !u!136 &646322114
 CapsuleCollider:
@@ -2183,7 +2183,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8dd81109f249c654bae8b2cae7c8a20f, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Unity::Game.PlayerMovement
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.PlayerMovement
   _speed: 5
 --- !u!114 &646322120
 MonoBehaviour:
@@ -2196,7 +2196,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bf8f224b692fc3e4198d64f5ca3cb146, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Unity::Game.PlayerShoot
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.PlayerShoot
   _gun: {fileID: 1932750514}
 --- !u!114 &646322121
 MonoBehaviour:
@@ -2209,7 +2209,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2466863702da12e49a57f7f5b71f86c7, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Unity::Game.PlayerRotation
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.PlayerRotation
   _rotationSpeed: 720
 --- !u!114 &646322122
 MonoBehaviour:
@@ -2222,7 +2222,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 846d107c4e109444197f08c4a6bcae47, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Unity::Game.HealthComponent
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.HealthComponent
   _maxHealth: 100
   _debugLog: 1
 --- !u!1 &660037532
@@ -2487,7 +2487,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 99754648c263cf445bfddc7ec8c37961, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Unity::Game.WaveAudio
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.WaveAudio
   _source: {fileID: 662556700}
   _waveRef: {fileID: 1013629112}
   _waveStartClip: {fileID: 0}
@@ -2541,7 +2541,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a448baa049646fc4daf4c8067632de8f, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Unity::Game.GameOverUI
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.GameOverUI
   _gameState: {fileID: 1702298050}
   _resetManager: {fileID: 1760600929}
   _panel: {fileID: 587256968}
@@ -2636,7 +2636,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7a7dc12738164404dba298e7ad16fb48, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Unity::Game.MainMenuUI
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.MainMenuUI
   _gameState: {fileID: 1702298050}
   _resetManager: {fileID: 1760600929}
   _panel: {fileID: 725488183}
@@ -2820,7 +2820,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 03ad2b258d530374cbf1134638fc1e58, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Unity::Game.PlayerAudio
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.PlayerAudio
   _source: {fileID: 743142989}
   _playerHealthRef: {fileID: 646322122}
   _playerRef: {fileID: 646322113}
@@ -3111,7 +3111,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 68b2dc8834ab9fd4c982aa94e7761f92, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Unity::Game.EnemySpawner
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.EnemySpawner
   _prefabs:
   - Prefab: {fileID: 1491644836695588414, guid: 8e457981d3ae14b4a948ed5ae1f8771f, type: 3}
     Weight: 6
@@ -3788,7 +3788,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 31658a22e892b9d439c6db4a4bb9d72a, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Unity::Game.WaveController
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.WaveController
   _waves:
   - EnemyCount: 5
     SpawnInterval: 1
@@ -3985,7 +3985,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1dc5518698386b64e88b59650ae08b26, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Unity::Game.WaveUI
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.WaveUI
   _waveRef: {fileID: 1013629112}
   _label: {fileID: 535934330}
 --- !u!114 &1097587833
@@ -4340,7 +4340,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1a76aa32c58e8b54b8cd04b329e2e63a, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Unity::Game.EnemyAudio
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.EnemyAudio
   _source: {fileID: 1402051462}
   _spawnerRef: {fileID: 836420982}
   _deathClip: {fileID: 0}
@@ -4394,7 +4394,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bee35268479fe0e43b03a35b4378f021, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Unity::Game.PauseUI
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.PauseUI
   _gameState: {fileID: 1702298050}
   _panel: {fileID: 174718221}
   _resumeButton: {fileID: 1794169375}
@@ -5084,7 +5084,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3186f93b4df7ec2459d4d33f756bb835, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Unity::Game.HealthBarUI
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.HealthBarUI
   _healthRef: {fileID: 646322122}
   _slider: {fileID: 1486535453}
 --- !u!114 &1597374740
@@ -5266,7 +5266,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: aa412e263e9538849a6309449d36df26, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Unity::Game.GameStateController
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.GameStateController
   _playerRef: {fileID: 646322113}
   _autoStart: 0
   _debugLog: 1
@@ -5328,7 +5328,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 255044156e7e5e84499aa8c658f31152, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Unity::Game.HighScoreController
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.HighScoreController
   _scoreRef: {fileID: 1999963527}
   _gameStateRef: {fileID: 1702298050}
   _prefsKey: HighScore
@@ -5375,7 +5375,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 699ccb81ba9f49f4c95a9cf52f1545f6, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Unity::Game.WorldResetManager
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.WorldResetManager
   _player: {fileID: 646322113}
   _spawnPoint: {fileID: 1439272296}
   _spawner: {fileID: 836420982}
@@ -5544,7 +5544,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0aeeaff1a0ea2aa408d52bd732f2e1d5, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Unity::Game.TimeController
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.TimeController
   _gameStateRef: {fileID: 1702298050}
 --- !u!1 &1815502430
 GameObject:
@@ -5596,7 +5596,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fc01170988b0c5c47ac77cfe02a0fc9c, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Unity::Game.HighScoreUI
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.HighScoreUI
   _highScoreRef: {fileID: 1706615883}
   _label: {fileID: 1895842911}
 --- !u!114 &1815502433
@@ -5687,7 +5687,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 316703b2a78794849b138d495b54dc32, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Unity::Game.ScoreUI
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.ScoreUI
   _scoreRef: {fileID: 1999963527}
   _label: {fileID: 936650108}
 --- !u!114 &1822438944
@@ -6054,7 +6054,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0cb901adea877d04bacb2191e58381ae, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Unity::Game.GunAudio
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.GunAudio
   _source: {fileID: 330585550}
   _gunRef: {fileID: 1932750514}
   _shotClip: {fileID: 0}
@@ -6105,7 +6105,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e92b9a3f65aa6604bbb6b9de64bcbc78, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Unity::Game.Gun
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.Gun
   _prefab: {fileID: 6247917408618948358, guid: 9c8a4317ddcb4ff4d90474e6455082ac, type: 3}
   _spawnPoint: {fileID: 1932750513}
   _damage: 10
@@ -6319,7 +6319,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0ee65315671c1734a8988b7334ad781b, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Unity::Game.ScoreController
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.ScoreController
   _spawnerRef: {fileID: 836420982}
   _gameStateRef: {fileID: 1702298050}
   _pointsPerKill: 1
@@ -6407,7 +6407,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b74c1e35a82f4d90bc63f2d5e9a017c8, type: 3}
   m_Name:
-  m_EditorClassIdentifier: Unity::Game.MuzzleFlashFX
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.MuzzleFlashFX
   _gunRef: {fileID: 1932750514}
   _muzzleEffect: {fileID: 2333333333}
 --- !u!114 &3555555555
@@ -6421,7 +6421,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c92e4f17d63b5a08e7413c6f0b128d9a, type: 3}
   m_Name:
-  m_EditorClassIdentifier: Unity::Game.PlayerHitFX
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.PlayerHitFX
   _playerHealthRef: {fileID: 646322122}
   _hitEffect: {fileID: 3333333333}
 --- !u!1 &2111111111
@@ -7861,7 +7861,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b2e9d4a17c6f4b83a9e1d05f3c728a64, type: 3}
   m_Name:
-  m_EditorClassIdentifier: Unity::Game.ParticleBurst
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.ParticleBurst
   _color: {r: 1, g: 0.92, b: 0.3, a: 1}
   _count: 10
   _lifetime: 0.1
@@ -7883,7 +7883,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b2e9d4a17c6f4b83a9e1d05f3c728a64, type: 3}
   m_Name:
-  m_EditorClassIdentifier: Unity::Game.ParticleBurst
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.ParticleBurst
   _color: {r: 1, g: 0.2, b: 0.15, a: 1}
   _count: 15
   _lifetime: 0.3
@@ -7937,7 +7937,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c3e7b1d9582a4f6c90d4a8e2b3f70d15, type: 3}
   m_Name:
-  m_EditorClassIdentifier: Unity::Game.EffectPool
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.EffectPool
   _defaultSize: 4
   _maxSize: 32
 --- !u!1660057539 &9223372036854775807
@@ -7973,7 +7973,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f8a0eaa6f814cf89ab1a43e01da2e64, type: 3}
   m_Name:
-  m_EditorClassIdentifier: Unity::Game.DamageAffiliation
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.DamageAffiliation
   _team: 1
   _allowFriendlyFire: 0
   _ignoreFriendlyCollisions: 1

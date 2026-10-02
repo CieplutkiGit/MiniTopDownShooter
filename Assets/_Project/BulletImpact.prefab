@@ -724,7 +724,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b2e9d4a17c6f4b83a9e1d05f3c728a64, type: 3}
   m_Name:
-  m_EditorClassIdentifier: Unity::Game.ParticleBurst
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.ParticleBurst
   _color: {r: 0.7, g: 0.9, b: 1, a: 1}
   _count: 6
   _lifetime: 0.15

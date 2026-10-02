@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b17e64e9a9f64cc99c2634d690df1abe, type: 3}
   m_Name: WaveSet_ArenaShowcase
-  m_EditorClassIdentifier: Unity::Game.WaveSet
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.WaveSet
   _waves:
   - EnemyCount: 8
     SpawnInterval: 0.8
