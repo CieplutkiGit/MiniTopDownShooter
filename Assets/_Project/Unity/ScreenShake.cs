@@ -13,38 +13,77 @@ namespace Game
         private float _timer;
         private Vector3 _currentOffset;
         private int _lastHealth;
+        private bool _isSubscribed;
 
         public Vector3 CurrentOffset
         {
             get { return _currentOffset; }
         }
 
+        public void Initialize(HealthComponent playerHealth)
+        {
+            UnsubscribeEvents();
+            _playerHealthRef = playerHealth;
+            _playerHealth = playerHealth;
+            if (isActiveAndEnabled)
+            {
+                SubscribeEvents();
+            }
+        }
+
         private void Awake()
         {
+            if (_playerHealthRef == null)
+            {
+                PlayerController pc = FindFirstObjectByType<PlayerController>();
+                if (pc != null)
+                {
+                    _playerHealthRef = pc.GetComponent<HealthComponent>();
+                }
+            }
+
             _playerHealth = _playerHealthRef;
             _currentOffset = Vector3.zero;
         }
 
         private void OnEnable()
         {
-            if (_playerHealth == null)
+            SubscribeEvents();
+        }
+
+        public void StopShake()
+        {
+            _timer = 0f;
+            _currentOffset = Vector3.zero;
+        }
+
+        private void OnDisable()
+        {
+            UnsubscribeEvents();
+            StopShake();
+        }
+
+        private void SubscribeEvents()
+        {
+            if (_isSubscribed || _playerHealth == null)
             {
                 return;
             }
 
             _playerHealth.OnHealthChanged += HandleHealthChanged;
             _lastHealth = _playerHealth.Current;
+            _isSubscribed = true;
         }
 
-        private void OnDisable()
+        private void UnsubscribeEvents()
         {
-            if (_playerHealth != null)
+            if (!_isSubscribed || _playerHealth == null)
             {
-                _playerHealth.OnHealthChanged -= HandleHealthChanged;
+                return;
             }
 
-            _timer = 0f;
-            _currentOffset = Vector3.zero;
+            _playerHealth.OnHealthChanged -= HandleHealthChanged;
+            _isSubscribed = false;
         }
 
         private void Update()

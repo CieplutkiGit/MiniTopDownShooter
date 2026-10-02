@@ -18,11 +18,24 @@ namespace Game
 
         private WeaponLoadout _loadout;
         private Gun _activeGun;
+        private bool _isSubscribedLoadout;
 
         public void Initialize(WeaponLoadout loadout)
         {
+            UnsubscribeLoadout();
+            UnbindGun();
+
             _loadoutRef = loadout;
             _loadout = loadout;
+
+            if (isActiveAndEnabled)
+            {
+                SubscribeLoadout();
+                if (_loadout != null && _loadout.ActiveGun != null)
+                {
+                    HandleWeaponEquipped(_loadout.ActiveGun, _loadout.ActiveIndex);
+                }
+            }
         }
 
         private void Awake()
@@ -37,24 +50,39 @@ namespace Game
 
         private void OnEnable()
         {
-            if (_loadout != null)
+            SubscribeLoadout();
+            if (_loadout != null && _loadout.ActiveGun != null)
             {
-                _loadout.WeaponEquipped += HandleWeaponEquipped;
-                if (_loadout.ActiveGun != null)
-                {
-                    HandleWeaponEquipped(_loadout.ActiveGun, _loadout.ActiveIndex);
-                }
+                HandleWeaponEquipped(_loadout.ActiveGun, _loadout.ActiveIndex);
             }
         }
 
         private void OnDisable()
         {
-            if (_loadout != null)
+            UnsubscribeLoadout();
+            UnbindGun();
+        }
+
+        private void SubscribeLoadout()
+        {
+            if (_isSubscribedLoadout || _loadout == null)
             {
-                _loadout.WeaponEquipped -= HandleWeaponEquipped;
+                return;
             }
 
-            UnbindGun();
+            _loadout.WeaponEquipped += HandleWeaponEquipped;
+            _isSubscribedLoadout = true;
+        }
+
+        private void UnsubscribeLoadout()
+        {
+            if (!_isSubscribedLoadout || _loadout == null)
+            {
+                return;
+            }
+
+            _loadout.WeaponEquipped -= HandleWeaponEquipped;
+            _isSubscribedLoadout = false;
         }
 
         private void Update()

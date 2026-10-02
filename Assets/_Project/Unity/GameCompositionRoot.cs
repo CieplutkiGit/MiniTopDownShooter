@@ -286,6 +286,22 @@ namespace Game
                 }
             }
 
+            ScreenShake shake = FindFirstObjectByType<ScreenShake>();
+            if (shake != null && _player != null)
+            {
+                HealthComponent playerHealth = _player.GetComponent<HealthComponent>();
+                if (playerHealth != null)
+                {
+                    shake.Initialize(playerHealth);
+                }
+            }
+
+            PlayerAudio playerAudio = FindFirstObjectByType<PlayerAudio>();
+            if (playerAudio != null && _player != null)
+            {
+                playerAudio.Initialize(_player);
+            }
+
             if (_settingsUI != null && _player != null)
             {
                 _settingsUI.Initialize(_player);

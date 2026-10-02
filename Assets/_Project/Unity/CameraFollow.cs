@@ -14,8 +14,20 @@ namespace Game
 
         private void OnEnable()
         {
+            ResetToTarget();
+        }
+
+        public void SetTarget(Transform target)
+        {
+            _target = target;
+            ResetToTarget();
+        }
+
+        public void ResetToTarget()
+        {
             if (_target != null)
             {
+                _velocity = Vector3.zero;
                 _basePosition = _target.position + _offset;
                 transform.position = _basePosition;
             }

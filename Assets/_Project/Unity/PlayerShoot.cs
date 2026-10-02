@@ -70,5 +70,31 @@ namespace Game
             Gun gun = ActiveGun;
             return gun != null ? gun.AddAmmo(amount) : 0;
         }
+
+        public void CancelActions()
+        {
+            Gun gun = ActiveGun;
+            if (gun != null)
+            {
+                gun.CancelBurst();
+                gun.CancelReload();
+            }
+        }
+
+        public void ResetWeapons()
+        {
+            CancelActions();
+
+            if (_loadout != null)
+            {
+                _loadout.ResetToDefault();
+            }
+
+            if (_gun != null)
+            {
+                _gun.ResetRuntimeState();
+                _gun.SetEquipped(_loadout == null || _loadout.Count == 0);
+            }
+        }
     }
 }

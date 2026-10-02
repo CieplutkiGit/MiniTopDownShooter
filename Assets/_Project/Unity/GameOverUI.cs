@@ -25,13 +25,11 @@ namespace Game
         private IScoreProvider _score;
         private IHighScoreProvider _highScore;
         private IWaveProvider _waves;
+        private bool _isSubscribed;
 
         public void Initialize(GameStateController gameState, WorldResetManager resetManager, ScoreController score = null, HighScoreController highScore = null, WaveController waves = null)
         {
-            if (_gameState != null && enabled)
-            {
-                _gameState.OnStateChanged -= HandleStateChanged;
-            }
+            UnsubscribeEvents();
 
             _gameStateRef = gameState;
             _resetManager = resetManager;
@@ -43,9 +41,9 @@ namespace Game
             _highScore = highScore;
             _waves = waves;
 
-            if (_gameState != null && enabled)
+            if (isActiveAndEnabled)
             {
-                _gameState.OnStateChanged += HandleStateChanged;
+                SubscribeEvents();
             }
         }
 
@@ -84,10 +82,7 @@ namespace Game
 
         private void OnEnable()
         {
-            if (_gameState != null)
-            {
-                _gameState.OnStateChanged += HandleStateChanged;
-            }
+            SubscribeEvents();
 
             if (_restartButton != null)
             {
@@ -99,18 +94,12 @@ namespace Game
                 _menuButton.onClick.AddListener(HandleMenuClicked);
             }
 
-            if (_panel != null)
-            {
-                _panel.SetActive(false);
-            }
+            SetPanelActive(false);
         }
 
         private void OnDisable()
         {
-            if (_gameState != null)
-            {
-                _gameState.OnStateChanged -= HandleStateChanged;
-            }
+            UnsubscribeEvents();
 
             if (_restartButton != null)
             {
@@ -123,6 +112,52 @@ namespace Game
             }
         }
 
+        private void SubscribeEvents()
+        {
+            if (_isSubscribed || _gameState == null)
+            {
+                return;
+            }
+
+            _gameState.OnStateChanged += HandleStateChanged;
+            _isSubscribed = true;
+        }
+
+        private void UnsubscribeEvents()
+        {
+            if (!_isSubscribed || _gameState == null)
+            {
+                return;
+            }
+
+            _gameState.OnStateChanged -= HandleStateChanged;
+            _isSubscribed = false;
+        }
+
+        private void SetPanelActive(bool active)
+        {
+            if (_panel == null)
+            {
+                return;
+            }
+
+            if (_panel == gameObject)
+            {
+                CanvasGroup cg = GetComponent<CanvasGroup>();
+                if (cg == null)
+                {
+                    cg = gameObject.AddComponent<CanvasGroup>();
+                }
+                cg.alpha = active ? 1f : 0f;
+                cg.interactable = active;
+                cg.blocksRaycasts = active;
+            }
+            else
+            {
+                _panel.SetActive(active);
+            }
+        }
+
         private void HandleStateChanged(GameState oldState, GameState newState)
         {
             if (_panel == null)
@@ -131,7 +166,7 @@ namespace Game
             }
 
             bool show = newState == GameState.GameOver;
-            _panel.SetActive(show);
+            SetPanelActive(show);
 
             if (show)
             {

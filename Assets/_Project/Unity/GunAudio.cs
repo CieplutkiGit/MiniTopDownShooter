@@ -9,6 +9,18 @@ namespace Game
         [SerializeField] private AudioClip _shotClip;
 
         private IGunEvents _gun;
+        private bool _isSubscribed;
+
+        public void Initialize(Gun gun)
+        {
+            UnsubscribeEvents();
+            _gunRef = gun;
+            _gun = gun;
+            if (isActiveAndEnabled)
+            {
+                SubscribeEvents();
+            }
+        }
 
         private void Awake()
         {
@@ -22,22 +34,34 @@ namespace Game
 
         private void OnEnable()
         {
-            if (_gun == null)
+            SubscribeEvents();
+        }
+
+        private void OnDisable()
+        {
+            UnsubscribeEvents();
+        }
+
+        private void SubscribeEvents()
+        {
+            if (_isSubscribed || _gun == null)
             {
                 return;
             }
 
             _gun.Fired += HandleFired;
+            _isSubscribed = true;
         }
 
-        private void OnDisable()
+        private void UnsubscribeEvents()
         {
-            if (_gun == null)
+            if (!_isSubscribed || _gun == null)
             {
                 return;
             }
 
             _gun.Fired -= HandleFired;
+            _isSubscribed = false;
         }
 
         private void HandleFired()

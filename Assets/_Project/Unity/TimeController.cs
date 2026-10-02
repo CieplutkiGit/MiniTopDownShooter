@@ -8,20 +8,18 @@ namespace Game
         [SerializeField] private GameStateController _gameStateRef;
 
         private IGameStateProvider _gameState;
+        private bool _isSubscribed;
 
         public void Initialize(GameStateController gameState)
         {
-            if (_gameState != null && enabled)
-            {
-                _gameState.OnStateChanged -= HandleStateChanged;
-            }
+            UnsubscribeEvents();
 
             _gameStateRef = gameState;
             _gameState = gameState;
 
-            if (_gameState != null && enabled)
+            if (isActiveAndEnabled)
             {
-                _gameState.OnStateChanged += HandleStateChanged;
+                SubscribeEvents();
                 ApplyTimeScale(_gameState.CurrentState);
             }
         }
@@ -37,9 +35,9 @@ namespace Game
 
         private void OnEnable()
         {
+            SubscribeEvents();
             if (_gameState != null)
             {
-                _gameState.OnStateChanged += HandleStateChanged;
                 ApplyTimeScale(_gameState.CurrentState);
             }
         }
@@ -54,12 +52,30 @@ namespace Game
 
         private void OnDisable()
         {
-            if (_gameState != null)
+            UnsubscribeEvents();
+            Time.timeScale = 1f;
+        }
+
+        private void SubscribeEvents()
+        {
+            if (_isSubscribed || _gameState == null)
             {
-                _gameState.OnStateChanged -= HandleStateChanged;
+                return;
             }
 
-            Time.timeScale = 1f;
+            _gameState.OnStateChanged += HandleStateChanged;
+            _isSubscribed = true;
+        }
+
+        private void UnsubscribeEvents()
+        {
+            if (!_isSubscribed || _gameState == null)
+            {
+                return;
+            }
+
+            _gameState.OnStateChanged -= HandleStateChanged;
+            _isSubscribed = false;
         }
 
         private void HandleStateChanged(GameState oldState, GameState newState)

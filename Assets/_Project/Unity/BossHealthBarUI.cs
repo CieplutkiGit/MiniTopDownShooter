@@ -17,9 +17,30 @@ namespace Game
 
         private void Awake()
         {
-            if (_panel != null)
+            SetPanelActive(false);
+        }
+
+        private void SetPanelActive(bool active)
+        {
+            if (_panel == null)
             {
-                _panel.SetActive(false);
+                return;
+            }
+
+            if (_panel == gameObject)
+            {
+                CanvasGroup cg = GetComponent<CanvasGroup>();
+                if (cg == null)
+                {
+                    cg = gameObject.AddComponent<CanvasGroup>();
+                }
+                cg.alpha = active ? 1f : 0f;
+                cg.interactable = active;
+                cg.blocksRaycasts = active;
+            }
+            else
+            {
+                _panel.SetActive(active);
             }
         }
 
@@ -75,11 +96,7 @@ namespace Game
             }
 
             UpdatePhaseDisplay(_activeBoss.ActivePhaseIndex);
-
-            if (_panel != null)
-            {
-                _panel.SetActive(true);
-            }
+            SetPanelActive(true);
         }
 
         private void UnbindCurrentBoss()
@@ -98,10 +115,7 @@ namespace Game
             _activeBoss = null;
             _activeHealth = null;
 
-            if (_panel != null)
-            {
-                _panel.SetActive(false);
-            }
+            SetPanelActive(false);
         }
 
         private void HandleHealthChanged(int current, int max)

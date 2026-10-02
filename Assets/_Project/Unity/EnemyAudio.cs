@@ -9,6 +9,18 @@ namespace Game
         [SerializeField] private AudioClip _deathClip;
 
         private ISpawner _spawner;
+        private bool _isSubscribed;
+
+        public void Initialize(EnemySpawner spawner)
+        {
+            UnsubscribeEvents();
+            _spawnerRef = spawner;
+            _spawner = spawner;
+            if (isActiveAndEnabled)
+            {
+                SubscribeEvents();
+            }
+        }
 
         private void Awake()
         {
@@ -22,22 +34,34 @@ namespace Game
 
         private void OnEnable()
         {
-            if (_spawner == null)
+            SubscribeEvents();
+        }
+
+        private void OnDisable()
+        {
+            UnsubscribeEvents();
+        }
+
+        private void SubscribeEvents()
+        {
+            if (_isSubscribed || _spawner == null)
             {
                 return;
             }
 
             _spawner.EnemyKilled += HandleEnemyKilled;
+            _isSubscribed = true;
         }
 
-        private void OnDisable()
+        private void UnsubscribeEvents()
         {
-            if (_spawner == null)
+            if (!_isSubscribed || _spawner == null)
             {
                 return;
             }
 
             _spawner.EnemyKilled -= HandleEnemyKilled;
+            _isSubscribed = false;
         }
 
         private void HandleEnemyKilled(int scoreValue)

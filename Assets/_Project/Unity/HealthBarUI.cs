@@ -10,11 +10,17 @@ namespace Game
         [SerializeField] private Slider _slider;
 
         private IHealthReadable _health;
+        private bool _isSubscribed;
 
         public void Initialize(HealthComponent health)
         {
+            UnsubscribeEvents();
             _healthRef = health;
             _health = health;
+            if (isActiveAndEnabled)
+            {
+                SubscribeEvents();
+            }
         }
 
         private void Awake()
@@ -37,23 +43,35 @@ namespace Game
 
         private void OnEnable()
         {
-            if (_health == null)
+            SubscribeEvents();
+        }
+
+        private void OnDisable()
+        {
+            UnsubscribeEvents();
+        }
+
+        private void SubscribeEvents()
+        {
+            if (_isSubscribed || _health == null)
             {
                 return;
             }
 
             _health.OnHealthChanged += HandleHealthChanged;
+            _isSubscribed = true;
             UpdateSlider(_health.Current, _health.Max);
         }
 
-        private void OnDisable()
+        private void UnsubscribeEvents()
         {
-            if (_health == null)
+            if (!_isSubscribed || _health == null)
             {
                 return;
             }
 
             _health.OnHealthChanged -= HandleHealthChanged;
+            _isSubscribed = false;
         }
 
         private void HandleHealthChanged(int current, int max)

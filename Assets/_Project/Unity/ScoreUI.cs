@@ -10,11 +10,17 @@ namespace Game
         [SerializeField] private TMP_Text _label;
 
         private IScoreProvider _score;
+        private bool _isSubscribed;
 
         public void Initialize(ScoreController score)
         {
+            UnsubscribeEvents();
             _scoreRef = score;
             _score = score;
+            if (isActiveAndEnabled)
+            {
+                SubscribeEvents();
+            }
         }
 
         private void Awake()
@@ -29,23 +35,35 @@ namespace Game
 
         private void OnEnable()
         {
-            if (_score == null)
+            SubscribeEvents();
+        }
+
+        private void OnDisable()
+        {
+            UnsubscribeEvents();
+        }
+
+        private void SubscribeEvents()
+        {
+            if (_isSubscribed || _score == null)
             {
                 return;
             }
 
             _score.OnScoreChanged += HandleScoreChanged;
+            _isSubscribed = true;
             UpdateLabel(_score.Score);
         }
 
-        private void OnDisable()
+        private void UnsubscribeEvents()
         {
-            if (_score == null)
+            if (!_isSubscribed || _score == null)
             {
                 return;
             }
 
             _score.OnScoreChanged -= HandleScoreChanged;
+            _isSubscribed = false;
         }
 
         private void HandleScoreChanged(int newScore)

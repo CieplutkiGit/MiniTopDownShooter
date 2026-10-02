@@ -117,6 +117,27 @@ namespace Game
             {
                 _movement?.Move(Vector2.zero);
                 _input?.ClearQueuedActions();
+                _shoot?.CancelActions();
+            }
+        }
+
+        private void OnApplicationFocus(bool hasFocus)
+        {
+            if (!hasFocus)
+            {
+                _movement?.Move(Vector2.zero);
+                _input?.ClearQueuedActions();
+                _shoot?.CancelActions();
+            }
+        }
+
+        private void OnApplicationPause(bool pauseStatus)
+        {
+            if (pauseStatus)
+            {
+                _movement?.Move(Vector2.zero);
+                _input?.ClearQueuedActions();
+                _shoot?.CancelActions();
             }
         }
 
@@ -147,6 +168,7 @@ namespace Game
 
         private void HandleDead()
         {
+            _shoot?.CancelActions();
             ChangeState(_deadState);
             Died?.Invoke();
         }
@@ -167,10 +189,17 @@ namespace Game
             _rotation.SetRotation(rotation);
             _health.ResetHealth();
 
-            WeaponLoadout loadout = GetComponent<WeaponLoadout>();
-            if (loadout != null)
+            if (_shoot != null)
             {
-                loadout.ResetToDefault();
+                _shoot.ResetWeapons();
+            }
+            else
+            {
+                WeaponLoadout loadout = GetComponent<WeaponLoadout>();
+                if (loadout != null)
+                {
+                    loadout.ResetToDefault();
+                }
             }
 
             _input.ResetGameplayTransientState();
@@ -181,11 +210,21 @@ namespace Game
 
         public void ApplySettings(GameSettingsData settings)
         {
-            if (_input != null && settings != null)
+            if (settings == null)
+            {
+                return;
+            }
+
+            if (_input != null)
             {
                 _input.AimSensitivity = settings.AimSensitivity;
                 _input.MoveDeadzone = settings.Deadzone;
                 _input.LookDeadzone = settings.Deadzone;
+            }
+
+            if (_rotation != null)
+            {
+                _rotation.AimSensitivity = settings.AimSensitivity;
             }
         }
 

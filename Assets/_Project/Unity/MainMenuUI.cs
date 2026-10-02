@@ -14,21 +14,19 @@ namespace Game
         [SerializeField] private Button _playButton;
 
         private IGameStateProvider _gameState;
+        private bool _isSubscribed;
 
         public void Initialize(GameStateController gameState, WorldResetManager resetManager)
         {
-            if (_gameState != null && enabled)
-            {
-                _gameState.OnStateChanged -= HandleStateChanged;
-            }
+            UnsubscribeEvents();
 
             _gameStateRef = gameState;
             _resetManager = resetManager;
             _gameState = gameState;
 
-            if (_gameState != null && enabled)
+            if (isActiveAndEnabled)
             {
-                _gameState.OnStateChanged += HandleStateChanged;
+                SubscribeEvents();
             }
         }
 
@@ -49,10 +47,7 @@ namespace Game
 
         private void OnEnable()
         {
-            if (_gameState != null)
-            {
-                _gameState.OnStateChanged += HandleStateChanged;
-            }
+            SubscribeEvents();
 
             if (_playButton != null)
             {
@@ -70,15 +65,34 @@ namespace Game
 
         private void OnDisable()
         {
-            if (_gameState != null)
-            {
-                _gameState.OnStateChanged -= HandleStateChanged;
-            }
+            UnsubscribeEvents();
 
             if (_playButton != null)
             {
                 _playButton.onClick.RemoveListener(HandlePlayClicked);
             }
+        }
+
+        private void SubscribeEvents()
+        {
+            if (_isSubscribed || _gameState == null)
+            {
+                return;
+            }
+
+            _gameState.OnStateChanged += HandleStateChanged;
+            _isSubscribed = true;
+        }
+
+        private void UnsubscribeEvents()
+        {
+            if (!_isSubscribed || _gameState == null)
+            {
+                return;
+            }
+
+            _gameState.OnStateChanged -= HandleStateChanged;
+            _isSubscribed = false;
         }
 
         private void HandleStateChanged(GameState oldState, GameState newState)
@@ -93,7 +107,22 @@ namespace Game
                 return;
             }
 
-            _panel.SetActive(state == GameState.Menu);
+            bool show = state == GameState.Menu;
+            if (_panel == gameObject)
+            {
+                CanvasGroup cg = GetComponent<CanvasGroup>();
+                if (cg == null)
+                {
+                    cg = gameObject.AddComponent<CanvasGroup>();
+                }
+                cg.alpha = show ? 1f : 0f;
+                cg.interactable = show;
+                cg.blocksRaycasts = show;
+            }
+            else
+            {
+                _panel.SetActive(show);
+            }
         }
 
         private void HandlePlayClicked()

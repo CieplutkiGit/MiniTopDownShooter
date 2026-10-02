@@ -9,6 +9,18 @@ namespace Game
         [SerializeField] private AudioClip _waveStartClip;
 
         private IWaveProvider _waves;
+        private bool _isSubscribed;
+
+        public void Initialize(WaveController waves)
+        {
+            UnsubscribeEvents();
+            _waveRef = waves;
+            _waves = waves;
+            if (isActiveAndEnabled)
+            {
+                SubscribeEvents();
+            }
+        }
 
         private void Awake()
         {
@@ -22,22 +34,34 @@ namespace Game
 
         private void OnEnable()
         {
-            if (_waves == null)
+            SubscribeEvents();
+        }
+
+        private void OnDisable()
+        {
+            UnsubscribeEvents();
+        }
+
+        private void SubscribeEvents()
+        {
+            if (_isSubscribed || _waves == null)
             {
                 return;
             }
 
             _waves.WaveStarted += HandleWaveStarted;
+            _isSubscribed = true;
         }
 
-        private void OnDisable()
+        private void UnsubscribeEvents()
         {
-            if (_waves == null)
+            if (!_isSubscribed || _waves == null)
             {
                 return;
             }
 
             _waves.WaveStarted -= HandleWaveStarted;
+            _isSubscribed = false;
         }
 
         private void HandleWaveStarted(int waveNumber)

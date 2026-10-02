@@ -14,6 +14,25 @@ namespace Game
         private IHealthReadable _playerHealth;
         private IPlayerEvents _player;
         private int _lastHealth;
+        private bool _isSubscribed;
+
+        public void Initialize(PlayerController player)
+        {
+            UnsubscribeEvents();
+            _playerRef = player;
+            _playerHealthRef = player != null ? player.GetComponent<HealthComponent>() : null;
+            _player = _playerRef;
+            _playerHealth = _playerHealthRef;
+            if (_playerHealth != null)
+            {
+                _lastHealth = _playerHealth.Current;
+            }
+
+            if (isActiveAndEnabled)
+            {
+                SubscribeEvents();
+            }
+        }
 
         private void Awake()
         {
@@ -35,18 +54,44 @@ namespace Game
         {
             if (_playerHealth != null)
             {
-                _playerHealth.OnHealthChanged += HandleHealthChanged;
                 _lastHealth = _playerHealth.Current;
+            }
+
+            SubscribeEvents();
+        }
+
+        private void OnDisable()
+        {
+            UnsubscribeEvents();
+        }
+
+        private void SubscribeEvents()
+        {
+            if (_isSubscribed)
+            {
+                return;
+            }
+
+            if (_playerHealth != null)
+            {
+                _playerHealth.OnHealthChanged += HandleHealthChanged;
             }
 
             if (_player != null)
             {
                 _player.Died += HandleDied;
             }
+
+            _isSubscribed = true;
         }
 
-        private void OnDisable()
+        private void UnsubscribeEvents()
         {
+            if (!_isSubscribed)
+            {
+                return;
+            }
+
             if (_playerHealth != null)
             {
                 _playerHealth.OnHealthChanged -= HandleHealthChanged;
@@ -56,6 +101,8 @@ namespace Game
             {
                 _player.Died -= HandleDied;
             }
+
+            _isSubscribed = false;
         }
 
         private void HandleHealthChanged(int current, int max)

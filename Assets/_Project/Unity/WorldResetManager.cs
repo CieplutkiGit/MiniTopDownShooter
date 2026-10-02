@@ -93,28 +93,32 @@ namespace Game
                 _spawner.ClearAllAlive();
             }
 
-            // 3. Clear active effects
+            // 3. Clear active effects and debris chunks
             if (_effectPool != null)
             {
                 _effectPool.ClearAllActive();
             }
+            ClearActiveDebris();
 
-            // 4. Clear active pickups
+            // 4. Clear active pickups (both ammo and weapon pickups)
             ClearActivePickups();
 
-            // 5. Restore timers and wave progress
+            // 5. Restore camera and screen shake state
+            ResetCameraState();
+
+            // 6. Restore timers and wave progress
             if (_waveRef != null)
             {
                 _waveRef.ResetWaves();
             }
 
-            // 6. Reset score tracker
+            // 7. Reset score tracker
             if (_scoreRef != null)
             {
                 _scoreRef.ResetScore();
             }
 
-            // 7. Restore player health, ammo, starting weapons, rotation, and input BEFORE entering Playing
+            // 8. Restore player health, ammo, starting weapons, rotation, and input BEFORE entering Playing
             if (_player != null && _spawnPoint != null)
             {
                 _player.ResetToSpawn(_spawnPoint.position, _spawnPoint.rotation);
@@ -124,7 +128,7 @@ namespace Game
                 _player.ResetToSpawn(_player.transform.position, _player.transform.rotation);
             }
 
-            // 8. Now safely enter Playing
+            // 9. Now safely enter Playing
             _gameState.StartGame();
         }
 
@@ -140,6 +144,18 @@ namespace Game
             }
         }
 
+        private void ClearActiveDebris()
+        {
+            DebrisChunk[] debris = FindObjectsByType<DebrisChunk>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            for (int i = 0; i < debris.Length; i++)
+            {
+                if (debris[i] != null)
+                {
+                    debris[i].gameObject.SetActive(false);
+                }
+            }
+        }
+
         private void ClearActivePickups()
         {
             AmmoPickup[] ammoPickups = FindObjectsByType<AmmoPickup>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
@@ -149,6 +165,30 @@ namespace Game
                 {
                     Destroy(ammoPickups[i].gameObject);
                 }
+            }
+
+            WeaponPickup[] weaponPickups = FindObjectsByType<WeaponPickup>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            for (int i = 0; i < weaponPickups.Length; i++)
+            {
+                if (weaponPickups[i] != null)
+                {
+                    Destroy(weaponPickups[i].gameObject);
+                }
+            }
+        }
+
+        private void ResetCameraState()
+        {
+            CameraFollow camFollow = FindFirstObjectByType<CameraFollow>();
+            if (camFollow != null)
+            {
+                camFollow.ResetToTarget();
+            }
+
+            ScreenShake shake = FindFirstObjectByType<ScreenShake>();
+            if (shake != null)
+            {
+                shake.StopShake();
             }
         }
     }
