@@ -17,6 +17,14 @@ namespace Game
         public MobileInputState Input => _input;
         public MobileInputAction Action => _action;
 
+        public void Configure(
+            MobileInputState input,
+            MobileInputAction action)
+        {
+            _input = input;
+            _action = action;
+        }
+
         public void OnPointerDown(PointerEventData eventData)
         {
             if (_input == null || _activePointerId != int.MinValue)
