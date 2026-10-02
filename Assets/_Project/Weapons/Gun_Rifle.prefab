@@ -43,7 +43,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e92b9a3f65aa6604bbb6b9de64bcbc78, type: 3}
   m_Name:
-  m_EditorClassIdentifier: Unity::Game.Gun
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.Gun
   _definition: {fileID: 11400000, guid: 59a6380ea8a548adbd041650f5f16336, type: 2}
   _spawnPoint: {fileID: 400000}
   _effectPool: {fileID: 0}

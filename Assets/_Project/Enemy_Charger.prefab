@@ -157,7 +157,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 33a9f8c17fda7404a9e11b3fe745ba1a, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Unity::Game.EnemyMovement
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.EnemyMovement
 --- !u!114 &1639913267662684004
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -169,7 +169,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ea25a9c3e1989ce489f4e8a658b9a4c2, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Unity::Game.EnemyAttack
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.EnemyAttack
   _damage: 10
   _attackCooldown: 1
   _attackRange: 2
@@ -184,7 +184,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 846d107c4e109444197f08c4a6bcae47, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Unity::Game.HealthComponent
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.HealthComponent
   _maxHealth: 100
 --- !u!114 &1491644836695588414
 MonoBehaviour:
@@ -197,7 +197,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7d8b655eb99d3584396f4b02ff715b1a, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Unity::Game.EnemyController
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.EnemyController
   _thinkInterval: 0.2
   _statsRef: {fileID: 11400000, guid: 74f18d3db07e4fd6842b77c6e96311aa, type: 2}
   _behavior: {fileID: 8444444444444444444}
@@ -212,7 +212,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a3d7f892b1c54e6f9d2a0b83e5c71f94, type: 3}
   m_Name:
-  m_EditorClassIdentifier: Unity::Game.EnemyDeathFX
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.EnemyDeathFX
   _enemyRef: {fileID: 1491644836695588414}
   _deathEffect: {fileID: 8333333333, guid: d45e7f12c83b4a96f1e2d3c4b5a67890, type: 3}
 --- !u!114 &7444444444444444444
@@ -226,7 +226,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c4a8e2f95d3b4176b8e0a2c6f91d537e, type: 3}
   m_Name:
-  m_EditorClassIdentifier: Unity::Game.EnemyHitFX
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.EnemyHitFX
   _healthRef: {fileID: 2686218851008760920}
   _hitEffect: {fileID: 8333333333, guid: e7c3a91d6b8f4e2a9c5d0b3f7a16e482, type: 3}
 --- !u!114 &7777777777777777777
@@ -240,7 +240,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f7a2d8e4c1b9463f8a5d2c7e0b94f163, type: 3}
   m_Name:
-  m_EditorClassIdentifier: Unity::Game.EnemyDeathDebris
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.EnemyDeathDebris
   _enemyRef: {fileID: 1491644836695588414}
   _renderer: {fileID: 678664222975679587}
   _chunkMesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
@@ -264,7 +264,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f8a0eaa6f814cf89ab1a43e01da2e64, type: 3}
   m_Name:
-  m_EditorClassIdentifier: Unity::Game.DamageAffiliation
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.DamageAffiliation
   _team: 2
   _allowFriendlyFire: 0
   _ignoreFriendlyCollisions: 1
@@ -280,7 +280,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e92e443552e8410f81868b9aa9b80692, type: 3}
   m_Name:
-  m_EditorClassIdentifier: Unity::Game.ChargerEnemyBehavior
+  m_EditorClassIdentifier: Cieplutki.MiniTopDownShooter.Runtime::Cieplutki.MiniTopDownShooter.Runtime.ChargerEnemyBehavior
   _chargeTriggerRange: 8
   _minimumChargeRange: 3
   _windupDuration: 0.55
