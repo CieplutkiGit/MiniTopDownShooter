@@ -37,6 +37,9 @@ namespace Game
         private int _burstShotsRemaining;
         private float _nextBurstShotTime;
         private Vector3 _burstDirection;
+        private DamageAffiliation _damageAffiliation;
+        private Transform _damageSourceRoot;
+        private CombatTeam _sourceTeam;
 
         public event Action Fired;
         public event Action EmptyFired;
@@ -76,6 +79,13 @@ namespace Game
         private void Awake()
         {
             InitializeAmmoState();
+            _damageSourceRoot = transform.root;
+            _damageAffiliation = DamageAffiliation.Find(this);
+            _sourceTeam =
+                _damageAffiliation != null &&
+                _damageAffiliation.Team != CombatTeam.Neutral
+                    ? _damageAffiliation.Team
+                    : DamageAffiliation.ResolveTeam(this);
 
             if (_spawnPoint == null)
             {
@@ -410,7 +420,9 @@ namespace Game
                     Damage,
                     _effectPool,
                     speedOverride,
-                    lifetimeOverride);
+                    lifetimeOverride,
+                    _damageAffiliation,
+                    _damageSourceRoot);
             }
         }
 
@@ -442,29 +454,74 @@ namespace Game
                 {
                     Collider collider = hits[i].collider;
 
-                    if (collider == null || collider.transform.root == transform.root)
+                    if (collider == null ||
+                        (_damageSourceRoot != null &&
+                         collider.transform.root == _damageSourceRoot))
                     {
                         continue;
                     }
 
-                    if (!TryGetDamageable(collider, out IDamageable damageable, out Component owner))
+                    DamageAffiliation targetAffiliation =
+                        DamageAffiliation.Find(collider);
+
+                    CombatTeam targetTeam =
+                        targetAffiliation != null &&
+                        targetAffiliation.Team != CombatTeam.Neutral
+                            ? targetAffiliation.Team
+                            : DamageAffiliation.ResolveTeam(collider);
+
+                    if (DamageAffiliation.ShouldIgnoreFriendlyCollision(
+                            _damageAffiliation,
+                            _sourceTeam,
+                            targetAffiliation,
+                            targetTeam))
+                    {
+                        continue;
+                    }
+
+                    if (!DamageAffiliation.TryGetDamageable(
+                            collider,
+                            out IDamageable damageable,
+                            out Component owner))
                     {
                         break;
                     }
 
-                    int targetId = owner != null ? owner.GetInstanceID() : collider.GetInstanceID();
+                    targetTeam =
+                        targetAffiliation != null &&
+                        targetAffiliation.Team != CombatTeam.Neutral
+                            ? targetAffiliation.Team
+                            : DamageAffiliation.ResolveTeam(owner);
+
+                    if (!DamageAffiliation.CanDamage(
+                            _damageAffiliation,
+                            _sourceTeam,
+                            targetAffiliation,
+                            targetTeam))
+                    {
+                        break;
+                    }
+
+                    int targetId =
+                        owner != null
+                            ? owner.GetInstanceID()
+                            : collider.GetInstanceID();
 
                     if (!damagedTargets.Add(targetId))
                     {
                         continue;
                     }
 
-                    float multiplier = _definition.EvaluateDamageMultiplier(hits[i].distance);
-                    int resolvedDamage = Mathf.RoundToInt(Damage * multiplier);
+                    float multiplier =
+                        _definition.EvaluateDamageMultiplier(hits[i].distance);
+
+                    int resolvedDamage =
+                        Mathf.RoundToInt(Damage * multiplier);
 
                     if (resolvedDamage > 0)
                     {
-                        damageable.TakeDamage(new DamageData(resolvedDamage));
+                        damageable.TakeDamage(
+                            new DamageData(resolvedDamage));
                     }
 
                     if (remainingPenetrations <= 0)
@@ -601,28 +658,6 @@ namespace Game
         private static int CompareHitDistance(RaycastHit left, RaycastHit right)
         {
             return left.distance.CompareTo(right.distance);
-        }
-
-        private static bool TryGetDamageable(
-            Collider collider,
-            out IDamageable damageable,
-            out Component owner)
-        {
-            MonoBehaviour[] behaviours = collider.GetComponentsInParent<MonoBehaviour>(true);
-
-            for (int i = 0; i < behaviours.Length; i++)
-            {
-                if (behaviours[i] is IDamageable found)
-                {
-                    damageable = found;
-                    owner = behaviours[i];
-                    return true;
-                }
-            }
-
-            damageable = null;
-            owner = null;
-            return false;
         }
 
         private void OnValidate()
