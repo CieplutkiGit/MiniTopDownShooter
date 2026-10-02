@@ -64,6 +64,9 @@ namespace Game
 
         public WaveSet WaveSet => _waveSet;
 
+        public IReadOnlyList<WaveConfig> ConfiguredWaves =>
+            _waveSet != null ? _waveSet.Waves : _waves;
+
         public int CurrentWaveNumber => _runner != null ? _runner.CurrentWaveNumber : 0;
 
         private void Awake()
