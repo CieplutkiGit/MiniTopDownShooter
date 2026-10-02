@@ -1,7 +1,7 @@
-using Application;
+using Cieplutki.MiniTopDownShooter.Application;
 using NUnit.Framework;
 
-namespace MiniTopDownShooter.Tests
+namespace Cieplutki.MiniTopDownShooter.Tests
 {
     public class WaveRunnerTests
     {

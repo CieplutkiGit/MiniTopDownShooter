@@ -1,6 +1,6 @@
 {
-    "name": "Core",
-    "rootNamespace": "Core",
+    "name": "Cieplutki.MiniTopDownShooter.Core",
+    "rootNamespace": "Cieplutki.MiniTopDownShooter.Core",
     "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],

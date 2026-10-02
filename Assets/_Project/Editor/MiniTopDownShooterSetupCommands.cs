@@ -1,4 +1,4 @@
-using Game;
+using Cieplutki.MiniTopDownShooter.Runtime;
 using Unity.AI.Navigation;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -6,6 +6,8 @@ using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.SceneManagement;
 
+namespace Cieplutki.MiniTopDownShooter.Editor
+{
 public static class MiniTopDownShooterSetupCommands
 {
     private const string RiflePrefabPath =
@@ -610,4 +612,5 @@ public static class MiniTopDownShooterSetupCommands
             EditorSceneManager.MarkSceneDirty(scene);
         }
     }
+}
 }

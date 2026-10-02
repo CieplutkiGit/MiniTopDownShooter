@@ -1,8 +1,8 @@
-using Game;
+using Cieplutki.MiniTopDownShooter.Runtime;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace MiniTopDownShooter.Tests
+namespace Cieplutki.MiniTopDownShooter.Tests
 {
     public class MobileInputStateTests
     {

@@ -1,7 +1,7 @@
-using Core;
+using Cieplutki.MiniTopDownShooter.Core;
 using NUnit.Framework;
 
-namespace MiniTopDownShooter.Tests
+namespace Cieplutki.MiniTopDownShooter.Tests
 {
     public class HealthTests
     {

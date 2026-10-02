@@ -1,6 +1,6 @@
 {
-    "name": "MiniTopDownShooter.Tests",
-    "rootNamespace": "MiniTopDownShooter.Tests",
+    "name": "Cieplutki.MiniTopDownShooter.Tests",
+    "rootNamespace": "Cieplutki.MiniTopDownShooter.Tests",
     "references": [
         "GUID:2c7b87ce2634cf140905f8d3f56c7098",
         "GUID:d2ab2add2c2367a42826eec9447f4502",

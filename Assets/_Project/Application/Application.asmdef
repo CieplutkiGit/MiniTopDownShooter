@@ -1,6 +1,6 @@
 {
-    "name": "Application",
-    "rootNamespace": "Application",
+    "name": "Cieplutki.MiniTopDownShooter.Application",
+    "rootNamespace": "Cieplutki.MiniTopDownShooter.Application",
     "references": [
         "GUID:2c7b87ce2634cf140905f8d3f56c7098"
     ],

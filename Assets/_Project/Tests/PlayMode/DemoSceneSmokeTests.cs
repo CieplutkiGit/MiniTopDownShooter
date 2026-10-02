@@ -1,11 +1,11 @@
 using System.Collections;
-using Game;
+using Cieplutki.MiniTopDownShooter.Runtime;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 
-namespace MiniTopDownShooter.PlayModeTests
+namespace Cieplutki.MiniTopDownShooter.PlayModeTests
 {
     public class DemoSceneSmokeTests
     {

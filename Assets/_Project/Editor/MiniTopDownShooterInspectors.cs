@@ -1,8 +1,10 @@
 using System.Collections.Generic;
-using Game;
+using Cieplutki.MiniTopDownShooter.Runtime;
 using UnityEditor;
 using UnityEngine;
 
+namespace Cieplutki.MiniTopDownShooter.Editor
+{
 [CustomEditor(typeof(WeaponDefinition))]
 public class WeaponDefinitionEditor : Editor
 {
@@ -355,4 +357,5 @@ public class EnemySpawnerEditor : Editor
                 MessageType.Info);
         }
     }
+}
 }

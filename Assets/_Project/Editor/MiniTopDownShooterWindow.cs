@@ -1,12 +1,14 @@
 using System.Collections.Generic;
 using System.Text;
-using Game;
+using Cieplutki.MiniTopDownShooter.Runtime;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 
+namespace Cieplutki.MiniTopDownShooter.Editor
+{
 public class MiniTopDownShooterWindow : EditorWindow
 {
     private const string DocumentationPath = "Assets/_Project/Documentation/README.md";
@@ -741,4 +743,5 @@ public class MiniTopDownShooterWindow : EditorWindow
         warnings++;
         report.AppendLine($"[WARN] {message}");
     }
+}
 }
