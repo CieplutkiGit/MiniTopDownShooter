@@ -1,8 +1,8 @@
 using System;
-using Core;
+using Cieplutki.MiniTopDownShooter.Core;
 using UnityEngine;
 
-namespace Game
+namespace Cieplutki.MiniTopDownShooter.Runtime
 {
     public class Projectile : MonoBehaviour
     {

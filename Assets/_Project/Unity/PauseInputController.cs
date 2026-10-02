@@ -1,9 +1,11 @@
-using Application;
+using Cieplutki.MiniTopDownShooter.Application;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Serialization;
 
-namespace Game
+using Cieplutki.MiniTopDownShooter.Input;
+
+namespace Cieplutki.MiniTopDownShooter.Runtime
 {
     public class PauseInputController : MonoBehaviour
     {

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Game
+namespace Cieplutki.MiniTopDownShooter.Runtime
 {
     [RequireComponent(typeof(Rigidbody))]
     public class PlayerMovement : MonoBehaviour

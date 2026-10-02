@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace Game
+namespace Cieplutki.MiniTopDownShooter.Runtime
 {
     [RequireComponent(typeof(ParticleSystem))]
     public class ParticleBurst : MonoBehaviour

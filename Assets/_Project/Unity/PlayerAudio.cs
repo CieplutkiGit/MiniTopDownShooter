@@ -1,8 +1,8 @@
-using Application;
-using Core;
+using Cieplutki.MiniTopDownShooter.Application;
+using Cieplutki.MiniTopDownShooter.Core;
 using UnityEngine;
 
-namespace Game
+namespace Cieplutki.MiniTopDownShooter.Runtime
 {
     public class PlayerAudio : AudioListenerBase
     {

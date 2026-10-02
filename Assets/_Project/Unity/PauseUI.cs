@@ -1,9 +1,9 @@
-using Application;
+using Cieplutki.MiniTopDownShooter.Application;
 using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 
-namespace Game
+namespace Cieplutki.MiniTopDownShooter.Runtime
 {
     public class PauseUI : MonoBehaviour
     {
