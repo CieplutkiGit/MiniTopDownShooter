@@ -37,10 +37,23 @@ namespace Game
             _movement.Move(moveDirection);
             _rotation.Rotate(lookDirection);
 
-            if (_input.IsShootHeld(_shootThreshold))
+            if (_input.ConsumePreviousWeaponPressed())
             {
-                _shoot.TryShoot();
+                _shoot.PreviousWeapon();
             }
+
+            if (_input.ConsumeNextWeaponPressed())
+            {
+                _shoot.NextWeapon();
+            }
+
+            if (_input.ConsumeReloadPressed())
+            {
+                _shoot.Reload();
+            }
+
+            _input.ReadShootState(_shootThreshold, out bool isShootHeld, out bool wasShootPressed);
+            _shoot.HandleTrigger(isShootHeld, wasShootPressed);
         }
 
         public void Exit()
