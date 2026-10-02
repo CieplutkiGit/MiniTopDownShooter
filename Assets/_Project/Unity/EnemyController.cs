@@ -32,7 +32,8 @@ namespace Game
         public event Action<EnemyController> Died;
 
         public int ScoreValue => _stats != null ? _stats.ScoreValue : _fallbackScore;
-        public EnemyBehaviorBase Behavior => _behavior;
+        public EnemyBehaviorBase Behavior =>
+            _behavior != null ? _behavior : GetComponent<EnemyBehaviorBase>();
         public EnemyStats Stats => _statsRef;
 
         private Action _diedObservers;
