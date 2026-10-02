@@ -148,7 +148,7 @@ namespace Game
                     break;
 
                 default: // Automatic
-                    if (isHeld && _runtime.TryFire(Time.time))
+                    if ((isHeld || wasPressed) && _runtime.TryFire(Time.time))
                     {
                         DeliverRound(_aimDirection);
                     }
@@ -158,7 +158,12 @@ namespace Game
 
         public void Shoot(Vector3 direction)
         {
-            HandleTrigger(direction, false, true);
+            HandleTrigger(direction, isHeld: true, wasPressed: true);
+        }
+
+        public void CancelBurst()
+        {
+            _runtime?.CancelBurst();
         }
 
         public bool Reload()
@@ -198,6 +203,7 @@ namespace Game
 
             if (!equipped)
             {
+                CancelBurst();
                 CancelReload();
             }
 
@@ -216,6 +222,7 @@ namespace Game
 
         public void ResetRuntimeState()
         {
+            _runtime?.CancelBurst();
             _runtime?.Reset();
             _delivery?.ClearActiveProjectiles();
             RaiseAmmoChanged();
@@ -294,25 +301,14 @@ namespace Game
                 return;
             }
 
-            Vector3 shotDir = ApplySpread(direction, _runtime.CurrentSpreadAngle);
             _delivery.Deliver(
                 _spawnPoint,
-                shotDir,
+                direction,
                 Damage,
                 _damageAffiliation,
                 _damageSourceRoot,
-                _effectPool);
-        }
-
-        private static Vector3 ApplySpread(Vector3 direction, float spreadAngle)
-        {
-            if (spreadAngle <= 0f)
-            {
-                return direction;
-            }
-
-            float angle = UnityEngine.Random.Range(-spreadAngle, spreadAngle);
-            return Quaternion.AngleAxis(angle, Vector3.up) * direction;
+                _effectPool,
+                _runtime != null ? _runtime.CurrentSpreadAngle : 0f);
         }
 
         private void RaiseAmmoChanged()

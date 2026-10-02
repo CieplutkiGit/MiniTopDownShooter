@@ -52,7 +52,8 @@ namespace Game
             int damage,
             DamageAffiliation sourceAffiliation,
             Transform sourceRoot,
-            EffectPool effectPool)
+            EffectPool effectPool,
+            float spreadAngle = 0f)
         {
             if (_pool == null || spawnPoint == null || _isDisposed)
             {
@@ -63,10 +64,15 @@ namespace Game
             {
                 Projectile projectile = _pool.Get();
                 projectile.transform.position = spawnPoint.position;
-                projectile.transform.rotation = spawnPoint.rotation;
+
+                Vector3 pelletDir = spreadAngle > 0.001f
+                    ? Quaternion.AngleAxis(UnityEngine.Random.Range(-spreadAngle, spreadAngle), Vector3.up) * direction
+                    : direction;
+
+                projectile.transform.rotation = Quaternion.LookRotation(pelletDir);
 
                 projectile.Initialize(
-                    direction,
+                    pelletDir,
                     ReleaseProjectile,
                     damage,
                     effectPool,
@@ -98,8 +104,21 @@ namespace Game
                 return;
             }
 
-            _isDisposed = true;
+            // Return all active projectiles before setting _isDisposed
             ClearActiveProjectiles();
+
+            // Destroy any lingering active projectiles to strictly guarantee zero orphans
+            for (int i = _activeProjectiles.Count - 1; i >= 0; i--)
+            {
+                Projectile p = _activeProjectiles[i];
+                if (p != null && p.gameObject != null)
+                {
+                    UnityEngine.Object.Destroy(p.gameObject);
+                }
+            }
+            _activeProjectiles.Clear();
+
+            _isDisposed = true;
 
             if (_pool != null)
             {
@@ -160,6 +179,14 @@ namespace Game
             if (_pool != null && !_isDisposed && projectile != null)
             {
                 _pool.Release(projectile);
+            }
+            else if (projectile != null)
+            {
+                _activeProjectiles.Remove(projectile);
+                if (projectile.gameObject != null)
+                {
+                    UnityEngine.Object.Destroy(projectile.gameObject);
+                }
             }
         }
     }

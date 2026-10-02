@@ -36,7 +36,8 @@ namespace Game
             int damage,
             DamageAffiliation sourceAffiliation,
             Transform sourceRoot,
-            EffectPool effectPool)
+            EffectPool effectPool,
+            float spreadAngle = 0f)
         {
             if (spawnPoint == null)
             {
@@ -50,9 +51,13 @@ namespace Game
 
             for (int rayIndex = 0; rayIndex < _projectilesPerShot; rayIndex++)
             {
+                Vector3 rayDir = spreadAngle > 0.001f
+                    ? Quaternion.AngleAxis(UnityEngine.Random.Range(-spreadAngle, spreadAngle), Vector3.up) * direction
+                    : direction;
+
                 RaycastHit[] hits = Physics.RaycastAll(
                     spawnPoint.position,
-                    direction,
+                    rayDir,
                     _range,
                     _mask,
                     QueryTriggerInteraction.Ignore);

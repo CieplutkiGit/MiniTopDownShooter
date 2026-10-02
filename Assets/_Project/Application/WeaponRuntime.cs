@@ -118,8 +118,18 @@ namespace Application
                 return false;
             }
 
-            _burstShotsRemaining = _config.BurstCount;
-            _nextBurstShotTime = currentTime;
+            if (!TryFire(currentTime))
+            {
+                return false;
+            }
+
+            _burstShotsRemaining = _config.BurstCount - 1;
+
+            if (_burstShotsRemaining > 0)
+            {
+                _nextBurstShotTime = currentTime + _config.BurstInterval;
+            }
+
             return true;
         }
 
@@ -149,6 +159,11 @@ namespace Application
             }
 
             return true;
+        }
+
+        public void CancelBurst()
+        {
+            _burstShotsRemaining = 0;
         }
 
         public bool StartReload(float currentTime)

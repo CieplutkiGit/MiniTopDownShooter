@@ -11,7 +11,8 @@ namespace Game
             int damage,
             DamageAffiliation sourceAffiliation,
             Transform sourceRoot,
-            EffectPool effectPool);
+            EffectPool effectPool,
+            float spreadAngle = 0f);
 
         void ClearActiveProjectiles();
     }
