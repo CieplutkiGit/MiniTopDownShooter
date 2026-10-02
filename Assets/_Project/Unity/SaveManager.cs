@@ -72,10 +72,30 @@ namespace Game
                 string backupPath = filePath + ".bak";
                 string json = JsonUtility.ToJson(data, true);
 
-                File.WriteAllText(tempPath, json);
+                if (string.IsNullOrWhiteSpace(json))
+                {
+                    Debug.LogError($"[SaveManager] Serialized data is empty for '{filePath}'.");
+                    return false;
+                }
+
+                // Write to temp file and flush completely to disk
+                using (var stream = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None))
+                using (var writer = new StreamWriter(stream))
+                {
+                    writer.Write(json);
+                    writer.Flush();
+                    stream.Flush(true);
+                }
+
+                if (new FileInfo(tempPath).Length == 0)
+                {
+                    Debug.LogError($"[SaveManager] Temp file is empty after write: '{tempPath}'.");
+                    return false;
+                }
 
                 if (File.Exists(filePath))
                 {
+                    // Preserve validated backup of the existing valid file
                     try
                     {
                         File.Copy(filePath, backupPath, true);
@@ -84,14 +104,27 @@ namespace Game
                     {
                         Debug.LogWarning($"[SaveManager] Failed to create backup: {ex.Message}");
                     }
-                }
 
-                if (File.Exists(filePath))
+                    // Atomic replacement supported by platform
+                    try
+                    {
+                        File.Replace(tempPath, filePath, null, true);
+                    }
+                    catch
+                    {
+                        File.Move(tempPath, filePath, overwrite: true);
+                    }
+                }
+                else
                 {
-                    File.Delete(filePath);
+                    File.Move(tempPath, filePath, overwrite: true);
+                    try
+                    {
+                        File.Copy(filePath, backupPath, true);
+                    }
+                    catch {}
                 }
 
-                File.Move(tempPath, filePath);
                 return true;
             }
             catch (Exception ex)
@@ -105,6 +138,7 @@ namespace Game
         {
             string backupPath = filePath + ".bak";
 
+            // 1. Try primary file
             if (File.Exists(filePath))
             {
                 try
@@ -115,6 +149,7 @@ namespace Game
                         T result = JsonUtility.FromJson<T>(json);
                         if (result != null)
                         {
+                            ValidateLoadedObject(result);
                             return result;
                         }
                     }
@@ -125,6 +160,7 @@ namespace Game
                 }
             }
 
+            // 2. Try backup recovery
             if (File.Exists(backupPath))
             {
                 try
@@ -135,7 +171,9 @@ namespace Game
                         T result = JsonUtility.FromJson<T>(backupJson);
                         if (result != null)
                         {
-                            Debug.Log($"[SaveManager] Successfully recovered from backup '{backupPath}'.");
+                            ValidateLoadedObject(result);
+                            Debug.Log($"[SaveManager] Successfully recovered from backup '{backupPath}'. Restoring primary.");
+                            AtomicWrite(filePath, result);
                             return result;
                         }
                     }
@@ -147,6 +185,18 @@ namespace Game
             }
 
             return null;
+        }
+
+        private static void ValidateLoadedObject<T>(T obj)
+        {
+            if (obj is UserProfileData profile)
+            {
+                profile.ValidateAndMigrate();
+            }
+            else if (obj is GameSettingsData settings)
+            {
+                settings.ValidateAndMigrate();
+            }
         }
     }
 }

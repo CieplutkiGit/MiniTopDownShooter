@@ -55,7 +55,15 @@ namespace Game
             _gameState = _gameStateRef;
 
             UserProfileData profile = SaveManager.LoadProfile();
-            _highScore = profile != null ? profile.HighScore : PlayerPrefs.GetInt(_prefsKey, 0);
+            int prefsScore = PlayerPrefs.GetInt(_prefsKey, 0);
+            int profileScore = profile != null ? profile.HighScore : 0;
+            _highScore = Math.Max(prefsScore, profileScore);
+
+            if (profile != null && _highScore > profile.HighScore)
+            {
+                profile.HighScore = _highScore;
+                SaveManager.SaveProfile(profile);
+            }
         }
 
         private void OnEnable()
@@ -76,7 +84,7 @@ namespace Game
 
         private void HandleStateChanged(GameState oldState, GameState newState)
         {
-            if (newState != GameState.GameOver && newState != GameState.Victory)
+            if (oldState != GameState.Playing || (newState != GameState.GameOver && newState != GameState.Victory))
             {
                 return;
             }

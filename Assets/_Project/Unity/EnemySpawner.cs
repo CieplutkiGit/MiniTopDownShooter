@@ -7,8 +7,18 @@ using UnityEngine.Pool;
 
 namespace Game
 {
+    public enum SpawnResult
+    {
+        Success,
+        CapacityReached,
+        NoAvailablePosition,
+        InvalidConfiguration,
+        GameStateNotPlaying
+    }
+
     public class EnemySpawner : MonoBehaviour, ISpawner
     {
+        // (Fields defined above)
         [Header("Enemy Pool")]
         [SerializeField] private WeightedPrefab[] _prefabs;
         [SerializeField] private int _defaultPoolSize = 50;
@@ -129,14 +139,33 @@ namespace Game
             EnemyController requestedPrefab,
             IReadOnlyList<string> allowedZoneIds)
         {
+            return TrySpawn(requestedPrefab, allowedZoneIds, out _) == SpawnResult.Success;
+        }
+
+        public SpawnResult TrySpawn(
+            EnemyController requestedPrefab,
+            IReadOnlyList<string> allowedZoneIds,
+            out EnemyController spawnedEnemy)
+        {
+            spawnedEnemy = null;
+
             if (_gameState != null && _gameState.CurrentState != GameState.Playing)
             {
-                return false;
+                return SpawnResult.GameStateNotPlaying;
             }
 
             if (_aliveCount >= _maxAlive)
             {
-                return false;
+                return SpawnResult.CapacityReached;
+            }
+
+            EnemyController prefab = requestedPrefab != null
+                ? requestedPrefab
+                : PickPrefab();
+
+            if (prefab == null)
+            {
+                return SpawnResult.InvalidConfiguration;
             }
 
             bool gotPosition = false;
@@ -153,14 +182,63 @@ namespace Game
 
             if (!gotPosition)
             {
+                return SpawnResult.NoAvailablePosition;
+            }
+
+            VariantPool pool = EnsurePool(prefab);
+            EnemyController enemy = pool.Get();
+            _instanceToPool[enemy] = pool;
+            enemy.Died += OnEnemyDied;
+            enemy.Spawn(position, _player);
+            _alive.Add(enemy);
+            _aliveCount++;
+            spawnedEnemy = enemy;
+            return SpawnResult.Success;
+        }
+
+        public bool TryRecoverSpawnInZone(
+            EnemyController requestedPrefab,
+            IReadOnlyList<string> allowedZoneIds,
+            out EnemyController spawnedEnemy)
+        {
+            spawnedEnemy = null;
+
+            if (_gameState != null && _gameState.CurrentState != GameState.Playing)
+            {
                 return false;
             }
 
-            EnemyController prefab = requestedPrefab != null
-                ? requestedPrefab
-                : PickPrefab();
+            if (_aliveCount >= _maxAlive)
+            {
+                return false;
+            }
 
+            EnemyController prefab = requestedPrefab != null ? requestedPrefab : PickPrefab();
             if (prefab == null)
+            {
+                return false;
+            }
+
+            Vector3 position = Vector3.zero;
+            bool gotPosition = false;
+
+            if (_spawnZones != null && _spawnZones.Length > 0)
+            {
+                for (int i = 0; i < _spawnZones.Length; i++)
+                {
+                    SpawnZone zone = _spawnZones[i];
+                    if (zone != null && IsZoneAllowed(zone, allowedZoneIds))
+                    {
+                        if (zone.TryGetFallbackSpawnPosition(_player, _spawnCamera, out position))
+                        {
+                            gotPosition = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (!gotPosition)
             {
                 return false;
             }
@@ -172,6 +250,7 @@ namespace Game
             enemy.Spawn(position, _player);
             _alive.Add(enemy);
             _aliveCount++;
+            spawnedEnemy = enemy;
             return true;
         }
 

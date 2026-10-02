@@ -114,6 +114,50 @@ namespace Game
             return false;
         }
 
+        public bool TryGetFallbackSpawnPosition(
+            Transform player,
+            Camera fallbackCamera,
+            out Vector3 position)
+        {
+            for (int attempt = 0; attempt < Mathf.Max(1, _attempts); attempt++)
+            {
+                if (!TryCreateCandidate(out Vector3 candidate))
+                {
+                    continue;
+                }
+
+                if (!NavMesh.SamplePosition(
+                        candidate,
+                        out NavMeshHit hit,
+                        _navMeshSampleRadius * 2f,
+                        NavMesh.AllAreas))
+                {
+                    continue;
+                }
+
+                if (!IsPositionInZone(hit.position))
+                {
+                    continue;
+                }
+
+                if (player != null)
+                {
+                    NavMeshPath path = new NavMeshPath();
+                    if (!NavMesh.CalculatePath(hit.position, player.position, NavMesh.AllAreas, path) ||
+                        path.status != NavMeshPathStatus.PathComplete)
+                    {
+                        continue;
+                    }
+                }
+
+                position = hit.position;
+                return true;
+            }
+
+            position = Vector3.zero;
+            return false;
+        }
+
         public bool IsPositionInZone(Vector3 position, float tolerance = 1.5f)
         {
             switch (_shape)

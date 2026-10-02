@@ -365,48 +365,54 @@ namespace Game
 
         private void TrySpawnEntry(WaveSpawnEntry entry)
         {
+            SpawnResult result = SpawnResult.CapacityReached;
             bool spawned = false;
 
             if (_spawnerRef != null)
             {
-                spawned = _spawnerRef.SpawnOne(entry.Prefab, entry.ZoneIds);
-
-                // If zone-restricted spawn failed after retries, fallback to unconstrained zone sampling
-                if (!spawned && entry.RetryCount >= MaxSpawnEntryRetries && entry.ZoneIds != null && entry.ZoneIds.Count > 0)
-                {
-                    if (_debugLog)
-                    {
-                        Debug.LogWarning($"[WaveController] Zone spawn failed {entry.RetryCount} times for wave entry. Falling back to any valid zone.");
-                    }
-                    spawned = _spawnerRef.SpawnOne(entry.Prefab, null);
-                }
+                result = _spawnerRef.TrySpawn(entry.Prefab, entry.ZoneIds, out _);
+                spawned = result == SpawnResult.Success;
             }
             else if (_spawner != null)
             {
                 spawned = _spawner.SpawnOne();
+                result = spawned ? SpawnResult.Success : SpawnResult.CapacityReached;
             }
 
-            if (!spawned)
+            if (spawned)
             {
-                entry.RetryCount++;
-
-                // If spawner permanently exhausted retries, advance plan to prevent indefinite wave soft-lock
-                if (entry.RetryCount > MaxSpawnEntryRetries * 2)
-                {
-                    if (_debugLog)
-                    {
-                        Debug.LogWarning($"[WaveController] Spawner permanently exhausted retries ({entry.RetryCount}). Advancing plan to prevent deadlock.");
-                    }
-                    _spawnPlanIndex++;
-                    _runner.NotifyEnemySpawned();
-                    _runner.NotifyEnemyKilled();
-                }
-
+                _spawnPlanIndex++;
+                _runner.NotifyEnemySpawned();
                 return;
             }
 
-            _spawnPlanIndex++;
-            _runner.NotifyEnemySpawned();
+            // Distinguish temporary capacity limit from position/configuration failure
+            if (result == SpawnResult.CapacityReached || result == SpawnResult.GameStateNotPlaying)
+            {
+                // Temporary capacity limit: arena is full. Do NOT burn retries or discard the spawn.
+                return;
+            }
+
+            entry.RetryCount++;
+
+            // Preserve authored spawn restrictions after retries: attempt safe stuck recovery within the authored zone
+            if (result == SpawnResult.NoAvailablePosition && entry.RetryCount >= MaxSpawnEntryRetries)
+            {
+                if (_spawnerRef != null && _spawnerRef.TryRecoverSpawnInZone(entry.Prefab, entry.ZoneIds, out _))
+                {
+                    _spawnPlanIndex++;
+                    _runner.NotifyEnemySpawned();
+                    return;
+                }
+            }
+
+            // If spawner permanently exhausted retries due to invalid configuration:
+            if (entry.RetryCount > MaxSpawnEntryRetries * 3)
+            {
+                // Visible failure path: NEVER count an unspawned required enemy/boss as killed!
+                Debug.LogError($"[WaveController] Fatal spawn failure: could not spawn enemy '{(entry.Prefab != null ? entry.Prefab.name : "null")}' after {entry.RetryCount} retries. Reason: {result}. Preserving integrity without granting false kill.");
+                _spawnPlanIndex++;
+            }
         }
 
         private void HandleEnemyKilled(int scoreValue)
