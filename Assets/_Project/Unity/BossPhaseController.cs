@@ -44,6 +44,8 @@ namespace Game
 
         private void OnEnable()
         {
+            _activePhaseIndex = int.MinValue;
+
             if (_health != null)
             {
                 _health.OnHealthChanged += HandleHealthChanged;
@@ -57,7 +59,8 @@ namespace Game
                 _health.OnHealthChanged -= HandleHealthChanged;
             }
 
-            _activePhaseIndex = -1;
+            ResetPhasePresentation();
+            _activePhaseIndex = int.MinValue;
         }
 
         private void HandleHealthChanged(int current, int max)
@@ -103,12 +106,39 @@ namespace Game
 
             if (phaseIndex < 0)
             {
+                ResetPhasePresentation();
                 return;
             }
 
             BossPhase phase = _phases[phaseIndex];
             SetObjectsActive(phase.EnableObjects, true);
             SetObjectsActive(phase.DisableObjects, false);
+        }
+
+        private void ResetPhasePresentation()
+        {
+            if (_movement != null)
+            {
+                _movement.SetSpeedMultiplier(1f);
+            }
+
+            if (_phases == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < _phases.Length; i++)
+            {
+                BossPhase phase = _phases[i];
+
+                if (phase == null)
+                {
+                    continue;
+                }
+
+                SetObjectsActive(phase.EnableObjects, false);
+                SetObjectsActive(phase.DisableObjects, true);
+            }
         }
 
         private static void SetObjectsActive(GameObject[] objects, bool active)
