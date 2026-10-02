@@ -27,6 +27,7 @@ namespace Game
 
         public void Enter()
         {
+            _input.ResetGameplayTransientState();
         }
 
         public void Update()
@@ -59,6 +60,7 @@ namespace Game
         public void Exit()
         {
             _movement.Move(Vector2.zero);
+            _input.ResetGameplayTransientState();
         }
     }
 }
