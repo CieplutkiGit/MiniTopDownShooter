@@ -11,6 +11,7 @@ namespace Game
         private readonly GameInput _input;
         private readonly Camera _aimCamera;
         private readonly Transform _playerTransform;
+        private readonly MobileInputState _mobileInput;
         private readonly InputAction _fireAction;
         private readonly InputAction _reloadAction;
         private readonly InputAction _nextWeaponAction;
@@ -22,10 +23,14 @@ namespace Game
         private bool _previousWeaponPressedQueued;
         private bool _previousLookShootHeld;
 
-        public InputReader(Camera aimCamera, Transform playerTransform)
+        public InputReader(
+            Camera aimCamera,
+            Transform playerTransform,
+            MobileInputState mobileInput = null)
         {
             _aimCamera = aimCamera;
             _playerTransform = playerTransform;
+            _mobileInput = mobileInput;
             _input = new GameInput();
 
             _fireAction = new InputAction("Fire", InputActionType.Button);
@@ -53,17 +58,36 @@ namespace Game
             _previousWeaponAction.Enable();
         }
 
-        public Vector2 MoveDirection => _input.Player.Move.ReadValue<Vector2>();
+        public Vector2 MoveDirection
+        {
+            get
+            {
+                Vector2 physical = _input.Player.Move.ReadValue<Vector2>();
+                Vector2 mobile = _mobileInput != null
+                    ? _mobileInput.MoveDirection
+                    : Vector2.zero;
+
+                return mobile.sqrMagnitude > physical.sqrMagnitude
+                    ? mobile
+                    : physical;
+            }
+        }
 
         public Vector2 LookDirection
         {
             get
             {
-                Vector2 controllerLook = _input.Player.Look.ReadValue<Vector2>();
+                Vector2 physicalLook = _input.Player.Look.ReadValue<Vector2>();
 
-                if (controllerLook.sqrMagnitude > 0.0001f)
+                if (physicalLook.sqrMagnitude > 0.0001f)
                 {
-                    return controllerLook;
+                    return physicalLook;
+                }
+
+                if (_mobileInput != null &&
+                    _mobileInput.LookDirection.sqrMagnitude > 0.0001f)
+                {
+                    return _mobileInput.LookDirection;
                 }
 
                 if (TryGetPointerLookDirection(out Vector2 pointerLook))
@@ -78,16 +102,31 @@ namespace Game
         public bool IsShootHeld(float lookThreshold)
         {
             Vector2 look = _input.Player.Look.ReadValue<Vector2>();
-            return look.magnitude > lookThreshold || _fireAction.IsPressed();
+            bool mobileHeld = _mobileInput != null && _mobileInput.FireHeld;
+
+            return look.magnitude > lookThreshold ||
+                   _fireAction.IsPressed() ||
+                   mobileHeld;
         }
 
-        public void ReadShootState(float lookThreshold, out bool isHeld, out bool wasPressed)
+        public void ReadShootState(
+            float lookThreshold,
+            out bool isHeld,
+            out bool wasPressed)
         {
-            bool lookHeld = _input.Player.Look.ReadValue<Vector2>().magnitude > lookThreshold;
-            bool buttonHeld = _fireAction.IsPressed();
+            bool lookHeld =
+                _input.Player.Look.ReadValue<Vector2>().magnitude > lookThreshold;
 
-            isHeld = lookHeld || buttonHeld;
-            wasPressed = _firePressedQueued || (lookHeld && !_previousLookShootHeld);
+            bool buttonHeld = _fireAction.IsPressed();
+            bool mobileHeld = _mobileInput != null && _mobileInput.FireHeld;
+            bool mobilePressed =
+                _mobileInput != null && _mobileInput.ConsumeFirePressed();
+
+            isHeld = lookHeld || buttonHeld || mobileHeld;
+            wasPressed =
+                _firePressedQueued ||
+                (lookHeld && !_previousLookShootHeld) ||
+                mobilePressed;
 
             _firePressedQueued = false;
             _previousLookShootHeld = lookHeld;
@@ -95,21 +134,30 @@ namespace Game
 
         public bool ConsumeReloadPressed()
         {
-            bool value = _reloadPressedQueued;
+            bool mobilePressed =
+                _mobileInput != null && _mobileInput.ConsumeReloadPressed();
+
+            bool value = _reloadPressedQueued || mobilePressed;
             _reloadPressedQueued = false;
             return value;
         }
 
         public bool ConsumeNextWeaponPressed()
         {
-            bool value = _nextWeaponPressedQueued;
+            bool mobilePressed =
+                _mobileInput != null && _mobileInput.ConsumeNextWeaponPressed();
+
+            bool value = _nextWeaponPressedQueued || mobilePressed;
             _nextWeaponPressedQueued = false;
             return value;
         }
 
         public bool ConsumePreviousWeaponPressed()
         {
-            bool value = _previousWeaponPressedQueued;
+            bool mobilePressed =
+                _mobileInput != null && _mobileInput.ConsumePreviousWeaponPressed();
+
+            bool value = _previousWeaponPressedQueued || mobilePressed;
             _previousWeaponPressedQueued = false;
             return value;
         }
@@ -121,6 +169,11 @@ namespace Game
             _nextWeaponPressedQueued = false;
             _previousWeaponPressedQueued = false;
             _previousLookShootHeld = false;
+
+            if (_mobileInput != null)
+            {
+                _mobileInput.ResetGameplayState();
+            }
         }
 
         public InputActionRebindingExtensions.RebindingOperation BeginInteractiveRebind(
@@ -133,7 +186,9 @@ namespace Game
 
             if (action == null)
             {
-                throw new ArgumentException($"Unknown input action '{actionName}'.", nameof(actionName));
+                throw new ArgumentException(
+                    $"Unknown input action '{actionName}'.",
+                    nameof(actionName));
             }
 
             if (bindingIndex < 0 || bindingIndex >= action.bindings.Count)
@@ -166,11 +221,15 @@ namespace Game
             return operation;
         }
 
-        public string GetBindingDisplayString(string actionName, int bindingIndex)
+        public string GetBindingDisplayString(
+            string actionName,
+            int bindingIndex)
         {
             InputAction action = FindAction(actionName);
 
-            if (action == null || bindingIndex < 0 || bindingIndex >= action.bindings.Count)
+            if (action == null ||
+                bindingIndex < 0 ||
+                bindingIndex >= action.bindings.Count)
             {
                 return string.Empty;
             }
@@ -290,7 +349,10 @@ namespace Game
 
         private void LoadBindings()
         {
-            string generated = PlayerPrefs.GetString(BindingKeyPrefix + "Generated", string.Empty);
+            string generated =
+                PlayerPrefs.GetString(
+                    BindingKeyPrefix + "Generated",
+                    string.Empty);
 
             if (!string.IsNullOrEmpty(generated))
             {
@@ -305,7 +367,10 @@ namespace Game
 
         private void LoadActionBindings(InputAction action)
         {
-            string json = PlayerPrefs.GetString(BindingKeyPrefix + action.name, string.Empty);
+            string json =
+                PlayerPrefs.GetString(
+                    BindingKeyPrefix + action.name,
+                    string.Empty);
 
             if (!string.IsNullOrEmpty(json))
             {
@@ -318,13 +383,20 @@ namespace Game
             lookDirection = Vector2.zero;
 
             Mouse mouse = Mouse.current;
-            if (mouse == null || _aimCamera == null || _playerTransform == null)
+
+            if (mouse == null ||
+                _aimCamera == null ||
+                _playerTransform == null)
             {
                 return false;
             }
 
-            Ray ray = _aimCamera.ScreenPointToRay(mouse.position.ReadValue());
-            Plane groundPlane = new Plane(Vector3.up, _playerTransform.position);
+            Ray ray =
+                _aimCamera.ScreenPointToRay(
+                    mouse.position.ReadValue());
+
+            Plane groundPlane =
+                new Plane(Vector3.up, _playerTransform.position);
 
             if (!groundPlane.Raycast(ray, out float distance))
             {
