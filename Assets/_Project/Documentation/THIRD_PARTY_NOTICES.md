@@ -1,18 +1,63 @@
 # Third-Party Notices
 
-Review every file included in the final commercial export and confirm that redistribution through an asset marketplace is permitted.
+This file records third-party content currently visible in the repository and the release action required for each item.
 
-The demo project includes Unity-provided packages/content such as TextMesh Pro resources. Preserve all license and attribution files required by those components.
+The **final commercial export must be audited again**, because this repository contains development/demo resources that may intentionally be excluded from the sold package.
 
-Do not include third-party meshes, textures, fonts, sounds, music, source code, icons, or effects in the commercial package unless their license explicitly permits redistribution in an asset marketplace product.
+## Liberation Sans
 
-For every redistributable third-party item included in the final package, record:
+Repository files include:
 
-- asset/library name
-- author or publisher
-- source
-- license
-- required attribution text
-- files in this package that originate from it
+- Assets/TextMesh Pro/Fonts/LiberationSans.ttf
+- Assets/TextMesh Pro/Fonts/LiberationSans - OFL.txt
+- generated TextMesh Pro LiberationSans SDF assets/materials
 
-This file is a submission checklist and must be updated before release.
+Copyright notices embedded in the repository license file include Google Corporation (2010) and Red Hat, Inc. (2012).
+
+License: **SIL Open Font License 1.1**.
+
+Release requirement: if Liberation Sans is redistributed, keep the included OFL license/copyright notice with the redistributed font software.
+
+## EmojiOne sample resources
+
+Repository files include:
+
+- Assets/TextMesh Pro/Sprites/EmojiOne.png
+- Assets/TextMesh Pro/Sprites/EmojiOne.json
+- Assets/TextMesh Pro/Sprites/EmojiOne Attribution.txt
+- Assets/TextMesh Pro/Resources/Sprite Assets/EmojiOne.asset
+
+The repository attribution file identifies EmojiOne as the source but does **not** embed a redistribution license; it instructs users to review EmojiOne licensing terms.
+
+Release action: **exclude these EmojiOne sample resources from the commercial package unless redistribution rights for the exact included version have been independently verified**.
+
+Do not treat the attribution file alone as proof of Asset Store redistribution rights.
+
+## Unity / TextMesh Pro resources
+
+The repository includes copied TextMesh Pro Essential Resources and shaders under Assets/TextMesh Pro.
+
+Before release, choose one of these approaches:
+
+1. exclude copied TMP Essential Resources and document that customers should import TMP Essential Resources from Unity, or
+2. confirm that the exact Unity-provided resources may be redistributed in the chosen Asset Store package and retain all required notices.
+
+Do not duplicate Unity package content in the commercial export unless it is actually required.
+
+## Project-authored content
+
+Current project-specific presentation content under Assets/_Project is primarily Unity primitives, generated materials/configuration and framework source.
+
+Before release, re-audit every exported:
+
+- mesh
+- texture
+- sprite/icon
+- font
+- audio clip
+- shader
+- material
+- particle/VFX asset
+- source-code dependency
+
+For each third-party item that remains in the final export, record the source, author/publisher, license, required attribution and exact exported files here.
