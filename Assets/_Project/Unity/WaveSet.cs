@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Game
+namespace Cieplutki.MiniTopDownShooter.Runtime
 {
     [CreateAssetMenu(fileName = "WaveSet", menuName = "Mini Top Down Shooter/Wave Set")]
     public class WaveSet : ScriptableObject

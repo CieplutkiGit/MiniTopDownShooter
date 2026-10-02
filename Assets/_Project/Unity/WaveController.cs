@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using Application;
+using Cieplutki.MiniTopDownShooter.Application;
 using UnityEngine;
 
-namespace Game
+namespace Cieplutki.MiniTopDownShooter.Runtime
 {
     [System.Serializable]
     public class WaveConfig

@@ -1,8 +1,8 @@
-using Application;
+using Cieplutki.MiniTopDownShooter.Application;
 using UnityEngine;
 using UnityEngine.Serialization;
 
-namespace Game
+namespace Cieplutki.MiniTopDownShooter.Runtime
 {
     public class WorldResetManager : MonoBehaviour
     {

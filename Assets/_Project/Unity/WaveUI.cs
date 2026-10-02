@@ -1,8 +1,8 @@
-using Application;
+using Cieplutki.MiniTopDownShooter.Application;
 using TMPro;
 using UnityEngine;
 
-namespace Game
+namespace Cieplutki.MiniTopDownShooter.Runtime
 {
     public class WaveUI : MonoBehaviour
     {

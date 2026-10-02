@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.AI;
 
-namespace Game
+namespace Cieplutki.MiniTopDownShooter.Runtime
 {
     public enum SpawnZoneShape
     {
