@@ -45,6 +45,44 @@ namespace Game
                    _ignoreFriendlyCollisions;
         }
 
+        public static bool CanDamage(
+            DamageAffiliation source,
+            CombatTeam sourceTeam,
+            DamageAffiliation target,
+            CombatTeam targetTeam)
+        {
+            if (source != null && target != null)
+            {
+                return source.CanDamage(target);
+            }
+
+            if (sourceTeam == CombatTeam.Neutral || targetTeam == CombatTeam.Neutral)
+            {
+                return true;
+            }
+
+            return sourceTeam != targetTeam ||
+                   (source != null && source.AllowFriendlyFire);
+        }
+
+        public static bool ShouldIgnoreFriendlyCollision(
+            DamageAffiliation source,
+            CombatTeam sourceTeam,
+            DamageAffiliation target,
+            CombatTeam targetTeam)
+        {
+            bool sameTeam =
+                sourceTeam != CombatTeam.Neutral &&
+                sourceTeam == targetTeam;
+
+            if (!sameTeam || CanDamage(source, sourceTeam, target, targetTeam))
+            {
+                return false;
+            }
+
+            return source == null || source.IgnoreFriendlyCollisions;
+        }
+
         public static DamageAffiliation Find(Component component)
         {
             return component != null
