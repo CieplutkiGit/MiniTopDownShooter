@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Text;
 using Game;
@@ -155,7 +154,7 @@ public class MiniTopDownShooterWindow : EditorWindow
             }
         }
 
-        HashSet<string> knownSpawnZoneIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        HashSet<string> knownSpawnZoneIds = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
         SpawnZone[] spawnZones = Object.FindObjectsByType<SpawnZone>(
             FindObjectsInactive.Include,
             FindObjectsSortMode.None);
