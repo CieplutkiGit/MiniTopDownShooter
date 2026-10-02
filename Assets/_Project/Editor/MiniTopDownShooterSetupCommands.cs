@@ -4,6 +4,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.SceneManagement;
 
 public static class MiniTopDownShooterSetupCommands
 {
@@ -602,10 +603,11 @@ public static class MiniTopDownShooterSetupCommands
 
     private static void MarkSceneDirty()
     {
-        if (EditorSceneManager.GetActiveScene().IsValid())
+        Scene scene = SceneManager.GetActiveScene();
+
+        if (scene.IsValid())
         {
-            EditorSceneManager.MarkSceneDirty(
-                EditorSceneManager.GetActiveScene());
+            EditorSceneManager.MarkSceneDirty(scene);
         }
     }
 }
