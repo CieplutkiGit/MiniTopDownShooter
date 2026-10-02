@@ -133,15 +133,20 @@ public class MiniTopDownShooterWindow : EditorWindow
             FindObjectsInactive.Include,
             FindObjectsSortMode.None);
 
+        bool hasGlobalEnemyFallback = false;
+
         foreach (EnemySpawner spawner in spawners)
         {
             SerializedObject serializedSpawner = new SerializedObject(spawner);
-            SerializedProperty prefabs = serializedSpawner.FindProperty("_prefabs");
             SerializedProperty player = serializedSpawner.FindProperty("_player");
+            hasGlobalEnemyFallback |= spawner.HasFallbackPrefabs;
 
-            if (prefabs == null || prefabs.arraySize == 0)
+            if (!spawner.HasFallbackPrefabs)
             {
-                AddError(report, $"EnemySpawner '{spawner.name}' has no enemy prefabs.", ref errors);
+                AddWarning(
+                    report,
+                    $"EnemySpawner '{spawner.name}' has no global fallback prefabs. Every wave must use explicit enemy groups.",
+                    ref warnings);
             }
 
             if (player == null || player.objectReferenceValue == null)
@@ -248,6 +253,30 @@ public class MiniTopDownShooterWindow : EditorWindow
                                     ref warnings);
                             }
                         }
+                    }
+
+                    bool hasExplicitEnemyGroup = false;
+
+                    if (wave.EnemyGroups != null)
+                    {
+                        for (int groupIndex = 0; groupIndex < wave.EnemyGroups.Count; groupIndex++)
+                        {
+                            WaveEnemyGroup group = wave.EnemyGroups[groupIndex];
+
+                            if (group != null && group.Prefab != null)
+                            {
+                                hasExplicitEnemyGroup = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!hasExplicitEnemyGroup && !hasGlobalEnemyFallback)
+                    {
+                        AddError(
+                            report,
+                            $"Wave {waveIndex + 1} relies on global enemy weights, but EnemySpawner has no fallback prefabs.",
+                            ref errors);
                     }
 
                     if (wave.BossCount > 0 && wave.BossPrefab == null)
