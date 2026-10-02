@@ -14,6 +14,9 @@ namespace Game
 
         private int _activePointerId = int.MinValue;
 
+        public MobileInputState Input => _input;
+        public MobileInputAction Action => _action;
+
         public void OnPointerDown(PointerEventData eventData)
         {
             if (_input == null || _activePointerId != int.MinValue)
