@@ -114,6 +114,15 @@ namespace Game
             return value;
         }
 
+        public void ResetGameplayTransientState()
+        {
+            _firePressedQueued = false;
+            _reloadPressedQueued = false;
+            _nextWeaponPressedQueued = false;
+            _previousWeaponPressedQueued = false;
+            _previousLookShootHeld = false;
+        }
+
         public InputActionRebindingExtensions.RebindingOperation BeginInteractiveRebind(
             string actionName,
             int bindingIndex,
