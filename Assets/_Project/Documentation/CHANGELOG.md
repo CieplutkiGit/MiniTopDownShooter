@@ -36,14 +36,18 @@
 - Shared DamageAffiliation combat teams and friendly-fire rules for projectile/hitscan weapons
 - Mouse aiming with left-click firing
 - Asset Store setup and validation editor window
+- One-click Player, Enemy, Gun, Arena, Spawn Zone and Wave Controller creation plus common-reference repair
+- Custom inspectors for WeaponDefinition, WaveSet, EnemyStats and EnemySpawner
 - Open-scene checks for core gameplay objects, gun setup, camera fallback, enemy spawning, waves, spawn zones, and NavMesh
 - EditMode tests for `Health`, `WaveRunner`, weapon ammo state, mobile input state, enemy armor, and combat affiliation
 - PlayMode smoke tests for all three demo scenes
 - GitHub Actions Unity CI with test execution and Linux player smoke build
-- Buyer-facing quick start, weapon, wave, dependency, extension, and licensing documentation
+- Buyer-facing quick start, weapon, wave, dependency, extension, licensing, API, upgrade, clean-import, art-replacement, CI and release-checklist documentation
 
 ### Changed
 
+- Removed unused Collab, Rider, Visual Studio, Multiplayer Center, Timeline, Visual Scripting and VContainer direct dependencies
+- Version 1.0 support target is pinned to Unity 6000.3.10f1 until other Unity releases are explicitly tested
 - `Gun` can use a Weapon Definition while preserving existing inline serialized values as backwards-compatible defaults
 - Legacy guns remain projectile/automatic/infinite-ammo by default
 - `Projectile.Initialize` accepts optional per-weapon motion overrides plus source affiliation without breaking old callers
