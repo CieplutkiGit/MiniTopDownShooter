@@ -28,6 +28,7 @@ namespace Game
         public event Action<int> PhaseChanged;
 
         public int ActivePhaseIndex => _activePhaseIndex;
+        public int PhaseCount => _phases != null ? _phases.Length : 0;
 
         private void Awake()
         {
