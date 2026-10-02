@@ -4651,7 +4651,7 @@ ParticleSystemRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 9ed9fe6a7dde3ad478079d97803aad01, type: 2}
+  - {fileID: 2100000, guid: e49712748a49a0649982b9db265fa8c9, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -4718,7 +4718,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity::Game.ParticleBurst
   _color: {r: 1, g: 0.45, b: 0.05, a: 1}
-  _count: 16
+  _count: 18
   _lifetime: 0.35
   _speed: 7
   _size: 0.22
@@ -4726,4 +4726,4 @@ MonoBehaviour:
   _playOnAwake: 0
   _destroyOnFinish: 0
   _worldSpace: 1
-  _material: {fileID: 2100000, guid: 9ed9fe6a7dde3ad478079d97803aad01, type: 2}
+  _material: {fileID: 2100000, guid: e49712748a49a0649982b9db265fa8c9, type: 2}

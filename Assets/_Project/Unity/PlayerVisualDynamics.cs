@@ -62,11 +62,28 @@ namespace Game
             UnhookActiveGun();
         }
 
+        public void ResetDynamics()
+        {
+            Transform parent = transform.parent;
+            _lastWorldPosition = parent != null ? parent.position : transform.position;
+            _currentTilt = Vector2.zero;
+            _currentRecoilOffset = 0f;
+            _currentRecoilPitch = 0f;
+            transform.localPosition = _initialLocalPosition;
+            transform.localRotation = _initialLocalRotation;
+        }
+
         private void Update()
         {
             Transform parent = transform.parent;
             Vector3 worldPos = parent != null ? parent.position : transform.position;
             float dt = Time.deltaTime;
+
+            if (Vector3.Distance(worldPos, _lastWorldPosition) > 2.0f)
+            {
+                _lastWorldPosition = worldPos;
+                _currentTilt = Vector2.zero;
+            }
 
             if (dt > 0.0001f)
             {
@@ -76,7 +93,7 @@ namespace Game
                     : worldVelocity;
 
                 float speedNorm = Mathf.Max(0.1f, _speedReference);
-                float targetPitch = Mathf.Clamp(-localVelocity.z / speedNorm * _maxPitchAngle, -_maxPitchAngle, _maxPitchAngle);
+                float targetPitch = Mathf.Clamp(localVelocity.z / speedNorm * _maxPitchAngle, -_maxPitchAngle, _maxPitchAngle);
                 float targetRoll = Mathf.Clamp(-localVelocity.x / speedNorm * _maxRollAngle, -_maxRollAngle, _maxRollAngle);
 
                 _currentTilt.x = Mathf.Lerp(_currentTilt.x, targetPitch, dt * _tiltSmoothSpeed);
@@ -92,7 +109,8 @@ namespace Game
             Quaternion tiltRot = Quaternion.Euler(_currentTilt.x + _currentRecoilPitch, 0f, _currentTilt.y);
             transform.localRotation = _initialLocalRotation * tiltRot;
 
-            if (_activeGun == null)
+            Gun currentGun = _loadout != null ? _loadout.ActiveGun : (_shoot != null ? _shoot.ActiveGun : null);
+            if (currentGun != _activeGun)
             {
                 HookActiveGun();
             }

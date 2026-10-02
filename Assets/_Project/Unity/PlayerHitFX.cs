@@ -13,6 +13,15 @@ namespace Game
 
         private void Awake()
         {
+            if (_playerHealthRef == null)
+            {
+                _playerHealthRef = GetComponent<HealthComponent>();
+                if (_playerHealthRef == null)
+                {
+                    _playerHealthRef = GetComponentInParent<HealthComponent>();
+                }
+            }
+
             _health = _playerHealthRef;
         }
 

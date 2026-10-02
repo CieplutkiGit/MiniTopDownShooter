@@ -100,7 +100,7 @@ public static class GeometricArenaPolishSetup
         string rendInfo = r != null ? $" [Renderer: enabled={r.enabled}, type={r.GetType().Name}, mat={r.sharedMaterial?.name}]" : "";
         MeshFilter mf = go.GetComponent<MeshFilter>();
         string meshInfo = mf != null ? $" [Mesh: {mf.sharedMesh?.name}]" : "";
-        
+
         var comps = go.GetComponents<Component>();
         List<string> cNames = new List<string>();
         foreach (var c in comps)
@@ -108,7 +108,7 @@ public static class GeometricArenaPolishSetup
             if (c != null && !(c is Transform)) cNames.Add(c.GetType().Name);
         }
         string compInfo = cNames.Count > 0 ? $" ({string.Join(", ", cNames)})" : "";
-        
+
         Debug.Log($"{indent}- {go.name} at {go.transform.position}{rendInfo}{meshInfo}{compInfo}");
         for (int i = 0; i < go.transform.childCount; i++)
         {
@@ -128,6 +128,35 @@ public static class GeometricArenaPolishSetup
             Debug.LogError($"[GeometricArenaPolish] Inspect failed: {ex}");
             EditorApplication.Exit(1);
         }
+    }
+
+    public static void PrintUIDebugBatch()
+    {
+        try
+        {
+            Scene scene = EditorSceneManager.OpenScene(ArenaScenePath, OpenSceneMode.Single);
+            Canvas canvas = Object.FindFirstObjectByType<Canvas>(FindObjectsInactive.Include);
+            if (canvas != null)
+            {
+                TextMeshProUGUI[] texts = canvas.GetComponentsInChildren<TextMeshProUGUI>(true);
+                foreach (var t in texts)
+                {
+                    Debug.Log($"[UIDebug] Path: {GetPath(t.transform)}, Text: '{t.text}', Active: {t.gameObject.activeInHierarchy}, LocalPos: {t.transform.localPosition}");
+                }
+            }
+            EditorApplication.Exit(0);
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[UIDebug] Failed: {ex}");
+            EditorApplication.Exit(1);
+        }
+    }
+
+    private static string GetPath(Transform t)
+    {
+        if (t.parent == null) return t.name;
+        return GetPath(t.parent) + "/" + t.name;
     }
 
     public class MaterialPalette
@@ -160,6 +189,8 @@ public static class GeometricArenaPolishSetup
 
         public Material FXPlayerBullet;
         public Material FXEnemyBullet;
+        public Material FXPlayerParticle;
+        public Material FXEnemyParticle;
         public Material FXTelegraph;
     }
 
@@ -210,6 +241,9 @@ public static class GeometricArenaPolishSetup
         // Projectiles & FX
         p.FXPlayerBullet = GetOrCreateMaterial("Mat_FX_PlayerBullet", litShader, new Color(0.0f, 0.95f, 1.0f), 0.5f, 0.0f, new Color(0.0f, 0.95f, 1.0f) * 3.0f);
         p.FXEnemyBullet = GetOrCreateMaterial("Mat_FX_EnemyBullet", litShader, new Color(1.0f, 0.35f, 0.05f), 0.5f, 0.0f, new Color(1.0f, 0.4f, 0.05f) * 3.0f);
+
+        p.FXPlayerParticle = GetOrCreateParticleMaterial("Mat_FX_PlayerParticle", particleShader, new Color(0.2f, 0.95f, 1f, 1f), true);
+        p.FXEnemyParticle = GetOrCreateParticleMaterial("Mat_FX_EnemyParticle", particleShader, new Color(1.0f, 0.55f, 0.1f, 1f), true);
         p.FXTelegraph = GetOrCreateTelegraphMaterial("Mat_FX_Telegraph", particleShader, new Color(1.0f, 0.2f, 0.05f, 0.65f));
 
         AssetDatabase.SaveAssets();
@@ -238,12 +272,42 @@ public static class GeometricArenaPolishSetup
         {
             mat.EnableKeyword("_EMISSION");
             mat.SetColor("_EmissionColor", emission.Value);
+            mat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
         }
         else
         {
             mat.DisableKeyword("_EMISSION");
             mat.SetColor("_EmissionColor", Color.black);
+            mat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
         }
+
+        EditorUtility.SetDirty(mat);
+        return mat;
+    }
+
+    private static Material GetOrCreateParticleMaterial(string name, Shader shader, Color color, bool additive = false)
+    {
+        string path = $"{MaterialsFolder}/{name}.mat";
+        Material mat = AssetDatabase.LoadAssetAtPath<Material>(path);
+        if (mat == null)
+        {
+            mat = new Material(shader);
+            AssetDatabase.CreateAsset(mat, path);
+        }
+        else if (mat.shader != shader)
+        {
+            mat.shader = shader;
+        }
+
+        mat.SetColor("_BaseColor", color);
+        mat.SetFloat("_Surface", 1); // Transparent
+        mat.SetFloat("_Blend", additive ? 1 : 0);   // 0 = Alpha, 1 = Additive
+        mat.SetInt("_SrcBlend", (int)BlendMode.SrcAlpha);
+        mat.SetInt("_DstBlend", additive ? (int)BlendMode.One : (int)BlendMode.OneMinusSrcAlpha);
+        mat.SetInt("_ZWrite", 0);
+        mat.renderQueue = (int)RenderQueue.Transparent;
+        mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+        if (additive) mat.EnableKeyword("_BLENDMODE_ADD");
 
         EditorUtility.SetDirty(mat);
         return mat;
@@ -329,7 +393,6 @@ public static class GeometricArenaPolishSetup
             switch (type)
             {
                 case WeaponType.Pistol:
-                    // Compact sleek sidearm
                     CreateVisualPrimitive("Frame", PrimitiveType.Cube, visualObj.transform, new Vector3(0f, 0f, 0.05f), new Vector3(0.12f, 0.15f, 0.32f), p.WeaponMetal);
                     CreateVisualPrimitive("Slide", PrimitiveType.Cube, visualObj.transform, new Vector3(0f, 0.10f, 0.07f), new Vector3(0.11f, 0.08f, 0.36f), p.WeaponAccent);
                     CreateVisualPrimitive("Barrel", PrimitiveType.Cube, visualObj.transform, new Vector3(0f, 0.10f, 0.28f), new Vector3(0.07f, 0.07f, 0.12f), p.WeaponMetal);
@@ -339,7 +402,6 @@ public static class GeometricArenaPolishSetup
                     break;
 
                 case WeaponType.Rifle:
-                    // Distinct assault rifle: elongated receiver, long barrel, handguard, mag, stock
                     CreateVisualPrimitive("Receiver", PrimitiveType.Cube, visualObj.transform, new Vector3(0f, 0.05f, 0f), new Vector3(0.13f, 0.18f, 0.44f), p.WeaponMetal);
                     CreateVisualPrimitive("Barrel", PrimitiveType.Cube, visualObj.transform, new Vector3(0f, 0.08f, 0.38f), new Vector3(0.08f, 0.08f, 0.44f), p.WeaponMetal);
                     CreateVisualPrimitive("Handguard", PrimitiveType.Cube, visualObj.transform, new Vector3(0f, 0.05f, 0.25f), new Vector3(0.14f, 0.14f, 0.30f), p.WeaponAccent);
@@ -351,7 +413,6 @@ public static class GeometricArenaPolishSetup
                     break;
 
                 case WeaponType.SMG:
-                    // Compact, fast profile: short vented barrel, vertical foregrip, stick mag
                     CreateVisualPrimitive("Body", PrimitiveType.Cube, visualObj.transform, new Vector3(0f, 0.04f, 0.02f), new Vector3(0.13f, 0.17f, 0.32f), p.WeaponMetal);
                     CreateVisualPrimitive("BarrelShroud", PrimitiveType.Cube, visualObj.transform, new Vector3(0f, 0.06f, 0.24f), new Vector3(0.11f, 0.11f, 0.20f), p.WeaponAccent);
                     CreateVisualPrimitive("Foregrip", PrimitiveType.Cube, visualObj.transform, new Vector3(0f, -0.10f, 0.22f), new Vector3(0.07f, 0.18f, 0.07f), p.WeaponAccent);
@@ -362,7 +423,6 @@ public static class GeometricArenaPolishSetup
                     break;
 
                 case WeaponType.Shotgun:
-                    // Heavy wide twin barrel, pump slide, solid heavy stock
                     CreateVisualPrimitive("Receiver", PrimitiveType.Cube, visualObj.transform, new Vector3(0f, 0.06f, 0f), new Vector3(0.16f, 0.20f, 0.38f), p.WeaponMetal);
                     CreateVisualPrimitive("TwinBarrel", PrimitiveType.Cube, visualObj.transform, new Vector3(0f, 0.08f, 0.35f), new Vector3(0.18f, 0.10f, 0.50f), p.WeaponMetal);
                     CreateVisualPrimitive("PumpSlide", PrimitiveType.Cube, visualObj.transform, new Vector3(0f, -0.01f, 0.25f), new Vector3(0.16f, 0.11f, 0.22f), p.WeaponAccent);
@@ -372,7 +432,6 @@ public static class GeometricArenaPolishSetup
                     break;
 
                 case WeaponType.Launcher:
-                    // Heavy cylindrical tube cannon, revolving drum, dual handles
                     CreateVisualPrimitive("CannonTube", PrimitiveType.Cube, visualObj.transform, new Vector3(0f, 0.06f, 0.15f), new Vector3(0.24f, 0.24f, 0.55f), p.WeaponMetal);
                     CreateVisualPrimitive("RevolvingDrum", PrimitiveType.Cube, visualObj.transform, new Vector3(0f, 0.04f, -0.10f), new Vector3(0.30f, 0.30f, 0.26f), p.WeaponAccent, Quaternion.Euler(0f, 0f, 45f));
                     CreateVisualPrimitive("FrontHandle", PrimitiveType.Cube, visualObj.transform, new Vector3(0f, -0.16f, 0.22f), new Vector3(0.09f, 0.20f, 0.09f), p.WeaponMetal);
@@ -384,13 +443,13 @@ public static class GeometricArenaPolishSetup
 
             muzzleObj.transform.localPosition = muzzlePos;
 
-            // Setup MuzzleFlashFX
+            // Setup MuzzleFlashFX with particle unlit material
             MuzzleFlashFX flashFX = root.GetComponent<MuzzleFlashFX>();
             if (flashFX == null) flashFX = root.AddComponent<MuzzleFlashFX>();
 
             ParticleSystem muzzlePS = muzzleObj.GetComponent<ParticleSystem>();
             if (muzzlePS == null) muzzlePS = muzzleObj.AddComponent<ParticleSystem>();
-            ConfigureMuzzleParticleSystem(muzzlePS, p.FXPlayerBullet);
+            ConfigureMuzzleParticleSystem(muzzlePS, p.FXPlayerParticle);
 
             // Wire Gun references via SerializedObject
             SerializedObject serGun = new SerializedObject(gun);
@@ -418,16 +477,16 @@ public static class GeometricArenaPolishSetup
         main.duration = 0.05f;
         main.loop = false;
         main.startLifetime = 0.06f;
-        main.startSpeed = 3f;
+        main.startSpeed = 3.5f;
         main.startSize = 0.22f;
-        main.startColor = new Color(0.2f, 0.9f, 1f, 1f);
+        main.startColor = new Color(0.2f, 0.95f, 1f, 1f);
         main.playOnAwake = false;
         main.stopAction = ParticleSystemStopAction.None;
 
         var emission = ps.emission;
         emission.enabled = true;
         emission.rateOverTime = 0;
-        emission.SetBursts(new[] { new ParticleSystem.Burst(0f, 6) });
+        emission.SetBursts(new[] { new ParticleSystem.Burst(0f, 8) });
 
         var shape = ps.shape;
         shape.shapeType = ParticleSystemShapeType.Cone;
@@ -494,7 +553,6 @@ public static class GeometricArenaPolishSetup
             {
                 case EnemySilhouetteRole.BasicBlock:
                 {
-                    // Basic block silhouette: compact cube body, offset brow/head, visor slit, small shoulder horns
                     var body = CreateVisualPrimitive("Body", PrimitiveType.Cube, visualObj.transform, new Vector3(0f, 0.5f, 0f), new Vector3(0.9f, 0.9f, 0.9f), p.EnemyBasic);
                     primaryBodyRenderer = body.GetComponent<MeshRenderer>();
 
@@ -513,7 +571,6 @@ public static class GeometricArenaPolishSetup
 
                 case EnemySilhouetteRole.NarrowFast:
                 {
-                    // Narrow fast silhouette: tall slim diamond body, swept wing fins, dart eye
                     var body = CreateVisualPrimitive("Body", PrimitiveType.Cube, visualObj.transform, new Vector3(0f, 0.65f, 0.05f), new Vector3(0.42f, 1.25f, 0.42f), p.EnemyFast, Quaternion.Euler(12f, 0f, 0f));
                     primaryBodyRenderer = body.GetComponent<MeshRenderer>();
 
@@ -529,7 +586,6 @@ public static class GeometricArenaPolishSetup
 
                 case EnemySilhouetteRole.DirectionalCharger:
                 {
-                    // Directional charger silhouette: heavy forward wedge ram, ramming horns, low aggressive profile
                     var body = CreateVisualPrimitive("WedgeBody", PrimitiveType.Cube, visualObj.transform, new Vector3(0f, 0.55f, 0.1f), new Vector3(1.1f, 0.85f, 1.35f), p.EnemyCharger, Quaternion.Euler(-6f, 0f, 0f));
                     primaryBodyRenderer = body.GetComponent<MeshRenderer>();
 
@@ -550,7 +606,7 @@ public static class GeometricArenaPolishSetup
 
                     GameObject telObj = new GameObject("TelegraphLine");
                     telObj.transform.SetParent(root.transform, false);
-                    telObj.transform.localPosition = new Vector3(0f, 0.06f, 0f);
+                    telObj.transform.localPosition = new Vector3(0f, 0.05f, 0f);
 
                     LineRenderer line = telObj.AddComponent<LineRenderer>();
                     line.useWorldSpace = true;
@@ -574,7 +630,6 @@ public static class GeometricArenaPolishSetup
 
                 case EnemySilhouetteRole.TurretRanged:
                 {
-                    // Turret-like ranged enemy: floating ring base, hovering crystal turret head, long protruding emitter cannon
                     var baseRing = CreateVisualPrimitive("PedestalBase", PrimitiveType.Cube, visualObj.transform, new Vector3(0f, 0.18f, 0f), new Vector3(1.15f, 0.24f, 1.15f), p.WeaponMetal, Quaternion.Euler(0f, 45f, 0f));
                     additionalRenderers.Add(baseRing.GetComponent<MeshRenderer>());
 
@@ -596,7 +651,6 @@ public static class GeometricArenaPolishSetup
 
                 case EnemySilhouetteRole.WideArmoredTank:
                 {
-                    // Wide armored tank: massive wide squat silhouette, heavy side blast shields, armored grill, heavy bronze/steel
                     var body = CreateVisualPrimitive("MainChassis", PrimitiveType.Cube, visualObj.transform, new Vector3(0f, 0.55f, 0f), new Vector3(1.75f, 1.1f, 1.35f), p.EnemyTank);
                     primaryBodyRenderer = body.GetComponent<MeshRenderer>();
 
@@ -615,7 +669,6 @@ public static class GeometricArenaPolishSetup
 
                 case EnemySilhouetteRole.MultipartBoss:
                 {
-                    // Multipart Boss Titan: obsidian monolith core, massive pauldrons, floating satellite armor pylons, floor shockwave telegraph
                     var core = CreateVisualPrimitive("BossCore", PrimitiveType.Cube, visualObj.transform, new Vector3(0f, 1.3f, 0f), new Vector3(1.8f, 2.2f, 1.8f), p.EnemyBossBase);
                     primaryBodyRenderer = core.GetComponent<MeshRenderer>();
 
@@ -646,7 +699,7 @@ public static class GeometricArenaPolishSetup
 
                     GameObject shockwaveTelegraph = new GameObject("ShockwaveTelegraph");
                     shockwaveTelegraph.transform.SetParent(root.transform, false);
-                    shockwaveTelegraph.transform.localPosition = new Vector3(0f, 0.06f, 0f);
+                    shockwaveTelegraph.transform.localPosition = new Vector3(0f, 0.05f, 0f);
 
                     LineRenderer ring = shockwaveTelegraph.AddComponent<LineRenderer>();
                     ring.useWorldSpace = false;
@@ -658,7 +711,7 @@ public static class GeometricArenaPolishSetup
                     ring.shadowCastingMode = ShadowCastingMode.Off;
                     ring.receiveShadows = false;
 
-                    float radius = 6f;
+                    float radius = 7f;
                     for (int i = 0; i < 48; i++)
                     {
                         float angle = (i * 360f / 48f) * Mathf.Deg2Rad;
@@ -666,47 +719,67 @@ public static class GeometricArenaPolishSetup
                     }
                     shockwaveTelegraph.SetActive(false);
 
-                    // Wire BossPhaseController
+                    // Ensure BossPhaseController is attached and wired
                     BossPhaseController bossCtrl = root.GetComponent<BossPhaseController>();
-                    if (bossCtrl != null)
-                    {
-                        SerializedObject serBoss = new SerializedObject(bossCtrl);
-                        SerializedProperty phasesProp = serBoss.FindProperty("_phases");
-                        if (phasesProp != null)
-                        {
-                            for (int i = 0; i < phasesProp.arraySize; i++)
-                            {
-                                SerializedProperty phaseProp = phasesProp.GetArrayElementAtIndex(i);
-                                phaseProp.FindPropertyRelative("ShockwaveTelegraph").objectReferenceValue = shockwaveTelegraph;
-                                phaseProp.FindPropertyRelative("TriggerShockwaveOnEnter").boolValue = true;
+                    if (bossCtrl == null) bossCtrl = root.AddComponent<BossPhaseController>();
 
-                                if (i == 0) // Phase 2
-                                {
-                                    SerializedProperty enProp = phaseProp.FindPropertyRelative("EnableObjects");
-                                    enProp.arraySize = 2;
-                                    enProp.GetArrayElementAtIndex(0).objectReferenceValue = pylonRL;
-                                    enProp.GetArrayElementAtIndex(1).objectReferenceValue = pylonRR;
-                                }
-                                else if (i == 1) // Phase 3
-                                {
-                                    SerializedProperty enProp = phaseProp.FindPropertyRelative("EnableObjects");
-                                    enProp.arraySize = 1;
-                                    enProp.GetArrayElementAtIndex(0).objectReferenceValue = wingsP3;
-                                }
-                            }
-                        }
-                        serBoss.ApplyModifiedPropertiesWithoutUndo();
+                    SerializedObject serBoss = new SerializedObject(bossCtrl);
+                    serBoss.FindProperty("_bossName").stringValue = "TITAN GOLIATH";
+                    SerializedProperty phasesProp = serBoss.FindProperty("_phases");
+                    if (phasesProp != null)
+                    {
+                        phasesProp.arraySize = 2;
+
+                        // Phase 2
+                        SerializedProperty p2 = phasesProp.GetArrayElementAtIndex(0);
+                        p2.FindPropertyRelative("PhaseName").stringValue = "Phase 2: Overcharge";
+                        p2.FindPropertyRelative("EnterAtHealthFraction").floatValue = 0.66f;
+                        p2.FindPropertyRelative("MovementSpeedMultiplier").floatValue = 1.25f;
+                        p2.FindPropertyRelative("AttackCooldownMultiplier").floatValue = 0.8f;
+                        p2.FindPropertyRelative("BonusDamage").intValue = 5;
+                        p2.FindPropertyRelative("TriggerShockwaveOnEnter").boolValue = true;
+                        p2.FindPropertyRelative("ShockwaveRadius").floatValue = 7f;
+                        p2.FindPropertyRelative("ShockwaveDamage").intValue = 15;
+                        p2.FindPropertyRelative("ShockwaveWindup").floatValue = 0.75f;
+                        p2.FindPropertyRelative("ShockwaveRecovery").floatValue = 0.35f;
+                        p2.FindPropertyRelative("ShockwaveTelegraph").objectReferenceValue = shockwaveTelegraph;
+                        SerializedProperty p2Enables = p2.FindPropertyRelative("EnableObjects");
+                        p2Enables.arraySize = 2;
+                        p2Enables.GetArrayElementAtIndex(0).objectReferenceValue = pylonRL;
+                        p2Enables.GetArrayElementAtIndex(1).objectReferenceValue = pylonRR;
+
+                        // Phase 3
+                        SerializedProperty p3 = phasesProp.GetArrayElementAtIndex(1);
+                        p3.FindPropertyRelative("PhaseName").stringValue = "Phase 3: Final Stand";
+                        p3.FindPropertyRelative("EnterAtHealthFraction").floatValue = 0.33f;
+                        p3.FindPropertyRelative("MovementSpeedMultiplier").floatValue = 1.45f;
+                        p3.FindPropertyRelative("AttackCooldownMultiplier").floatValue = 0.65f;
+                        p3.FindPropertyRelative("BonusDamage").intValue = 10;
+                        p3.FindPropertyRelative("TriggerShockwaveOnEnter").boolValue = true;
+                        p3.FindPropertyRelative("ShockwaveRadius").floatValue = 9f;
+                        p3.FindPropertyRelative("ShockwaveDamage").intValue = 25;
+                        p3.FindPropertyRelative("ShockwaveWindup").floatValue = 0.6f;
+                        p3.FindPropertyRelative("ShockwaveRecovery").floatValue = 0.3f;
+                        p3.FindPropertyRelative("ShockwaveTelegraph").objectReferenceValue = shockwaveTelegraph;
+                        SerializedProperty p3Enables = p3.FindPropertyRelative("EnableObjects");
+                        p3Enables.arraySize = 1;
+                        p3Enables.GetArrayElementAtIndex(0).objectReferenceValue = wingsP3;
                     }
+                    serBoss.ApplyModifiedPropertiesWithoutUndo();
                     break;
                 }
             }
 
-            // Update HitFlash references
+            // Ensure HitFlash is present and wired on all enemy prefabs
             HitFlash hitFlash = root.GetComponent<HitFlash>();
-            if (hitFlash != null && primaryBodyRenderer != null)
+            if (hitFlash == null) hitFlash = root.AddComponent<HitFlash>();
+            if (primaryBodyRenderer != null)
             {
                 SerializedObject serHit = new SerializedObject(hitFlash);
                 serHit.FindProperty("_renderer").objectReferenceValue = primaryBodyRenderer;
+                serHit.FindProperty("_duration").floatValue = 0.08f;
+                serHit.FindProperty("_flashColor").colorValue = Color.white;
+                serHit.FindProperty("_healthRef").objectReferenceValue = root.GetComponent<HealthComponent>();
                 SerializedProperty addProp = serHit.FindProperty("_additionalRenderers");
                 if (addProp != null)
                 {
@@ -755,7 +828,7 @@ public static class GeometricArenaPolishSetup
                 if (trail != null)
                 {
                     SerializedObject serTrail = new SerializedObject(trail);
-                    serTrail.FindProperty("_material").objectReferenceValue = p.FXPlayerBullet;
+                    serTrail.FindProperty("_material").objectReferenceValue = p.FXPlayerParticle;
                     serTrail.FindProperty("_startColor").colorValue = new Color(0.1f, 0.95f, 1f, 1f);
                     serTrail.FindProperty("_endColor").colorValue = new Color(0f, 0.5f, 1f, 0f);
                     serTrail.FindProperty("_time").floatValue = 0.12f;
@@ -771,13 +844,13 @@ public static class GeometricArenaPolishSetup
         }
 
         // 2. BulletImpact.prefab
-        TuneParticleBurst("Assets/_Project/BulletImpact.prefab", p.FXPlayerBullet, new Color(0.4f, 0.95f, 1f, 1f), 8, 0.15f, 6f, 0.12f);
+        TuneParticleBurst("Assets/_Project/BulletImpact.prefab", p.FXPlayerParticle, new Color(0.4f, 0.95f, 1f, 1f), 10, 0.15f, 6f, 0.12f);
 
         // 3. EnemyHitEffect.prefab
-        TuneParticleBurst("Assets/_Project/EnemyHitEffect.prefab", p.FXEnemyBullet, new Color(1f, 0.7f, 0.1f, 1f), 8, 0.18f, 5.5f, 0.14f);
+        TuneParticleBurst("Assets/_Project/EnemyHitEffect.prefab", p.FXEnemyParticle, new Color(1f, 0.75f, 0.1f, 1f), 10, 0.18f, 5.5f, 0.14f);
 
         // 4. EnemyDeathEffect.prefab
-        TuneParticleBurst("Assets/_Project/EnemyDeathEffect.prefab", p.FXEnemyBullet, new Color(1f, 0.45f, 0.05f, 1f), 16, 0.35f, 7.0f, 0.22f);
+        TuneParticleBurst("Assets/_Project/EnemyDeathEffect.prefab", p.FXEnemyParticle, new Color(1f, 0.45f, 0.05f, 1f), 18, 0.35f, 7.0f, 0.22f);
     }
 
     private static void TuneParticleBurst(string prefabPath, Material mat, Color col, int count, float lifetime, float speed, float size)
@@ -853,7 +926,7 @@ public static class GeometricArenaPolishSetup
         // 5. Setup Directional Light & Global Volume
         SetupLightingAndAtmosphere(p);
 
-        // 6. Style UI & Correct Game Over "Pause" Title
+        // 6. Style UI & Correct Game Over "Pause" Title & Layouts
         SetupSceneUI();
 
         // 7. Wire all game connections
@@ -903,20 +976,22 @@ public static class GeometricArenaPolishSetup
         visualObj.transform.localRotation = Quaternion.identity;
 
         // Visual Dynamics component for tilt & recoil
-        PlayerVisualDynamics dynamics = visualObj.AddComponent<PlayerVisualDynamics>();
+        PlayerVisualDynamics dynamics = visualObj.GetComponent<PlayerVisualDynamics>();
+        if (dynamics == null) dynamics = visualObj.AddComponent<PlayerVisualDynamics>();
 
         // Compact cube body: (0.75, 0.75, 0.75) at y=0.5
-        CreateVisualPrimitive("Body", PrimitiveType.Cube, visualObj.transform, new Vector3(0f, 0.5f, 0f), new Vector3(0.75f, 0.75f, 0.75f), p.PlayerBody);
+        GameObject bodyObj = CreateVisualPrimitive("Body", PrimitiveType.Cube, visualObj.transform, new Vector3(0f, 0.5f, 0f), new Vector3(0.75f, 0.75f, 0.75f), p.PlayerBody);
+        MeshRenderer bodyMR = bodyObj.GetComponent<MeshRenderer>();
 
         // Bright glowing Cyan Visor facing forward +Z
-        CreateVisualPrimitive("Visor", PrimitiveType.Cube, visualObj.transform, new Vector3(0f, 0.62f, 0.38f), new Vector3(0.48f, 0.16f, 0.12f), p.PlayerVisor);
+        GameObject visorObj = CreateVisualPrimitive("Visor", PrimitiveType.Cube, visualObj.transform, new Vector3(0f, 0.62f, 0.38f), new Vector3(0.48f, 0.16f, 0.12f), p.PlayerVisor);
 
         // Backpack core
-        CreateVisualPrimitive("BackpackCore", PrimitiveType.Cube, visualObj.transform, new Vector3(0f, 0.55f, -0.38f), new Vector3(0.36f, 0.46f, 0.14f), p.PlayerDark);
+        GameObject bpObj = CreateVisualPrimitive("BackpackCore", PrimitiveType.Cube, visualObj.transform, new Vector3(0f, 0.55f, -0.38f), new Vector3(0.36f, 0.46f, 0.14f), p.PlayerDark);
 
         // Shoulder pads
-        CreateVisualPrimitive("Shoulder_L", PrimitiveType.Cube, visualObj.transform, new Vector3(-0.42f, 0.65f, 0f), new Vector3(0.14f, 0.30f, 0.40f), p.PlayerDark);
-        CreateVisualPrimitive("Shoulder_R", PrimitiveType.Cube, visualObj.transform, new Vector3(0.42f, 0.65f, 0f), new Vector3(0.14f, 0.30f, 0.40f), p.PlayerDark);
+        GameObject shLObj = CreateVisualPrimitive("Shoulder_L", PrimitiveType.Cube, visualObj.transform, new Vector3(-0.42f, 0.65f, 0f), new Vector3(0.14f, 0.30f, 0.40f), p.PlayerDark);
+        GameObject shRObj = CreateVisualPrimitive("Shoulder_R", PrimitiveType.Cube, visualObj.transform, new Vector3(0.42f, 0.65f, 0f), new Vector3(0.14f, 0.30f, 0.40f), p.PlayerDark);
 
         // Dedicated right-hand weapon mount
         GameObject mountObj = new GameObject("WeaponMount");
@@ -964,6 +1039,36 @@ public static class GeometricArenaPolishSetup
             serShoot.ApplyModifiedPropertiesWithoutUndo();
         }
 
+        // Attach HitFlash to Player
+        HitFlash playerHitFlash = pGo.GetComponent<HitFlash>();
+        if (playerHitFlash == null) playerHitFlash = pGo.AddComponent<HitFlash>();
+        if (bodyMR != null)
+        {
+            SerializedObject serHit = new SerializedObject(playerHitFlash);
+            serHit.FindProperty("_renderer").objectReferenceValue = bodyMR;
+            serHit.FindProperty("_duration").floatValue = 0.08f;
+            serHit.FindProperty("_flashColor").colorValue = Color.white;
+            serHit.FindProperty("_healthRef").objectReferenceValue = pGo.GetComponent<HealthComponent>();
+            SerializedProperty addProp = serHit.FindProperty("_additionalRenderers");
+            if (addProp != null)
+            {
+                Renderer[] extras = { visorObj.GetComponent<MeshRenderer>(), bpObj.GetComponent<MeshRenderer>(), shLObj.GetComponent<MeshRenderer>(), shRObj.GetComponent<MeshRenderer>() };
+                addProp.arraySize = extras.Length;
+                for (int r = 0; r < extras.Length; r++)
+                {
+                    addProp.GetArrayElementAtIndex(r).objectReferenceValue = extras[r];
+                }
+            }
+            serHit.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        // Attach PlayerHitFX to Player
+        PlayerHitFX playerHitFX = pGo.GetComponent<PlayerHitFX>();
+        if (playerHitFX == null) playerHitFX = pGo.AddComponent<PlayerHitFX>();
+        SerializedObject serHitFX = new SerializedObject(playerHitFX);
+        serHitFX.FindProperty("_playerHealthRef").objectReferenceValue = pGo.GetComponent<HealthComponent>();
+        serHitFX.ApplyModifiedPropertiesWithoutUndo();
+
         EditorUtility.SetDirty(pGo);
     }
 
@@ -999,11 +1104,17 @@ public static class GeometricArenaPolishSetup
         CreateEnvironmentBlock("SpawnPad_East", PrimitiveType.Cube, floorRoot.transform, new Vector3(18f, 0.015f, 0f), new Vector3(8f, 0.04f, 8f), p.ArenaSpawnPad, false, Quaternion.Euler(0f, 45f, 0f));
         CreateEnvironmentBlock("SpawnPad_South", PrimitiveType.Cube, floorRoot.transform, new Vector3(0f, 0.015f, -18f), new Vector3(8f, 0.04f, 8f), p.ArenaSpawnPad, false, Quaternion.Euler(0f, 45f, 0f));
 
+        // Ensure cardinal spawn zones exist
+        EnsureSpawnZone("SpawnZone_North", new Vector3(0f, 0f, 18f));
+        EnsureSpawnZone("SpawnZone_South", new Vector3(0f, 0f, -18f));
+        EnsureSpawnZone("SpawnZone_West", new Vector3(-18f, 0f, 0f));
+        EnsureSpawnZone("SpawnZone_East", new Vector3(18f, 0f, 0f));
+
         // 3. Boundary Walls Hierarchy (Height 3.5m, thickness 1.5m)
         GameObject wallsRoot = new GameObject("BoundaryWalls");
         wallsRoot.transform.SetParent(env.transform, false);
 
-        // 4 Main Walls
+        // 4 Main Walls with Trim (Parented to wallsRoot to avoid scale multiplication)
         CreateWallWithTrim("Wall_North", wallsRoot.transform, new Vector3(0f, 1.75f, 27f), new Vector3(54f, 3.5f, 1.5f), p);
         CreateWallWithTrim("Wall_South", wallsRoot.transform, new Vector3(0f, 1.75f, -27f), new Vector3(54f, 3.5f, 1.5f), p);
         CreateWallWithTrim("Wall_West", wallsRoot.transform, new Vector3(-27f, 1.75f, 0f), new Vector3(1.5f, 3.5f, 54f), p);
@@ -1024,7 +1135,7 @@ public static class GeometricArenaPolishSetup
         BuildCoverCluster("Cover_SE", coverRoot.transform, new Vector3(9f, 0f, -9f), 1f, p, true);
         BuildCoverCluster("Cover_SW", coverRoot.transform, new Vector3(-9f, 0f, -9f), -1f, p, true);
 
-        // 5. Landmarks: 2 Monolithic Geometric Pylons at (+/-14, 0)
+        // 5. Landmarks: 2 Monolithic Geometric Pylons at (+/-13.5, 0)
         GameObject landmarksRoot = new GameObject("Landmarks");
         landmarksRoot.transform.SetParent(env.transform, false);
 
@@ -1037,14 +1148,35 @@ public static class GeometricArenaPolishSetup
         surface.useGeometry = NavMeshCollectGeometry.PhysicsColliders;
     }
 
+    private static void EnsureSpawnZone(string name, Vector3 pos)
+    {
+        GameObject szObj = GameObject.Find(name);
+        if (szObj == null)
+        {
+            szObj = new GameObject(name);
+            szObj.transform.position = pos;
+            SpawnZone zone = szObj.AddComponent<SpawnZone>();
+            SerializedObject serZone = new SerializedObject(zone);
+            serZone.FindProperty("_id").stringValue = name;
+            serZone.FindProperty("_weight").intValue = 1;
+            serZone.FindProperty("_radius").floatValue = 4f;
+            serZone.FindProperty("_shape").enumValueIndex = (int)SpawnZoneShape.Circle;
+            serZone.ApplyModifiedPropertiesWithoutUndo();
+        }
+        else
+        {
+            szObj.transform.position = pos;
+        }
+    }
+
     private static void CreateWallWithTrim(string name, Transform parent, Vector3 pos, Vector3 size, MaterialPalette p)
     {
-        GameObject wall = CreateEnvironmentBlock(name, PrimitiveType.Cube, parent, pos, size, p.ArenaWall, true);
+        CreateEnvironmentBlock(name, PrimitiveType.Cube, parent, pos, size, p.ArenaWall, true);
 
-        // Glowing trim cap on top edge
-        Vector3 trimSize = new Vector3(size.x > size.z ? size.x : 0.35f, 0.18f, size.z > size.x ? size.z : 0.35f);
-        Vector3 trimPos = new Vector3(0f, size.y * 0.5f + 0.09f, 0f);
-        CreateEnvironmentBlock("Trim", PrimitiveType.Cube, wall.transform, trimPos, trimSize, p.ArenaWallTrim, false);
+        // Glowing trim cap on top edge - parented to parent (wallsRoot) to prevent scale multiplication
+        Vector3 trimSize = new Vector3(size.x > size.z ? size.x : 0.4f, 0.18f, size.z > size.x ? size.z : 0.4f);
+        Vector3 trimPos = pos + Vector3.up * (size.y * 0.5f + 0.09f);
+        CreateEnvironmentBlock($"{name}_Trim", PrimitiveType.Cube, parent, trimPos, trimSize, p.ArenaWallTrim, false);
     }
 
     private static void BuildCoverCluster(string name, Transform parent, Vector3 center, float dirX, MaterialPalette p, bool flipZ = false)
@@ -1055,11 +1187,11 @@ public static class GeometricArenaPolishSetup
 
         float zSign = flipZ ? -1f : 1f;
 
-        // Low cover barricade (1.1m high, 2.8m long) - player and enemies can shoot over or duck around
+        // Low cover barricade (1.1m high, 2.8m long)
         CreateEnvironmentBlock("LowBarricade_1", PrimitiveType.Cube, cluster.transform, new Vector3(dirX * 0.8f, 0.55f, 0f), new Vector3(2.8f, 1.1f, 0.85f), p.ArenaCover, true);
         CreateEnvironmentBlock("Trim_1", PrimitiveType.Cube, cluster.transform, new Vector3(dirX * 0.8f, 1.12f, 0f), new Vector3(2.84f, 0.08f, 0.89f), p.ArenaWallTrim, false);
 
-        // Medium L-shaped sightline blocker (2.0m high, 1.2m wide, 2.2m deep)
+        // Medium L-shaped sightline blocker (2.0m high, 1.1m wide, 2.2m deep)
         CreateEnvironmentBlock("CornerBlock_2", PrimitiveType.Cube, cluster.transform, new Vector3(dirX * -1.4f, 1.0f, zSign * 1.2f), new Vector3(1.1f, 2.0f, 2.2f), p.ArenaCover, true);
         CreateEnvironmentBlock("Trim_2", PrimitiveType.Cube, cluster.transform, new Vector3(dirX * -1.4f, 2.03f, zSign * 1.2f), new Vector3(1.15f, 0.08f, 2.25f), p.ArenaWallTrim, false);
     }
@@ -1183,44 +1315,182 @@ public static class GeometricArenaPolishSetup
     {
         TMP_FontAsset font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(FontPath);
 
-        // 1. Correct Game Over Panel "Pause" Title
-        GameOverUI gameOver = Object.FindFirstObjectByType<GameOverUI>(FindObjectsInactive.Include);
-        if (gameOver != null)
+        // 1. Clean & Style HUD (Top-Left Health, Top-Right Wave, Score & HighScore)
+        GameObject hudObj = GameObject.Find("HUD");
+        if (hudObj != null)
         {
-            SerializedObject serGO = new SerializedObject(gameOver);
-            SerializedProperty panelProp = serGO.FindProperty("_panel");
-            if (panelProp != null && panelProp.objectReferenceValue is GameObject pObj)
+            Image hudImg = hudObj.GetComponent<Image>();
+            if (hudImg != null) hudImg.color = Color.clear;
+
+            Transform healthBarTrans = hudObj.transform.Find("HealthBar");
+            if (healthBarTrans != null)
             {
-                TextMeshProUGUI[] texts = pObj.GetComponentsInChildren<TextMeshProUGUI>(true);
-                foreach (TextMeshProUGUI t in texts)
+                RectTransform rt = healthBarTrans.GetComponent<RectTransform>();
+                rt.anchorMin = new Vector2(0f, 1f);
+                rt.anchorMax = new Vector2(0f, 1f);
+                rt.pivot = new Vector2(0f, 1f);
+                rt.anchoredPosition = new Vector2(25f, -25f);
+                rt.sizeDelta = new Vector2(260f, 22f);
+
+                if (healthBarTrans.TryGetComponent<Image>(out var barImg))
                 {
-                    if (string.Equals(t.text.Trim(), "Pause", StringComparison.OrdinalIgnoreCase) || string.Equals(t.text.Trim(), "GAME OVER", StringComparison.OrdinalIgnoreCase))
-                    {
-                        t.text = "GAME OVER";
-                        t.color = new Color(1f, 0.25f, 0.2f);
-                        t.enableWordWrapping = false;
-                        RectTransform rt = t.GetComponent<RectTransform>();
-                        if (rt != null)
-                        {
-                            rt.sizeDelta = new Vector2(350f, 60f);
-                        }
-                        EditorUtility.SetDirty(t);
-                        Debug.Log("[GeometricArenaPolish] Corrected Game Over Panel title to single-line 'GAME OVER'");
-                    }
-                    if (font != null) t.font = font;
+                    barImg.color = Color.clear;
                 }
 
-                Image img = pObj.GetComponent<Image>();
-                if (img != null)
+                Slider s = healthBarTrans.GetComponentInChildren<Slider>(true);
+                if (s != null)
                 {
-                    img.color = new Color(0.06f, 0.07f, 0.09f, 0.92f);
-                    EditorUtility.SetDirty(img);
+                    s.handleRect = null;
+                    Transform handleArea = s.transform.Find("Handle Slide Area");
+                    if (handleArea != null)
+                    {
+                        Object.DestroyImmediate(handleArea.gameObject);
+                    }
+
+                    Transform bg = s.transform.Find("Background");
+                    if (bg != null && bg.TryGetComponent<Image>(out var bgImg))
+                    {
+                        bgImg.color = new Color(0.08f, 0.10f, 0.13f, 0.85f);
+                    }
+
+                    Transform fillArea = s.transform.Find("Fill Area");
+                    if (fillArea != null)
+                    {
+                        RectTransform fillAreaRT = fillArea.GetComponent<RectTransform>();
+                        fillAreaRT.anchorMin = Vector2.zero;
+                        fillAreaRT.anchorMax = Vector2.one;
+                        fillAreaRT.offsetMin = Vector2.zero;
+                        fillAreaRT.offsetMax = Vector2.zero;
+
+                        Transform fill = fillArea.Find("Fill");
+                        if (fill != null && fill.TryGetComponent<Image>(out var fillImg))
+                        {
+                            fillImg.color = new Color(0.0f, 0.85f, 1.0f, 0.95f);
+                        }
+                    }
                 }
-                pObj.SetActive(false);
+            }
+
+            Transform waveTrans = hudObj.transform.Find("Wave");
+            if (waveTrans != null)
+            {
+                RectTransform rt = waveTrans.GetComponent<RectTransform>();
+                rt.anchorMin = new Vector2(1f, 1f);
+                rt.anchorMax = new Vector2(1f, 1f);
+                rt.pivot = new Vector2(1f, 1f);
+                rt.anchoredPosition = new Vector2(-25f, -25f);
+                rt.sizeDelta = new Vector2(140f, 32f);
+
+                if (waveTrans.TryGetComponent<Image>(out var img))
+                {
+                    img.color = new Color(0.07f, 0.08f, 0.11f, 0.80f);
+                }
+                var txt = waveTrans.GetComponentInChildren<TextMeshProUGUI>(true);
+                if (txt != null)
+                {
+                    if (font != null) txt.font = font;
+                    txt.color = new Color(0.96f, 0.75f, 0.15f);
+                    txt.fontSize = 18;
+                    txt.alignment = TextAlignmentOptions.Center;
+                }
+            }
+
+            Transform scoreTrans = hudObj.transform.Find("Score");
+            if (scoreTrans != null)
+            {
+                RectTransform rt = scoreTrans.GetComponent<RectTransform>();
+                rt.anchorMin = new Vector2(1f, 1f);
+                rt.anchorMax = new Vector2(1f, 1f);
+                rt.pivot = new Vector2(1f, 1f);
+                rt.anchoredPosition = new Vector2(-25f, -65f);
+                rt.sizeDelta = new Vector2(140f, 32f);
+
+                if (scoreTrans.TryGetComponent<Image>(out var img))
+                {
+                    img.color = new Color(0.07f, 0.08f, 0.11f, 0.80f);
+                }
+                var txt = scoreTrans.GetComponentInChildren<TextMeshProUGUI>(true);
+                if (txt != null)
+                {
+                    if (font != null) txt.font = font;
+                    txt.color = Color.white;
+                    txt.fontSize = 18;
+                    txt.alignment = TextAlignmentOptions.Center;
+                }
+            }
+
+            Transform highScoreTrans = hudObj.transform.Find("HighScore");
+            if (highScoreTrans != null)
+            {
+                RectTransform rt = highScoreTrans.GetComponent<RectTransform>();
+                rt.anchorMin = new Vector2(1f, 1f);
+                rt.anchorMax = new Vector2(1f, 1f);
+                rt.pivot = new Vector2(1f, 1f);
+                rt.anchoredPosition = new Vector2(-25f, -105f);
+                rt.sizeDelta = new Vector2(140f, 32f);
+
+                if (highScoreTrans.TryGetComponent<Image>(out var img))
+                {
+                    img.color = new Color(0.07f, 0.08f, 0.11f, 0.80f);
+                }
+                var txt = highScoreTrans.GetComponentInChildren<TextMeshProUGUI>(true);
+                if (txt != null)
+                {
+                    if (font != null) txt.font = font;
+                    txt.color = new Color(0.85f, 0.90f, 0.95f, 0.9f);
+                    txt.fontSize = 16;
+                    txt.alignment = TextAlignmentOptions.Center;
+                }
             }
         }
 
-        // 2. Style PauseUI
+        // 2. Style WeaponHUD (Bottom-Right)
+        WeaponHUD weaponHUD = Object.FindFirstObjectByType<WeaponHUD>(FindObjectsInactive.Include);
+        if (weaponHUD != null)
+        {
+            RectTransform rt = weaponHUD.GetComponent<RectTransform>();
+            rt.anchorMin = new Vector2(1f, 0f);
+            rt.anchorMax = new Vector2(1f, 0f);
+            rt.pivot = new Vector2(1f, 0f);
+            rt.anchoredPosition = new Vector2(-25f, 25f);
+            rt.sizeDelta = new Vector2(240f, 95f);
+
+            var texts = weaponHUD.GetComponentsInChildren<TextMeshProUGUI>(true);
+            foreach (var t in texts)
+            {
+                if (font != null) t.font = font;
+            }
+        }
+
+        // 3. Style BossHealthBarUI (Top-Center)
+        BossHealthBarUI bossUI = Object.FindFirstObjectByType<BossHealthBarUI>(FindObjectsInactive.Include);
+        if (bossUI != null)
+        {
+            RectTransform rt = bossUI.GetComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0.5f, 1f);
+            rt.anchorMax = new Vector2(0.5f, 1f);
+            rt.pivot = new Vector2(0.5f, 1f);
+            rt.anchoredPosition = new Vector2(0f, -25f);
+            rt.sizeDelta = new Vector2(440f, 55f);
+
+            var texts = bossUI.GetComponentsInChildren<TextMeshProUGUI>(true);
+            foreach (var t in texts)
+            {
+                if (font != null) t.font = font;
+            }
+
+            Slider s = bossUI.GetComponentInChildren<Slider>(true);
+            if (s != null)
+            {
+                Transform fill = s.transform.Find("Fill Area/Fill");
+                if (fill != null && fill.TryGetComponent<Image>(out var fillImg))
+                {
+                    fillImg.color = new Color(1.0f, 0.35f, 0.05f, 1f);
+                }
+            }
+        }
+
+        // 4. Style PauseUI & Fix Button Overlap
         PauseUI pause = Object.FindFirstObjectByType<PauseUI>(FindObjectsInactive.Include);
         if (pause != null)
         {
@@ -1228,22 +1498,202 @@ public static class GeometricArenaPolishSetup
             SerializedProperty panelProp = serPause.FindProperty("_panel");
             if (panelProp != null && panelProp.objectReferenceValue is GameObject pObj)
             {
+                RectTransform panelRT = pObj.GetComponent<RectTransform>();
+                panelRT.anchorMin = new Vector2(0.5f, 0.5f);
+                panelRT.anchorMax = new Vector2(0.5f, 0.5f);
+                panelRT.pivot = new Vector2(0.5f, 0.5f);
+                panelRT.anchoredPosition = Vector2.zero;
+                panelRT.sizeDelta = new Vector2(360f, 320f);
+
                 Image img = pObj.GetComponent<Image>();
                 if (img != null)
                 {
-                    img.color = new Color(0.06f, 0.07f, 0.09f, 0.90f);
+                    img.color = new Color(0.06f, 0.07f, 0.09f, 0.94f);
                     EditorUtility.SetDirty(img);
                 }
+
+                Button resumeBtn = serPause.FindProperty("_resumeButton")?.objectReferenceValue as Button;
+                if (resumeBtn == null) resumeBtn = pObj.transform.Find("Resume")?.GetComponent<Button>();
+                if (resumeBtn != null)
+                {
+                    serPause.FindProperty("_resumeButton").objectReferenceValue = resumeBtn;
+                    StyleButton(resumeBtn, "Resume", new Vector2(0f, 25f), font);
+                }
+
+                Button settingsBtn = serPause.FindProperty("_settingsButton")?.objectReferenceValue as Button;
+                if (settingsBtn == null) settingsBtn = pObj.transform.Find("SettingsButton")?.GetComponent<Button>() ?? pObj.transform.Find("Settings")?.GetComponent<Button>();
+                if (settingsBtn != null)
+                {
+                    serPause.FindProperty("_settingsButton").objectReferenceValue = settingsBtn;
+                    StyleButton(settingsBtn, "Settings", new Vector2(0f, -35f), font);
+                }
+
+                Button menuBtn = serPause.FindProperty("_menuButton")?.objectReferenceValue as Button;
+                if (menuBtn == null) menuBtn = pObj.transform.Find("MenuButton")?.GetComponent<Button>() ?? pObj.transform.Find("Menu")?.GetComponent<Button>();
+                if (menuBtn != null)
+                {
+                    serPause.FindProperty("_menuButton").objectReferenceValue = menuBtn;
+                    StyleButton(menuBtn, "Menu", new Vector2(0f, -95f), font);
+                }
+
                 TextMeshProUGUI[] texts = pObj.GetComponentsInChildren<TextMeshProUGUI>(true);
                 foreach (TextMeshProUGUI t in texts)
                 {
                     if (font != null) t.font = font;
+                    if (t.transform.parent == pObj.transform && (t.text.Contains("Pause") || t.text.Contains("PAUSE")))
+                    {
+                        RectTransform rt = t.GetComponent<RectTransform>();
+                        rt.anchorMin = new Vector2(0.5f, 0.5f);
+                        rt.anchorMax = new Vector2(0.5f, 0.5f);
+                        rt.pivot = new Vector2(0.5f, 0.5f);
+                        rt.anchoredPosition = new Vector2(0f, 95f);
+                        rt.sizeDelta = new Vector2(280f, 50f);
+                        t.text = "PAUSED";
+                        t.fontSize = 36;
+                        t.alignment = TextAlignmentOptions.Center;
+                    }
                 }
                 pObj.SetActive(false);
             }
         }
 
-        // 3. Style VictoryUI
+        // 5. Style GameOverUI & Fix Overlap, Title & Stats
+        GameOverUI gameOver = Object.FindFirstObjectByType<GameOverUI>(FindObjectsInactive.Include);
+        if (gameOver != null)
+        {
+            SerializedObject serGO = new SerializedObject(gameOver);
+            SerializedProperty panelProp = serGO.FindProperty("_panel");
+            if (panelProp != null && panelProp.objectReferenceValue is GameObject pObj)
+            {
+                RectTransform panelRT = pObj.GetComponent<RectTransform>();
+                panelRT.anchorMin = new Vector2(0.5f, 0.5f);
+                panelRT.anchorMax = new Vector2(0.5f, 0.5f);
+                panelRT.pivot = new Vector2(0.5f, 0.5f);
+                panelRT.anchoredPosition = Vector2.zero;
+                panelRT.sizeDelta = new Vector2(420f, 380f);
+
+                Image img = pObj.GetComponent<Image>();
+                if (img != null)
+                {
+                    img.color = new Color(0.06f, 0.07f, 0.09f, 0.94f);
+                    EditorUtility.SetDirty(img);
+                }
+
+                // Correct Title
+                TextMeshProUGUI[] texts = pObj.GetComponentsInChildren<TextMeshProUGUI>(true);
+                foreach (TextMeshProUGUI t in texts)
+                {
+                    if (font != null) t.font = font;
+                    if (string.Equals(t.text.Trim(), "Pause", StringComparison.OrdinalIgnoreCase) || string.Equals(t.text.Trim(), "GAME OVER", StringComparison.OrdinalIgnoreCase))
+                    {
+                        t.text = "GAME OVER";
+                        t.color = new Color(1f, 0.25f, 0.2f);
+                        t.fontSize = 40;
+                        t.alignment = TextAlignmentOptions.Center;
+                        RectTransform rt = t.GetComponent<RectTransform>();
+                        if (rt != null)
+                        {
+                            rt.anchorMin = new Vector2(0.5f, 0.5f);
+                            rt.anchorMax = new Vector2(0.5f, 0.5f);
+                            rt.pivot = new Vector2(0.5f, 0.5f);
+                            rt.anchoredPosition = new Vector2(0f, 130f);
+                            rt.sizeDelta = new Vector2(350f, 55f);
+                        }
+                        EditorUtility.SetDirty(t);
+                    }
+                }
+
+                // Ensure Score, High Score, and Waves labels exist in GOPanel
+                TMP_Text scoreLabel = serGO.FindProperty("_scoreLabel")?.objectReferenceValue as TMP_Text;
+                if (scoreLabel == null)
+                {
+                    scoreLabel = CreateOrGetLabel(pObj.transform, "ScoreText", font, "Final Score: 0", 20, new Vector2(0f, 65f), new Vector2(320f, 28f), Color.white);
+                    serGO.FindProperty("_scoreLabel").objectReferenceValue = scoreLabel;
+                }
+                else
+                {
+                    RectTransform rt = scoreLabel.GetComponent<RectTransform>();
+                    rt.anchoredPosition = new Vector2(0f, 65f);
+                    rt.sizeDelta = new Vector2(320f, 28f);
+                    if (font != null) scoreLabel.font = font;
+                    scoreLabel.alignment = TextAlignmentOptions.Center;
+                }
+
+                TMP_Text highScoreLabel = serGO.FindProperty("_highScoreLabel")?.objectReferenceValue as TMP_Text;
+                if (highScoreLabel == null)
+                {
+                    highScoreLabel = CreateOrGetLabel(pObj.transform, "HighScoreText", font, "High Score: 0", 18, new Vector2(0f, 35f), new Vector2(320f, 26f), new Color(0.96f, 0.75f, 0.15f));
+                    serGO.FindProperty("_highScoreLabel").objectReferenceValue = highScoreLabel;
+                }
+                else
+                {
+                    RectTransform rt = highScoreLabel.GetComponent<RectTransform>();
+                    rt.anchoredPosition = new Vector2(0f, 35f);
+                    rt.sizeDelta = new Vector2(320f, 26f);
+                    if (font != null) highScoreLabel.font = font;
+                    highScoreLabel.alignment = TextAlignmentOptions.Center;
+                }
+
+                TMP_Text wavesLabel = serGO.FindProperty("_wavesLabel")?.objectReferenceValue as TMP_Text;
+                if (wavesLabel == null)
+                {
+                    wavesLabel = CreateOrGetLabel(pObj.transform, "WavesText", font, "Waves Cleared: 0", 18, new Vector2(0f, 5f), new Vector2(320f, 26f), new Color(0.0f, 0.85f, 1.0f));
+                    serGO.FindProperty("_wavesLabel").objectReferenceValue = wavesLabel;
+                }
+                else
+                {
+                    RectTransform rt = wavesLabel.GetComponent<RectTransform>();
+                    rt.anchoredPosition = new Vector2(0f, 5f);
+                    rt.sizeDelta = new Vector2(320f, 26f);
+                    if (font != null) wavesLabel.font = font;
+                    wavesLabel.alignment = TextAlignmentOptions.Center;
+                }
+
+                // Layout buttons: Restart (Y = -55), Menu (Y = -115)
+                Button restartBtn = serGO.FindProperty("_restartButton")?.objectReferenceValue as Button;
+                if (restartBtn == null) restartBtn = pObj.transform.Find("Restart")?.GetComponent<Button>() ?? pObj.transform.Find("RestartButton")?.GetComponent<Button>();
+                if (restartBtn != null)
+                {
+                    serGO.FindProperty("_restartButton").objectReferenceValue = restartBtn;
+                    StyleButton(restartBtn, "Play Again", new Vector2(0f, -55f), font);
+                }
+
+                Button menuBtn = serGO.FindProperty("_menuButton")?.objectReferenceValue as Button;
+                if (menuBtn == null) menuBtn = pObj.transform.Find("Menu")?.GetComponent<Button>() ?? pObj.transform.Find("MenuButton")?.GetComponent<Button>();
+                if (menuBtn != null)
+                {
+                    serGO.FindProperty("_menuButton").objectReferenceValue = menuBtn;
+                    StyleButton(menuBtn, "Main Menu", new Vector2(0f, -115f), font);
+                }
+
+                serGO.ApplyModifiedPropertiesWithoutUndo();
+                pObj.SetActive(false);
+            }
+        }
+
+        // 6. Style MainMenuUI & Button Spacing
+        MainMenuUI mainMenu = Object.FindFirstObjectByType<MainMenuUI>(FindObjectsInactive.Include);
+        if (mainMenu != null)
+        {
+            SerializedObject serMenu = new SerializedObject(mainMenu);
+            SerializedProperty panelProp = serMenu.FindProperty("_panel");
+            if (panelProp != null && panelProp.objectReferenceValue is GameObject pObj)
+            {
+                Button playBtn = serMenu.FindProperty("_playButton")?.objectReferenceValue as Button;
+                if (playBtn != null)
+                {
+                    StyleButton(playBtn, "Play", new Vector2(0f, 20f), font);
+                }
+
+                Button setBtn = serMenu.FindProperty("_settingsButton")?.objectReferenceValue as Button;
+                if (setBtn != null)
+                {
+                    StyleButton(setBtn, "Settings", new Vector2(0f, -40f), font);
+                }
+            }
+        }
+
+        // 7. Style VictoryUI
         VictoryUI victory = Object.FindFirstObjectByType<VictoryUI>(FindObjectsInactive.Include);
         if (victory != null)
         {
@@ -1251,10 +1701,17 @@ public static class GeometricArenaPolishSetup
             SerializedProperty panelProp = serVic.FindProperty("_panel");
             if (panelProp != null && panelProp.objectReferenceValue is GameObject pObj)
             {
+                RectTransform panelRT = pObj.GetComponent<RectTransform>();
+                panelRT.anchorMin = new Vector2(0.5f, 0.5f);
+                panelRT.anchorMax = new Vector2(0.5f, 0.5f);
+                panelRT.pivot = new Vector2(0.5f, 0.5f);
+                panelRT.anchoredPosition = Vector2.zero;
+                panelRT.sizeDelta = new Vector2(420f, 380f);
+
                 Image img = pObj.GetComponent<Image>();
                 if (img != null)
                 {
-                    img.color = new Color(0.05f, 0.08f, 0.10f, 0.92f);
+                    img.color = new Color(0.05f, 0.08f, 0.10f, 0.94f);
                     EditorUtility.SetDirty(img);
                 }
                 TextMeshProUGUI[] texts = pObj.GetComponentsInChildren<TextMeshProUGUI>(true);
@@ -1266,10 +1723,28 @@ public static class GeometricArenaPolishSetup
                     }
                     if (font != null) t.font = font;
                 }
+
+                Button vicRestart = serVic.FindProperty("_restartButton")?.objectReferenceValue as Button;
+                if (vicRestart == null) vicRestart = pObj.transform.Find("RestartButton")?.GetComponent<Button>() ?? pObj.transform.Find("Restart")?.GetComponent<Button>();
+                if (vicRestart != null)
+                {
+                    serVic.FindProperty("_restartButton").objectReferenceValue = vicRestart;
+                    StyleButton(vicRestart, "Play Again", new Vector2(0f, -80f), font);
+                }
+
+                Button vicMenu = serVic.FindProperty("_menuButton")?.objectReferenceValue as Button;
+                if (vicMenu == null) vicMenu = pObj.transform.Find("MenuButton")?.GetComponent<Button>() ?? pObj.transform.Find("Menu")?.GetComponent<Button>();
+                if (vicMenu != null)
+                {
+                    serVic.FindProperty("_menuButton").objectReferenceValue = vicMenu;
+                    StyleButton(vicMenu, "Main Menu", new Vector2(0f, -140f), font);
+                }
+
+                serVic.ApplyModifiedPropertiesWithoutUndo();
             }
         }
 
-        // 4. Style SettingsUI
+        // 8. Style SettingsUI
         SettingsUI settings = Object.FindFirstObjectByType<SettingsUI>(FindObjectsInactive.Include);
         if (settings != null)
         {
@@ -1286,18 +1761,94 @@ public static class GeometricArenaPolishSetup
             }
         }
 
-        // 5. Style Buttons across all UI
+        // 9. Style Buttons across all UI
         Button[] buttons = Object.FindObjectsByType<Button>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         foreach (Button b in buttons)
         {
             ColorBlock cb = b.colors;
-            cb.normalColor = new Color(0.12f, 0.15f, 0.20f, 0.95f);
-            cb.highlightedColor = new Color(0.18f, 0.24f, 0.32f, 1.0f);
-            cb.pressedColor = new Color(0.08f, 0.10f, 0.14f, 1.0f);
+            cb.normalColor = new Color(0.16f, 0.20f, 0.26f, 0.95f);
+            cb.highlightedColor = new Color(0.0f, 0.75f, 0.95f, 1.0f);
+            cb.pressedColor = new Color(0.0f, 0.50f, 0.70f, 1.0f);
             cb.selectedColor = cb.highlightedColor;
             b.colors = cb;
             EditorUtility.SetDirty(b);
+
+            TextMeshProUGUI btnText = b.GetComponentInChildren<TextMeshProUGUI>(true);
+            if (btnText != null)
+            {
+                btnText.color = Color.white;
+                if (font != null) btnText.font = font;
+                EditorUtility.SetDirty(btnText);
+            }
+            Text legText = b.GetComponentInChildren<Text>(true);
+            if (legText != null)
+            {
+                legText.color = Color.white;
+                EditorUtility.SetDirty(legText);
+            }
         }
+    }
+
+    private static void StyleButton(Button btn, string text, Vector2 pos, TMP_FontAsset font)
+    {
+        if (btn == null) return;
+        btn.gameObject.SetActive(true);
+        RectTransform rt = btn.GetComponent<RectTransform>();
+        rt.anchorMin = new Vector2(0.5f, 0.5f);
+        rt.anchorMax = new Vector2(0.5f, 0.5f);
+        rt.pivot = new Vector2(0.5f, 0.5f);
+        rt.anchoredPosition = pos;
+        rt.sizeDelta = new Vector2(220f, 44f);
+
+        Image bImg = btn.GetComponent<Image>();
+        if (bImg != null)
+        {
+            bImg.color = new Color(0.16f, 0.20f, 0.26f, 0.95f);
+            EditorUtility.SetDirty(bImg);
+        }
+        TextMeshProUGUI t = btn.GetComponentInChildren<TextMeshProUGUI>(true);
+        if (t != null)
+        {
+            if (!string.IsNullOrEmpty(text)) t.text = text;
+            t.color = Color.white;
+            t.fontSize = 20;
+            if (font != null) t.font = font;
+            t.alignment = TextAlignmentOptions.Center;
+            EditorUtility.SetDirty(t);
+        }
+        else
+        {
+            Text legT = btn.GetComponentInChildren<Text>(true);
+            if (legT != null)
+            {
+                if (!string.IsNullOrEmpty(text)) legT.text = text;
+                legT.color = Color.white;
+                legT.fontSize = 20;
+                legT.alignment = TextAnchor.MiddleCenter;
+                EditorUtility.SetDirty(legT);
+            }
+        }
+    }
+
+    private static TextMeshProUGUI CreateOrGetLabel(Transform parent, string name, TMP_FontAsset font, string text, float size, Vector2 pos, Vector2 delta, Color color)
+    {
+        Transform existing = parent.Find(name);
+        GameObject go = existing != null ? existing.gameObject : new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+        go.transform.SetParent(parent, false);
+        RectTransform rt = go.GetComponent<RectTransform>();
+        rt.anchorMin = new Vector2(0.5f, 0.5f);
+        rt.anchorMax = new Vector2(0.5f, 0.5f);
+        rt.pivot = new Vector2(0.5f, 0.5f);
+        rt.anchoredPosition = pos;
+        rt.sizeDelta = delta;
+
+        TextMeshProUGUI tmp = go.GetComponent<TextMeshProUGUI>();
+        tmp.text = text;
+        tmp.fontSize = size;
+        tmp.color = color;
+        tmp.alignment = TextAlignmentOptions.Center;
+        if (font != null) tmp.font = font;
+        return tmp;
     }
 
     private static void BakeArenaNavMesh()
@@ -1364,11 +1915,14 @@ public static class GeometricArenaPolishSetup
     [MenuItem("Tools/Mini Top Down Shooter/Capture Gameplay Screenshots")]
     public static void CaptureScreenshots()
     {
+        ShaderUtil.allowAsyncCompilation = false;
+        Shader.WarmupAllShaders();
+
         Scene scene = EditorSceneManager.OpenScene(ArenaScenePath, OpenSceneMode.Single);
-        string outputDir = "Builds/Screenshots";
-        if (!Directory.Exists(outputDir))
+        string[] outputDirs = { "Builds/Screenshots", "Assets/_Project/Documentation/Screenshots" };
+        foreach (var dir in outputDirs)
         {
-            Directory.CreateDirectory(outputDir);
+            if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
         }
 
         Camera cam = Camera.main;
@@ -1386,19 +1940,93 @@ public static class GeometricArenaPolishSetup
 
         Vector3 originalCamPos = cam.transform.position;
         Quaternion originalCamRot = cam.transform.rotation;
+        CameraClearFlags originalClearFlags = cam.clearFlags;
+        Color originalBgColor = cam.backgroundColor;
+        int originalCullingMask = cam.cullingMask;
 
-        // 1. Shot 1: Arena Overview (elevated angle)
-        cam.transform.position = new Vector3(0f, 22f, -22f);
+        cam.clearFlags = CameraClearFlags.SolidColor;
+        cam.backgroundColor = new Color(0.04f, 0.045f, 0.055f, 1f);
+
+        Canvas canvas = Object.FindFirstObjectByType<Canvas>(FindObjectsInactive.Include);
+        RenderMode originalRenderMode = canvas != null ? canvas.renderMode : RenderMode.ScreenSpaceOverlay;
+        Camera originalCanvasCam = canvas != null ? canvas.worldCamera : null;
+        float originalPlaneDist = canvas != null ? canvas.planeDistance : 100f;
+
+        MainMenuUI mainMenu = Object.FindFirstObjectByType<MainMenuUI>(FindObjectsInactive.Include);
+        GameObject mainMenuPanel = null;
+        if (mainMenu != null)
+        {
+            SerializedObject serMenu = new SerializedObject(mainMenu);
+            mainMenuPanel = serMenu.FindProperty("_panel")?.objectReferenceValue as GameObject;
+            mainMenu.gameObject.SetActive(false);
+            if (mainMenuPanel != null) mainMenuPanel.SetActive(false);
+        }
+
+        PauseUI pauseUI = Object.FindFirstObjectByType<PauseUI>(FindObjectsInactive.Include);
+        GameObject pausePanel = null;
+        if (pauseUI != null)
+        {
+            SerializedObject serPause = new SerializedObject(pauseUI);
+            pausePanel = serPause.FindProperty("_panel")?.objectReferenceValue as GameObject;
+            pauseUI.gameObject.SetActive(false);
+            if (pausePanel != null) pausePanel.SetActive(false);
+        }
+
+        GameOverUI gameOver = Object.FindFirstObjectByType<GameOverUI>(FindObjectsInactive.Include);
+        GameObject goPanel = null;
+        if (gameOver != null)
+        {
+            SerializedObject serGO = new SerializedObject(gameOver);
+            goPanel = serGO.FindProperty("_panel")?.objectReferenceValue as GameObject;
+            gameOver.gameObject.SetActive(false);
+            if (goPanel != null) goPanel.SetActive(false);
+        }
+
+        VictoryUI victoryUI = Object.FindFirstObjectByType<VictoryUI>(FindObjectsInactive.Include);
+        if (victoryUI != null)
+        {
+            SerializedObject serVic = new SerializedObject(victoryUI);
+            GameObject vicPanel = serVic.FindProperty("_panel")?.objectReferenceValue as GameObject;
+            victoryUI.gameObject.SetActive(false);
+            if (vicPanel != null) vicPanel.SetActive(false);
+        }
+
+        SettingsUI settingsUI = Object.FindFirstObjectByType<SettingsUI>(FindObjectsInactive.Include);
+        if (settingsUI != null)
+        {
+            SerializedObject serSet = new SerializedObject(settingsUI);
+            GameObject setPanel = serSet.FindProperty("_panel")?.objectReferenceValue as GameObject;
+            settingsUI.gameObject.SetActive(false);
+            if (setPanel != null) setPanel.SetActive(false);
+        }
+
+        GameObject hudObj = GameObject.Find("HUD");
+        if (hudObj != null) hudObj.SetActive(true);
+
+        GameObject weaponHudObj = GameObject.Find("WeaponHUD");
+        if (weaponHudObj != null) weaponHudObj.SetActive(true);
+
+        // Warmup render to ensure all shaders and materials are loaded
+        cam.Render();
+
+        // 1. Shot 1: Arena Overview (elevated angle) - UI hidden
+        cam.transform.position = new Vector3(0f, 24f, -24f);
         cam.transform.rotation = Quaternion.Euler(45f, 0f, 0f);
-        string path1 = $"{outputDir}/Arena_Overview.png";
-        CaptureCameraToPNG(cam, path1, 1920, 1080);
-        Debug.Log($"[GeometricArenaPolish] Captured: {path1}");
+        SaveCaptureToAllDirs("Arena_Overview.png", cam, outputDirs, 1920, 1080);
 
-        // 2. Shot 2: Combat Action Encounter
+        // Setup ScreenSpaceCamera for UI capture
+        if (canvas != null)
+        {
+            cam.cullingMask |= (1 << LayerMask.NameToLayer("UI"));
+            canvas.renderMode = RenderMode.ScreenSpaceCamera;
+            canvas.worldCamera = cam;
+            canvas.planeDistance = 1.0f;
+        }
+
+        // 2. Shot 2: Combat Action Encounter (elevated combat angle with active HUD)
         cam.transform.position = new Vector3(0f, 13f, -9f);
         cam.transform.rotation = Quaternion.Euler(55f, 0f, 0f);
 
-        // Instantiate sample enemy silhouettes temporarily for action composition
         List<GameObject> tempCombatObjects = new List<GameObject>();
         string[] prefabs = {
             "Assets/_Project/Enemy.prefab",
@@ -1425,7 +2053,6 @@ public static class GeometricArenaPolishSetup
                 GameObject inst = Object.Instantiate(pObj, spawnPositions[i], Quaternion.Euler(0f, 180f, 0f));
                 tempCombatObjects.Add(inst);
 
-                // Enable telegraphs for preview if present
                 Transform tel = inst.transform.Find("TelegraphLine");
                 if (tel != null)
                 {
@@ -1433,8 +2060,8 @@ public static class GeometricArenaPolishSetup
                     if (lr != null)
                     {
                         lr.enabled = true;
-                        lr.SetPosition(0, spawnPositions[i] + new Vector3(0f, 0.06f, 0f));
-                        lr.SetPosition(1, new Vector3(0f, 0.06f, 0f));
+                        lr.SetPosition(0, spawnPositions[i] + new Vector3(0f, 0.05f, 0f));
+                        lr.SetPosition(1, new Vector3(0f, 0.05f, 0f));
                     }
                 }
 
@@ -1443,7 +2070,6 @@ public static class GeometricArenaPolishSetup
             }
         }
 
-        // Spawn a preview glowing bullet
         GameObject projPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Projectile.prefab");
         if (projPrefab != null)
         {
@@ -1451,85 +2077,53 @@ public static class GeometricArenaPolishSetup
             tempCombatObjects.Add(bullet);
         }
 
-        string path2 = $"{outputDir}/Arena_Combat_Action.png";
-        CaptureCameraToPNG(cam, path2, 1920, 1080);
-        Debug.Log($"[GeometricArenaPolish] Captured: {path2}");
+        SaveCaptureToAllDirs("Arena_Combat_Action.png", cam, outputDirs, 1920, 1080);
 
-        // Clean up temporary combat visuals
         foreach (var obj in tempCombatObjects)
         {
             if (obj != null) Object.DestroyImmediate(obj);
         }
 
-        // UI Overlay capture setup
-        Canvas canvas = Object.FindFirstObjectByType<Canvas>(FindObjectsInactive.Include);
-        RenderMode originalRenderMode = canvas != null ? canvas.renderMode : RenderMode.ScreenSpaceOverlay;
-        Camera originalCanvasCam = canvas != null ? canvas.worldCamera : null;
-        float originalPlaneDist = canvas != null ? canvas.planeDistance : 100f;
-        int originalCullingMask = cam.cullingMask;
-
-        MainMenuUI mainMenu = Object.FindFirstObjectByType<MainMenuUI>(FindObjectsInactive.Include);
-        bool wasMainMenuActive = mainMenu != null && mainMenu.gameObject.activeSelf;
-        if (mainMenu != null) mainMenu.gameObject.SetActive(false);
-
-        PauseUI pauseUI = Object.FindFirstObjectByType<PauseUI>(FindObjectsInactive.Include);
-        GameObject pausePanel = null;
-        if (pauseUI != null)
-        {
-            SerializedObject serPause = new SerializedObject(pauseUI);
-            pausePanel = serPause.FindProperty("_panel").objectReferenceValue as GameObject;
-            if (pausePanel != null) pausePanel.SetActive(false);
-        }
-
-        GameOverUI gameOver = Object.FindFirstObjectByType<GameOverUI>(FindObjectsInactive.Include);
-        GameObject goPanel = null;
-        if (gameOver != null)
-        {
-            SerializedObject serGO = new SerializedObject(gameOver);
-            goPanel = serGO.FindProperty("_panel").objectReferenceValue as GameObject;
-            if (goPanel != null) goPanel.SetActive(false);
-        }
-
-        if (canvas != null)
-        {
-            cam.cullingMask |= (1 << LayerMask.NameToLayer("UI"));
-            canvas.renderMode = RenderMode.ScreenSpaceCamera;
-            canvas.worldCamera = cam;
-            canvas.planeDistance = 1.0f;
-        }
-
         // 3. Shot 3: Game Over UI
+        if (gameOver != null) gameOver.gameObject.SetActive(true);
         if (goPanel != null) goPanel.SetActive(true);
+        if (pauseUI != null) pauseUI.gameObject.SetActive(false);
         if (pausePanel != null) pausePanel.SetActive(false);
-
-        string path3 = $"{outputDir}/Arena_GameOver_UI.png";
-        CaptureCameraToPNG(cam, path3, 1920, 1080);
-        Debug.Log($"[GeometricArenaPolish] Captured: {path3}");
-
+        SaveCaptureToAllDirs("Arena_GameOver_UI.png", cam, outputDirs, 1920, 1080);
         if (goPanel != null) goPanel.SetActive(false);
+        if (gameOver != null) gameOver.gameObject.SetActive(false);
 
         // 4. Shot 4: Pause UI
+        if (pauseUI != null) pauseUI.gameObject.SetActive(true);
         if (pausePanel != null) pausePanel.SetActive(true);
-
-        string path4 = $"{outputDir}/Arena_Pause_UI.png";
-        CaptureCameraToPNG(cam, path4, 1920, 1080);
-        Debug.Log($"[GeometricArenaPolish] Captured: {path4}");
-
+        SaveCaptureToAllDirs("Arena_Pause_UI.png", cam, outputDirs, 1920, 1080);
         if (pausePanel != null) pausePanel.SetActive(false);
+        if (pauseUI != null) pauseUI.gameObject.SetActive(false);
 
-        if (mainMenu != null) mainMenu.gameObject.SetActive(wasMainMenuActive);
-
+        // Restore canvas & camera
         if (canvas != null)
         {
             canvas.renderMode = originalRenderMode;
             canvas.worldCamera = originalCanvasCam;
             canvas.planeDistance = originalPlaneDist;
-            cam.cullingMask = originalCullingMask;
         }
 
-        // Restore camera
         cam.transform.position = originalCamPos;
         cam.transform.rotation = originalCamRot;
+        cam.clearFlags = originalClearFlags;
+        cam.backgroundColor = originalBgColor;
+        cam.cullingMask = originalCullingMask;
+    }
+
+    private static void SaveCaptureToAllDirs(string filename, Camera cam, string[] dirs, int width, int height)
+    {
+        byte[] png = CaptureCameraToPNGData(cam, width, height);
+        foreach (var dir in dirs)
+        {
+            string p = Path.Combine(dir, filename).Replace("\\", "/");
+            File.WriteAllBytes(p, png);
+            Debug.Log($"[GeometricArenaPolish] Captured: {p}");
+        }
     }
 
     public static void CaptureScreenshotsBatch()
@@ -1546,7 +2140,7 @@ public static class GeometricArenaPolishSetup
         }
     }
 
-    private static void CaptureCameraToPNG(Camera cam, string outputPath, int width, int height)
+    private static byte[] CaptureCameraToPNGData(Camera cam, int width, int height)
     {
         RenderTexture rt = new RenderTexture(width, height, 24, RenderTextureFormat.ARGB32);
         RenderTexture prevRT = cam.targetTexture;
@@ -1567,6 +2161,6 @@ public static class GeometricArenaPolishSetup
         byte[] pngData = tex.EncodeToPNG();
         Object.DestroyImmediate(tex);
 
-        File.WriteAllBytes(outputPath, pngData);
+        return pngData;
     }
 }

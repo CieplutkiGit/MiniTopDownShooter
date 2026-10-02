@@ -20,6 +20,15 @@ namespace Game
 
         private void Awake()
         {
+            if (_healthRef == null)
+            {
+                _healthRef = GetComponent<HealthComponent>();
+                if (_healthRef == null)
+                {
+                    _healthRef = GetComponentInParent<HealthComponent>();
+                }
+            }
+
             _health = _healthRef;
             _block = new MaterialPropertyBlock();
             _propertyId = Shader.PropertyToID(_colorProperty);

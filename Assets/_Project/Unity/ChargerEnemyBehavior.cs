@@ -216,8 +216,10 @@ namespace Game
                 _telegraphLine.enabled = active;
                 if (active && Target != null)
                 {
-                    Vector3 origin = transform.position + Vector3.up * 0.5f;
-                    Vector3 targetPos = Target.position + Vector3.up * 0.5f;
+                    Vector3 origin = transform.position;
+                    origin.y = 0.05f;
+                    Vector3 targetPos = Target.position;
+                    targetPos.y = 0.05f;
                     _telegraphLine.SetPosition(0, origin);
                     _telegraphLine.SetPosition(1, targetPos);
                 }

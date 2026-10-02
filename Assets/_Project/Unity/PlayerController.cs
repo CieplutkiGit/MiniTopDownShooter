@@ -235,6 +235,8 @@ namespace Game
                 _input.ClearQueuedActions();
             }
 
+            GetComponentInChildren<PlayerVisualDynamics>()?.ResetDynamics();
+
             if (_aliveState == null)
             {
                 _aliveState = new AlivePlayerState(_input, _movement, _rotation, _shoot, _shootThreshold);

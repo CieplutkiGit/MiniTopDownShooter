@@ -173,7 +173,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d8f3a6c21e9b4075a3c8e1f47b260d93, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity::Game.BulletTrail
-  _material: {fileID: 2100000, guid: 7e4fc86c9c7037a4dbb5ae3c2b0c7f94, type: 2}
+  _material: {fileID: 2100000, guid: ec903ccc16da63442a14d544d5f92426, type: 2}
   _startColor: {r: 0.1, g: 0.95, b: 1, a: 1}
   _endColor: {r: 0, g: 0.5, b: 1, a: 0}
   _time: 0.12

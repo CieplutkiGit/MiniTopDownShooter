@@ -12,6 +12,15 @@ namespace Game
 
         private void Awake()
         {
+            if (_gunRef == null)
+            {
+                _gunRef = GetComponent<Gun>();
+                if (_gunRef == null)
+                {
+                    _gunRef = GetComponentInParent<Gun>();
+                }
+            }
+
             _gun = _gunRef;
         }
 
