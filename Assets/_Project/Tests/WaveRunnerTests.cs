@@ -66,5 +66,27 @@ namespace MiniTopDownShooter.Tests
             Assert.AreEqual(1, allCompletedCount);
             Assert.IsFalse(runner.IsRunning);
         }
+
+        [Test]
+        public void InitialDelay_DefersFirstSpawnRequest()
+        {
+            WaveRunner runner = new WaveRunner(new[]
+            {
+                new Wave(1, 1f, 0f, 2f)
+            });
+
+            int spawnRequests = 0;
+            runner.SpawnRequested += () => spawnRequests++;
+            runner.StartWaves();
+
+            runner.Tick(1f);
+            Assert.AreEqual(0, spawnRequests);
+
+            runner.Tick(0.99f);
+            Assert.AreEqual(0, spawnRequests);
+
+            runner.Tick(0.01f);
+            Assert.AreEqual(1, spawnRequests);
+        }
     }
 }
