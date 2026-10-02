@@ -21,6 +21,16 @@ namespace Game
         public bool AllowFriendlyFire => _allowFriendlyFire;
         public bool IgnoreFriendlyCollisions => _ignoreFriendlyCollisions;
 
+        public void Configure(
+            CombatTeam team,
+            bool allowFriendlyFire = false,
+            bool ignoreFriendlyCollisions = true)
+        {
+            _team = team;
+            _allowFriendlyFire = allowFriendlyFire;
+            _ignoreFriendlyCollisions = ignoreFriendlyCollisions;
+        }
+
         public bool CanDamage(DamageAffiliation target)
         {
             if (target == null)
