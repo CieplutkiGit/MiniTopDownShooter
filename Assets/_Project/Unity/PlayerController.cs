@@ -86,6 +86,21 @@ namespace Game
             ChangeState(_aliveState);
         }
 
+        public void BeginInputRebind(string actionName, int bindingIndex)
+        {
+            _input.BeginInteractiveRebind(actionName, bindingIndex);
+        }
+
+        public string GetBindingDisplayString(string actionName, int bindingIndex)
+        {
+            return _input.GetBindingDisplayString(actionName, bindingIndex);
+        }
+
+        public void ResetInputBindings()
+        {
+            _input.ResetBindingsToDefault();
+        }
+
         private void OnDestroy()
         {
             _input.Dispose();
