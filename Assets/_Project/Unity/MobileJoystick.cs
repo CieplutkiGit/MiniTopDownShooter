@@ -34,6 +34,10 @@ namespace Game
 
         private int _activePointerId = int.MinValue;
 
+        public MobileInputState Input => _input;
+        public MobileJoystickChannel Channel => _channel;
+        public bool FireWhileAiming => _fireWhileAiming;
+
         private void Awake()
         {
             if (_background == null)
