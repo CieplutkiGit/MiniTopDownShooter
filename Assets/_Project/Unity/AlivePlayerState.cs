@@ -11,7 +11,12 @@ namespace Game
         private readonly PlayerShoot _shoot;
         private readonly float _shootThreshold;
 
-        public AlivePlayerState(InputReader input, PlayerMovement movement, PlayerRotation rotation, PlayerShoot shoot, float shootThreshold)
+        public AlivePlayerState(
+            InputReader input,
+            PlayerMovement movement,
+            PlayerRotation rotation,
+            PlayerShoot shoot,
+            float shootThreshold)
         {
             _input = input;
             _movement = movement;
@@ -32,7 +37,7 @@ namespace Game
             _movement.Move(moveDirection);
             _rotation.Rotate(lookDirection);
 
-            if (lookDirection.magnitude > _shootThreshold)
+            if (_input.IsShootHeld(_shootThreshold))
             {
                 _shoot.TryShoot();
             }

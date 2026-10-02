@@ -10,6 +10,8 @@ namespace Game
     [RequireComponent(typeof(HealthComponent))]
     public class PlayerController : MonoBehaviour, IPlayerEvents
     {
+        [Header("Aiming")]
+        [SerializeField] private Camera _aimCamera;
         [SerializeField] private float _shootThreshold = 0.1f;
 
         private InputReader _input;
@@ -26,7 +28,12 @@ namespace Game
 
         private void Awake()
         {
-            _input = new InputReader();
+            if (_aimCamera == null)
+            {
+                _aimCamera = Camera.main;
+            }
+
+            _input = new InputReader(_aimCamera, transform);
             _movement = GetComponent<PlayerMovement>();
             _rotation = GetComponent<PlayerRotation>();
             _shoot = GetComponent<PlayerShoot>();
@@ -82,6 +89,11 @@ namespace Game
         private void OnDestroy()
         {
             _input.Dispose();
+        }
+
+        private void OnValidate()
+        {
+            _shootThreshold = Mathf.Max(0f, _shootThreshold);
         }
     }
 }
