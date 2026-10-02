@@ -14,6 +14,9 @@ namespace Game
         [SerializeField] private Camera _aimCamera;
         [SerializeField] private float _shootThreshold = 0.1f;
 
+        [Header("Mobile")]
+        [SerializeField] private MobileInputState _mobileInput;
+
         private InputReader _input;
         private PlayerMovement _movement;
         private PlayerRotation _rotation;
@@ -33,7 +36,13 @@ namespace Game
                 _aimCamera = Camera.main;
             }
 
-            _input = new InputReader(_aimCamera, transform);
+            if (_mobileInput == null)
+            {
+                _mobileInput = FindFirstObjectByType<MobileInputState>(
+                    FindObjectsInactive.Include);
+            }
+
+            _input = new InputReader(_aimCamera, transform, _mobileInput);
             _movement = GetComponent<PlayerMovement>();
             _rotation = GetComponent<PlayerRotation>();
             _shoot = GetComponent<PlayerShoot>();
