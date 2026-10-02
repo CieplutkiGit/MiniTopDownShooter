@@ -2030,22 +2030,49 @@ public static class GeometricArenaPolishSetup
         }
 
         // ==========================================
-        // 1. CLEAN ARENA SCREENSHOTS (TOP & SIDE)
+        // 1. ARENA THREE-VIEW ARCHITECTURAL SHEET
         // ==========================================
-        // 1a. Full Arena Top-Down View (looking straight down, full perimeter framing)
+        cam.clearFlags = CameraClearFlags.Color;
+        cam.backgroundColor = new Color(0.08f, 0.09f, 0.11f, 1f);
+        cam.aspect = 1f;
+
+        // Side view (elevated 3/4 isometric perspective)
+        cam.transform.position = new Vector3(-20f, 12f, -20f);
+        cam.transform.rotation = Quaternion.Euler(23f, 45f, 0f);
+        Texture2D arenaSide = CaptureCameraToTexture(cam, 800, 800);
+
+        // Front view (ground-level combat entrance perspective)
+        cam.transform.position = new Vector3(0f, 7f, -24f);
+        cam.transform.rotation = Quaternion.Euler(14f, 0f, 0f);
+        Texture2D arenaFront = CaptureCameraToTexture(cam, 800, 800);
+
+        // Top view (overhead tactical layout)
+        cam.transform.position = new Vector3(0f, 44f, 0f);
+        cam.transform.rotation = Quaternion.Euler(90f, -90f, 0f);
+        Texture2D arenaTop = CaptureCameraToTexture(cam, 800, 800);
+
+        Texture2D arenaSheet = CreateThreeViewSheet(arenaSide, arenaFront, arenaTop, "ARENA SHOWCASE - 3-VIEW ARCHITECTURE");
+        SaveTextureToAllDirs("Arena.png", arenaSheet, outputDirs);
+        SaveTextureToAllDirs("Arena_Overview.png", arenaSheet, outputDirs);
+        Object.DestroyImmediate(arenaSide);
+        Object.DestroyImmediate(arenaFront);
+        Object.DestroyImmediate(arenaTop);
+        Object.DestroyImmediate(arenaSheet);
+
+        // Standalone widescreen top & side views
+        cam.aspect = 16f / 9f;
         cam.transform.position = new Vector3(0f, 48f, 0f);
         cam.transform.rotation = Quaternion.Euler(90f, -90f, 0f);
         SaveCaptureToAllDirs("Arena_TopView.png", cam, outputDirs, 1920, 1080);
         SaveCaptureToAllDirs("Arena_Full_TopDown.png", cam, outputDirs, 1920, 1080);
 
-        // 1b. Dramatic Side-Angle Perspective (showing 3D depth, cover heights, glowing pylons)
         cam.transform.position = new Vector3(-20f, 12f, -20f);
         cam.transform.rotation = Quaternion.Euler(23f, 45f, 0f);
         SaveCaptureToAllDirs("Arena_SideView.png", cam, outputDirs, 1920, 1080);
         SaveCaptureToAllDirs("Arena_Side_Perspective.png", cam, outputDirs, 1920, 1080);
 
         // ==========================================
-        // 2. INDIVIDUAL GUN SCREENSHOTS (SOLID BG, SIDE PROFILE VIEW)
+        // 2. INDIVIDUAL GUN 3-VIEW PROFILE SHEETS
         // ==========================================
         GameObject envObj = GameObject.Find("ArenaEnvironment");
         bool envPrevActive = envObj != null && envObj.activeSelf;
@@ -2053,15 +2080,15 @@ public static class GeometricArenaPolishSetup
 
         cam.clearFlags = CameraClearFlags.SolidColor;
         cam.backgroundColor = new Color(0.08f, 0.09f, 0.11f, 1f);
-        cam.transform.rotation = Quaternion.identity;
+        cam.aspect = 1f;
 
-        var weaponConfigs = new (string prefab, string outName, float camDist, float camY)[]
+        var weaponConfigs = new (string prefab, string title, string outName, float camDist, float camY)[]
         {
-            ("Assets/_Project/Weapons/Gun_Pistol.prefab", "Gun_Pistol.png", 0.95f, 0.04f),
-            ("Assets/_Project/Weapons/Gun_SMG.prefab", "Gun_SMG.png", 1.15f, 0.05f),
-            ("Assets/_Project/Weapons/Gun_Rifle.prefab", "Gun_Rifle.png", 1.55f, 0.05f),
-            ("Assets/_Project/Weapons/Gun_Shotgun.prefab", "Gun_Shotgun.png", 1.45f, 0.05f),
-            ("Assets/_Project/Weapons/Gun_Launcher.prefab", "Gun_Launcher.png", 1.75f, 0.05f)
+            ("Assets/_Project/Weapons/Gun_Pistol.prefab", "PISTOL", "Gun_Pistol.png", 0.85f, 0.02f),
+            ("Assets/_Project/Weapons/Gun_SMG.prefab", "SMG", "Gun_SMG.png", 1.05f, 0.02f),
+            ("Assets/_Project/Weapons/Gun_Rifle.prefab", "ASSAULT RIFLE", "Gun_Rifle.png", 1.45f, 0.02f),
+            ("Assets/_Project/Weapons/Gun_Shotgun.prefab", "SHOTGUN", "Gun_Shotgun.png", 1.40f, 0.02f),
+            ("Assets/_Project/Weapons/Gun_Launcher.prefab", "HEAVY LAUNCHER", "Gun_Launcher.png", 1.55f, 0.02f)
         };
 
         foreach (var w in weaponConfigs)
@@ -2069,25 +2096,48 @@ public static class GeometricArenaPolishSetup
             GameObject wPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(w.prefab);
             if (wPrefab != null)
             {
-                // Instantiate rotated so barrel points horizontally to the right in pure side profile
-                GameObject gunInst = Object.Instantiate(wPrefab, Vector3.zero, Quaternion.Euler(0f, 90f, 0f));
+                GameObject gunInst = Object.Instantiate(wPrefab, Vector3.zero, Quaternion.identity);
+
+                // Side Profile View (barrel pointing right)
+                gunInst.transform.rotation = Quaternion.Euler(0f, 90f, 0f);
                 cam.transform.position = new Vector3(0f, w.camY, -w.camDist);
-                SaveCaptureToAllDirs(w.outName, cam, outputDirs, 1920, 1080);
+                cam.transform.rotation = Quaternion.identity;
+                Texture2D sideTex = CaptureCameraToTexture(cam, 800, 800);
+
+                // Front View (barrel facing camera)
+                gunInst.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
+                cam.transform.position = new Vector3(0f, w.camY, -w.camDist);
+                cam.transform.rotation = Quaternion.identity;
+                Texture2D frontTex = CaptureCameraToTexture(cam, 800, 800);
+
+                // Top View (barrel pointing right)
+                gunInst.transform.rotation = Quaternion.Euler(0f, 90f, 0f);
+                cam.transform.position = new Vector3(0f, w.camDist, 0f);
+                cam.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+                Texture2D topTex = CaptureCameraToTexture(cam, 800, 800);
+
+                Texture2D sheet = CreateThreeViewSheet(sideTex, frontTex, topTex, $"{w.title} - 3-VIEW PROFILE");
+                SaveTextureToAllDirs(w.outName, sheet, outputDirs);
+
+                Object.DestroyImmediate(sideTex);
+                Object.DestroyImmediate(frontTex);
+                Object.DestroyImmediate(topTex);
+                Object.DestroyImmediate(sheet);
                 Object.DestroyImmediate(gunInst);
             }
         }
 
         // ==========================================
-        // 3. INDIVIDUAL MOB SCREENSHOTS (SOLID BG, FRONT VIEW)
+        // 3. INDIVIDUAL MOB 3-VIEW TURNAROUND SHEETS
         // ==========================================
-        var mobConfigs = new (string prefab, string outName, float camDist, float camY, bool isBoss)[]
+        var mobConfigs = new (string prefab, string title, string outName, float camDist, float camY, bool isBoss)[]
         {
-            ("Assets/_Project/Enemy.prefab", "Enemy_Basic.png", 2.2f, 0.65f, false),
-            ("Assets/_Project/Enemy_Fast.prefab", "Enemy_Fast.png", 2.4f, 0.65f, false),
-            ("Assets/_Project/Enemy_Charger.prefab", "Enemy_Charger.png", 2.7f, 0.6f, false),
-            ("Assets/_Project/Enemy_Ranged.prefab", "Enemy_Ranged.png", 2.4f, 0.65f, false),
-            ("Assets/_Project/Enemy_Tank.prefab", "Enemy_Tank.png", 3.4f, 0.65f, false),
-            ("Assets/_Project/Enemy_Boss.prefab", "Enemy_Boss.png", 7.0f, 1.55f, true)
+            ("Assets/_Project/Enemy.prefab", "ENEMY BASIC BLOCK", "Enemy_Basic.png", 2.1f, 0.65f, false),
+            ("Assets/_Project/Enemy_Fast.prefab", "ENEMY FAST STRIKER", "Enemy_Fast.png", 2.3f, 0.65f, false),
+            ("Assets/_Project/Enemy_Charger.prefab", "ENEMY DIRECTIONAL CHARGER", "Enemy_Charger.png", 2.5f, 0.60f, false),
+            ("Assets/_Project/Enemy_Ranged.prefab", "ENEMY TURRET RANGED", "Enemy_Ranged.png", 2.3f, 0.65f, false),
+            ("Assets/_Project/Enemy_Tank.prefab", "ENEMY ARMORED TANK", "Enemy_Tank.png", 3.2f, 0.65f, false),
+            ("Assets/_Project/Enemy_Boss.prefab", "ENEMY MULTIPART BOSS", "Enemy_Boss.png", 8.8f, 2.40f, true)
         };
 
         foreach (var m in mobConfigs)
@@ -2095,8 +2145,7 @@ public static class GeometricArenaPolishSetup
             GameObject mPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(m.prefab);
             if (mPrefab != null)
             {
-                // Instantiate facing camera (Y rotation 180 degrees)
-                GameObject mobInst = Object.Instantiate(mPrefab, Vector3.zero, Quaternion.Euler(0f, 180f, 0f));
+                GameObject mobInst = Object.Instantiate(mPrefab, Vector3.zero, Quaternion.identity);
 
                 if (m.isBoss)
                 {
@@ -2108,28 +2157,77 @@ public static class GeometricArenaPolishSetup
                     if (wings != null) wings.gameObject.SetActive(true);
                 }
 
+                // Side Profile View (facing right)
+                mobInst.transform.rotation = Quaternion.Euler(0f, 90f, 0f);
                 cam.transform.position = new Vector3(0f, m.camY, -m.camDist);
-                SaveCaptureToAllDirs(m.outName, cam, outputDirs, 1920, 1080);
+                cam.transform.rotation = Quaternion.identity;
+                Texture2D sideTex = CaptureCameraToTexture(cam, 800, 800);
+
+                // Front View (facing camera)
+                mobInst.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
+                cam.transform.position = new Vector3(0f, m.camY, -m.camDist);
+                cam.transform.rotation = Quaternion.identity;
+                Texture2D frontTex = CaptureCameraToTexture(cam, 800, 800);
+
+                // Top View (facing forward/up on screen)
+                mobInst.transform.rotation = Quaternion.Euler(0f, 0f, 0f);
+                cam.transform.position = new Vector3(0f, m.camDist + m.camY, 0f);
+                cam.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+                Texture2D topTex = CaptureCameraToTexture(cam, 800, 800);
+
+                Texture2D sheet = CreateThreeViewSheet(sideTex, frontTex, topTex, $"{m.title} - 3-VIEW PROFILE");
+                SaveTextureToAllDirs(m.outName, sheet, outputDirs);
+
+                Object.DestroyImmediate(sideTex);
+                Object.DestroyImmediate(frontTex);
+                Object.DestroyImmediate(topTex);
+                Object.DestroyImmediate(sheet);
                 Object.DestroyImmediate(mobInst);
             }
         }
 
-        // Player front view
+        // ==========================================
+        // 4. PLAYER 3-VIEW TURNAROUND SHEET
+        // ==========================================
         if (scenePlayer != null)
         {
             scenePlayer.gameObject.SetActive(true);
             Vector3 savedPlayerPos = scenePlayer.transform.position;
             Quaternion savedPlayerRot = scenePlayer.transform.rotation;
             scenePlayer.transform.position = Vector3.zero;
-            scenePlayer.transform.rotation = Quaternion.Euler(0f, 180f, 0f); // face camera
 
-            cam.transform.position = new Vector3(0f, 0.65f, -2.1f);
-            SaveCaptureToAllDirs("Player.png", cam, outputDirs, 1920, 1080);
+            // Side Profile View (facing right)
+            scenePlayer.transform.rotation = Quaternion.Euler(0f, 90f, 0f);
+            cam.transform.position = new Vector3(0f, 0.65f, -2.4f);
+            cam.transform.rotation = Quaternion.identity;
+            Texture2D sideTex = CaptureCameraToTexture(cam, 800, 800);
+
+            // Front View (facing camera)
+            scenePlayer.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
+            cam.transform.position = new Vector3(0f, 0.65f, -2.4f);
+            cam.transform.rotation = Quaternion.identity;
+            Texture2D frontTex = CaptureCameraToTexture(cam, 800, 800);
+
+            // Top View (facing forward/up on screen)
+            scenePlayer.transform.rotation = Quaternion.Euler(0f, 0f, 0f);
+            cam.transform.position = new Vector3(0f, 3.05f, 0f);
+            cam.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+            Texture2D topTex = CaptureCameraToTexture(cam, 800, 800);
+
+            Texture2D sheet = CreateThreeViewSheet(sideTex, frontTex, topTex, "PLAYER CYBER-OPERATIVE - 3-VIEW PROFILE");
+            SaveTextureToAllDirs("Player.png", sheet, outputDirs);
+
+            Object.DestroyImmediate(sideTex);
+            Object.DestroyImmediate(frontTex);
+            Object.DestroyImmediate(topTex);
+            Object.DestroyImmediate(sheet);
 
             scenePlayer.transform.position = savedPlayerPos;
             scenePlayer.transform.rotation = savedPlayerRot;
             scenePlayer.gameObject.SetActive(false);
         }
+
+        cam.aspect = 16f / 9f;
 
         // Restore environment for combat and UI screenshots
         if (envObj != null) envObj.SetActive(envPrevActive);
@@ -2256,6 +2354,17 @@ public static class GeometricArenaPolishSetup
         }
     }
 
+    private static void SaveTextureToAllDirs(string filename, Texture2D tex, string[] dirs)
+    {
+        byte[] png = tex.EncodeToPNG();
+        foreach (var dir in dirs)
+        {
+            string p = Path.Combine(dir, filename).Replace("\\", "/");
+            File.WriteAllBytes(p, png);
+            Debug.Log($"[GeometricArenaPolish] Captured 3-View Sheet: {p}");
+        }
+    }
+
     public static void CaptureScreenshotsBatch()
     {
         try
@@ -2272,7 +2381,15 @@ public static class GeometricArenaPolishSetup
 
     private static byte[] CaptureCameraToPNGData(Camera cam, int width, int height)
     {
-        RenderTexture rt = new RenderTexture(width, height, 24, RenderTextureFormat.ARGB32);
+        Texture2D tex = CaptureCameraToTexture(cam, width, height);
+        byte[] pngData = tex.EncodeToPNG();
+        Object.DestroyImmediate(tex);
+        return pngData;
+    }
+
+    private static Texture2D CaptureCameraToTexture(Camera cam, int width, int height)
+    {
+        RenderTexture rt = RenderTexture.GetTemporary(width, height, 24, RenderTextureFormat.ARGB32);
         RenderTexture prevRT = cam.targetTexture;
         RenderTexture prevActive = RenderTexture.active;
 
@@ -2286,11 +2403,172 @@ public static class GeometricArenaPolishSetup
 
         cam.targetTexture = prevRT;
         RenderTexture.active = prevActive;
-        Object.DestroyImmediate(rt);
+        RenderTexture.ReleaseTemporary(rt);
 
-        byte[] pngData = tex.EncodeToPNG();
-        Object.DestroyImmediate(tex);
-
-        return pngData;
+        return tex;
     }
+
+    private static Texture2D CreateThreeViewSheet(Texture2D sideTex, Texture2D frontTex, Texture2D topTex, string title)
+    {
+        int panelW = 800;
+        int panelH = 800;
+        int totalW = panelW * 3;
+        int totalH = panelH;
+
+        Texture2D sheet = new Texture2D(totalW, totalH, TextureFormat.RGB24, false);
+        Color bgColor = new Color(0.08f, 0.09f, 0.11f, 1f);
+        Color[] bg = new Color[totalW * totalH];
+        for (int i = 0; i < bg.Length; i++) bg[i] = bgColor;
+        sheet.SetPixels(bg);
+
+        // Blit panels
+        sheet.SetPixels(0, 0, panelW, panelH, sideTex.GetPixels());
+        sheet.SetPixels(panelW, 0, panelW, panelH, frontTex.GetPixels());
+        sheet.SetPixels(panelW * 2, 0, panelW, panelH, topTex.GetPixels());
+
+        // Vertical dividers between panels
+        Color dividerColor = new Color(0.22f, 0.25f, 0.30f, 1f);
+        DrawVLine(sheet, 799, 0, totalH, dividerColor);
+        DrawVLine(sheet, 800, 0, totalH, dividerColor);
+        DrawVLine(sheet, 1599, 0, totalH, dividerColor);
+        DrawVLine(sheet, 1600, 0, totalH, dividerColor);
+
+        // Bottom labels & underlines
+        Color labelColor = new Color(0.85f, 0.90f, 0.95f, 1f);
+        Color cyanAccent = new Color(0.2f, 0.85f, 0.95f, 1f);
+
+        DrawLabelWithUnderline(sheet, "SIDE VIEW", 400, 52, labelColor, cyanAccent, 2);
+        DrawLabelWithUnderline(sheet, "FRONT VIEW", 1200, 52, labelColor, cyanAccent, 2);
+        DrawLabelWithUnderline(sheet, "TOP VIEW", 2000, 52, labelColor, cyanAccent, 2);
+
+        // Top title header
+        if (!string.IsNullOrEmpty(title))
+        {
+            Color titleColor = new Color(0.65f, 0.72f, 0.80f, 1f);
+            DrawString(sheet, title.ToUpper(), 40, totalH - 35, titleColor, 2);
+        }
+
+        sheet.Apply();
+        return sheet;
+    }
+
+    private static void DrawLabelWithUnderline(Texture2D tex, string text, int centerX, int startY, Color textColor, Color lineColor, int scale)
+    {
+        int strWidth = GetStringWidth(text, scale);
+        int startX = centerX - strWidth / 2;
+        DrawString(tex, text, startX, startY, textColor, scale);
+
+        int lineY = startY - 7 * scale - 4;
+        int pad = 16;
+        int x0 = Mathf.Max(0, startX - pad);
+        int x1 = Mathf.Min(tex.width - 1, startX + strWidth + pad);
+        for (int x = x0; x <= x1; x++)
+        {
+            if (lineY >= 0 && lineY < tex.height)
+            {
+                tex.SetPixel(x, lineY, lineColor);
+                if (lineY + 1 < tex.height) tex.SetPixel(x, lineY + 1, lineColor);
+            }
+        }
+    }
+
+    private static int GetStringWidth(string text, int scale)
+    {
+        return text.Length * (6 * scale);
+    }
+
+    private static void DrawString(Texture2D tex, string text, int startX, int startY, Color color, int scale)
+    {
+        int curX = startX;
+        for (int i = 0; i < text.Length; i++)
+        {
+            char c = char.ToUpperInvariant(text[i]);
+            if (Font5x7.TryGetValue(c, out byte[] rows))
+            {
+                for (int r = 0; r < 7; r++)
+                {
+                    int py = startY - r * scale;
+                    byte b = rows[r];
+                    for (int col = 0; col < 5; col++)
+                    {
+                        bool bit = ((b >> (4 - col)) & 1) == 1;
+                        if (bit)
+                        {
+                            int px = curX + col * scale;
+                            for (int dy = 0; dy < scale; dy++)
+                            {
+                                for (int dx = 0; dx < scale; dx++)
+                                {
+                                    int finalX = px + dx;
+                                    int finalY = py + dy;
+                                    if (finalX >= 0 && finalX < tex.width && finalY >= 0 && finalY < tex.height)
+                                    {
+                                        tex.SetPixel(finalX, finalY, color);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            curX += 6 * scale;
+        }
+    }
+
+    private static void DrawVLine(Texture2D tex, int x, int y0, int y1, Color color)
+    {
+        if (x < 0 || x >= tex.width) return;
+        int minY = Mathf.Max(0, Mathf.Min(y0, y1));
+        int maxY = Mathf.Min(tex.height - 1, Mathf.Max(y0, y1));
+        for (int y = minY; y <= maxY; y++)
+        {
+            tex.SetPixel(x, y, color);
+        }
+    }
+
+    private static readonly Dictionary<char, byte[]> Font5x7 = new Dictionary<char, byte[]>
+    {
+        { 'A', new byte[] { 0x0E, 0x11, 0x11, 0x1F, 0x11, 0x11, 0x11 } },
+        { 'B', new byte[] { 0x1E, 0x11, 0x11, 0x1E, 0x11, 0x11, 0x1E } },
+        { 'C', new byte[] { 0x0E, 0x11, 0x10, 0x10, 0x10, 0x11, 0x0E } },
+        { 'D', new byte[] { 0x1C, 0x12, 0x11, 0x11, 0x11, 0x12, 0x1C } },
+        { 'E', new byte[] { 0x1F, 0x10, 0x10, 0x1E, 0x10, 0x10, 0x1F } },
+        { 'F', new byte[] { 0x1F, 0x10, 0x10, 0x1E, 0x10, 0x10, 0x10 } },
+        { 'G', new byte[] { 0x0E, 0x11, 0x10, 0x17, 0x11, 0x11, 0x0F } },
+        { 'H', new byte[] { 0x11, 0x11, 0x11, 0x1F, 0x11, 0x11, 0x11 } },
+        { 'I', new byte[] { 0x0E, 0x04, 0x04, 0x04, 0x04, 0x04, 0x0E } },
+        { 'J', new byte[] { 0x07, 0x02, 0x02, 0x02, 0x12, 0x12, 0x0C } },
+        { 'K', new byte[] { 0x11, 0x12, 0x14, 0x18, 0x14, 0x12, 0x11 } },
+        { 'L', new byte[] { 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x1F } },
+        { 'M', new byte[] { 0x11, 0x1B, 0x15, 0x15, 0x11, 0x11, 0x11 } },
+        { 'N', new byte[] { 0x11, 0x19, 0x15, 0x13, 0x11, 0x11, 0x11 } },
+        { 'O', new byte[] { 0x0E, 0x11, 0x11, 0x11, 0x11, 0x11, 0x0E } },
+        { 'P', new byte[] { 0x1E, 0x11, 0x11, 0x1E, 0x10, 0x10, 0x10 } },
+        { 'Q', new byte[] { 0x0E, 0x11, 0x11, 0x11, 0x15, 0x12, 0x0D } },
+        { 'R', new byte[] { 0x1E, 0x11, 0x11, 0x1E, 0x14, 0x12, 0x11 } },
+        { 'S', new byte[] { 0x0E, 0x11, 0x10, 0x0E, 0x01, 0x11, 0x0E } },
+        { 'T', new byte[] { 0x1F, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04 } },
+        { 'U', new byte[] { 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x0E } },
+        { 'V', new byte[] { 0x11, 0x11, 0x11, 0x11, 0x11, 0x0A, 0x04 } },
+        { 'W', new byte[] { 0x11, 0x11, 0x11, 0x15, 0x15, 0x1B, 0x11 } },
+        { 'X', new byte[] { 0x11, 0x11, 0x0A, 0x04, 0x0A, 0x11, 0x11 } },
+        { 'Y', new byte[] { 0x11, 0x11, 0x0A, 0x04, 0x04, 0x04, 0x04 } },
+        { 'Z', new byte[] { 0x1F, 0x01, 0x02, 0x04, 0x08, 0x10, 0x1F } },
+        { '0', new byte[] { 0x0E, 0x13, 0x15, 0x19, 0x11, 0x11, 0x0E } },
+        { '1', new byte[] { 0x04, 0x0C, 0x04, 0x04, 0x04, 0x04, 0x0E } },
+        { '2', new byte[] { 0x0E, 0x11, 0x01, 0x06, 0x08, 0x10, 0x1F } },
+        { '3', new byte[] { 0x1E, 0x01, 0x01, 0x0E, 0x01, 0x01, 0x1E } },
+        { '4', new byte[] { 0x02, 0x06, 0x0A, 0x12, 0x1F, 0x02, 0x02 } },
+        { '5', new byte[] { 0x1F, 0x10, 0x1E, 0x01, 0x01, 0x11, 0x0E } },
+        { '6', new byte[] { 0x06, 0x08, 0x10, 0x1E, 0x11, 0x11, 0x0E } },
+        { '7', new byte[] { 0x1F, 0x01, 0x02, 0x04, 0x08, 0x08, 0x08 } },
+        { '8', new byte[] { 0x0E, 0x11, 0x11, 0x0E, 0x11, 0x11, 0x0E } },
+        { '9', new byte[] { 0x0E, 0x11, 0x11, 0x0F, 0x01, 0x02, 0x0C } },
+        { ' ', new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 } },
+        { '-', new byte[] { 0x00, 0x00, 0x00, 0x1F, 0x00, 0x00, 0x00 } },
+        { '_', new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1F } },
+        { '/', new byte[] { 0x01, 0x02, 0x02, 0x04, 0x08, 0x08, 0x10 } },
+        { '|', new byte[] { 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04 } },
+        { ':', new byte[] { 0x00, 0x0C, 0x0C, 0x00, 0x0C, 0x0C, 0x00 } }
+    };
 }
