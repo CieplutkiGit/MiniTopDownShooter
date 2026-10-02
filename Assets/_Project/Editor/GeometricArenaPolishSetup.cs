@@ -2016,17 +2016,7 @@ public static class GeometricArenaPolishSetup
         cam.transform.rotation = Quaternion.Euler(45f, 0f, 0f);
         SaveCaptureToAllDirs("Arena_Overview.png", cam, outputDirs, 1920, 1080);
 
-        // 1b. Shot 1b: Full Arena Top-Down View (looking straight down, full perimeter framing)
-        cam.transform.position = new Vector3(0f, 48f, 0f);
-        cam.transform.rotation = Quaternion.Euler(90f, -90f, 0f);
-        SaveCaptureToAllDirs("Arena_Full_TopDown.png", cam, outputDirs, 1920, 1080);
-
-        // 1c. Shot 1c: Dramatic Side-Angle Perspective (showing 3D depth, cover heights, glowing pylons)
-        cam.transform.position = new Vector3(-24f, 6.5f, -24f);
-        cam.transform.rotation = Quaternion.Euler(14f, 45f, 0f);
-        SaveCaptureToAllDirs("Arena_Side_Perspective.png", cam, outputDirs, 1920, 1080);
-
-        // Hide scene player and all scene enemies during static showcase shots so they don't photobomb
+        // Hide scene player and all scene enemies during clean isolate shots
         PlayerController scenePlayer = Object.FindFirstObjectByType<PlayerController>(FindObjectsInactive.Include);
         bool scenePlayerPrevActive = scenePlayer != null && scenePlayer.gameObject.activeSelf;
         if (scenePlayer != null) scenePlayer.gameObject.SetActive(false);
@@ -2039,169 +2029,110 @@ public static class GeometricArenaPolishSetup
             se.gameObject.SetActive(false);
         }
 
-        // 1d. Shot 1d: Enemy / Monster Archetypes Showcase Lineup
-        List<GameObject> tempEnemyShowcase = new List<GameObject>();
-        cam.transform.position = new Vector3(0f, 3.0f, -6.8f);
-        cam.transform.rotation = Quaternion.Euler(15f, 0f, 0f);
+        // ==========================================
+        // 1. CLEAN ARENA SCREENSHOTS (TOP & SIDE)
+        // ==========================================
+        // 1a. Full Arena Top-Down View (looking straight down, full perimeter framing)
+        cam.transform.position = new Vector3(0f, 48f, 0f);
+        cam.transform.rotation = Quaternion.Euler(90f, -90f, 0f);
+        SaveCaptureToAllDirs("Arena_TopView.png", cam, outputDirs, 1920, 1080);
+        SaveCaptureToAllDirs("Arena_Full_TopDown.png", cam, outputDirs, 1920, 1080);
 
-        string[] enemyPrefabs = {
-            "Assets/_Project/Enemy_Fast.prefab",
-            "Assets/_Project/Enemy_Tank.prefab",
-            "Assets/_Project/Enemy.prefab",
-            "Assets/_Project/Enemy_Ranged.prefab",
-            "Assets/_Project/Enemy_Charger.prefab",
-            "Assets/_Project/Enemy_Boss.prefab"
+        // 1b. Dramatic Side-Angle Perspective (showing 3D depth, cover heights, glowing pylons)
+        cam.transform.position = new Vector3(-20f, 12f, -20f);
+        cam.transform.rotation = Quaternion.Euler(23f, 45f, 0f);
+        SaveCaptureToAllDirs("Arena_SideView.png", cam, outputDirs, 1920, 1080);
+        SaveCaptureToAllDirs("Arena_Side_Perspective.png", cam, outputDirs, 1920, 1080);
+
+        // ==========================================
+        // 2. INDIVIDUAL GUN SCREENSHOTS (SOLID BG, SIDE PROFILE VIEW)
+        // ==========================================
+        GameObject envObj = GameObject.Find("ArenaEnvironment");
+        bool envPrevActive = envObj != null && envObj.activeSelf;
+        if (envObj != null) envObj.SetActive(false); // Hide arena completely for pure solid background
+
+        cam.clearFlags = CameraClearFlags.SolidColor;
+        cam.backgroundColor = new Color(0.08f, 0.09f, 0.11f, 1f);
+        cam.transform.rotation = Quaternion.identity;
+
+        var weaponConfigs = new (string prefab, string outName, float camDist, float camY)[]
+        {
+            ("Assets/_Project/Weapons/Gun_Pistol.prefab", "Gun_Pistol.png", 0.95f, 0.04f),
+            ("Assets/_Project/Weapons/Gun_SMG.prefab", "Gun_SMG.png", 1.15f, 0.05f),
+            ("Assets/_Project/Weapons/Gun_Rifle.prefab", "Gun_Rifle.png", 1.55f, 0.05f),
+            ("Assets/_Project/Weapons/Gun_Shotgun.prefab", "Gun_Shotgun.png", 1.45f, 0.05f),
+            ("Assets/_Project/Weapons/Gun_Launcher.prefab", "Gun_Launcher.png", 1.75f, 0.05f)
         };
 
-        Vector3[] lineupPositions = {
-            new Vector3(-5.2f, 0.4f, 0.2f), // Fast Swarm
-            new Vector3(-2.8f, 0f, 0.5f),   // Armored Tank
-            new Vector3(-0.9f, 0f, -0.4f),  // Basic Rusher
-            new Vector3(1.0f, 0f, -0.4f),   // Ranged Turret
-            new Vector3(3.2f, 0f, 0.5f),    // Charger
-            new Vector3(0f, 0f, 3.2f)       // Multipart Boss (towering in center back)
-        };
-
-        Quaternion[] lineupRotations = {
-            Quaternion.Euler(0f, 155f, 0f),
-            Quaternion.Euler(0f, 165f, 0f),
-            Quaternion.Euler(0f, 175f, 0f),
-            Quaternion.Euler(0f, 185f, 0f),
-            Quaternion.Euler(0f, 200f, 0f),
-            Quaternion.Euler(0f, 180f, 0f)
-        };
-
-        for (int i = 0; i < enemyPrefabs.Length; i++)
+        foreach (var w in weaponConfigs)
         {
-            GameObject ePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(enemyPrefabs[i]);
-            if (ePrefab != null)
-            {
-                GameObject inst = Object.Instantiate(ePrefab, lineupPositions[i], lineupRotations[i]);
-                tempEnemyShowcase.Add(inst);
-
-                Transform tel = inst.transform.Find("TelegraphLine");
-                if (tel != null)
-                {
-                    LineRenderer lr = tel.GetComponent<LineRenderer>();
-                    if (lr != null)
-                    {
-                        lr.enabled = true;
-                        lr.SetPosition(0, lineupPositions[i] + new Vector3(0f, 0.05f, 0f));
-                        lr.SetPosition(1, new Vector3(0f, 0.05f, -2.5f));
-                    }
-                }
-
-                Transform shock = inst.transform.Find("ShockwaveTelegraph");
-                if (shock != null) shock.gameObject.SetActive(true);
-            }
-        }
-
-        SaveCaptureToAllDirs("Showcase_Enemies.png", cam, outputDirs, 1920, 1080);
-
-        // 1e. Shot 1e: Close-Up Boss & Heavy Charger Detail
-        foreach (var obj in tempEnemyShowcase)
-        {
-            if (obj != null) Object.DestroyImmediate(obj);
-        }
-        tempEnemyShowcase.Clear();
-
-        cam.transform.position = new Vector3(0.5f, 2.5f, -5.8f);
-        cam.transform.rotation = Quaternion.Euler(9f, -5f, 0f);
-
-        GameObject bObj = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Enemy_Boss.prefab");
-        if (bObj != null)
-        {
-            GameObject instB = Object.Instantiate(bObj, new Vector3(-0.4f, 0f, 1.8f), Quaternion.Euler(0f, 180f, 0f));
-            tempEnemyShowcase.Add(instB);
-
-            // Activate Phase 2 & 3 attachments to showcase full multipart model
-            Transform pRL = instB.transform.Find("Visual/Pylon_Phase2_RL");
-            if (pRL != null) pRL.gameObject.SetActive(true);
-            Transform pRR = instB.transform.Find("Visual/Pylon_Phase2_RR");
-            if (pRR != null) pRR.gameObject.SetActive(true);
-            Transform wings = instB.transform.Find("Visual/Wings_Phase3");
-            if (wings != null) wings.gameObject.SetActive(true);
-
-            Transform shock = instB.transform.Find("ShockwaveTelegraph");
-            if (shock != null) shock.gameObject.SetActive(true);
-        }
-
-        GameObject cObj = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Enemy_Charger.prefab");
-        if (cObj != null)
-        {
-            GameObject instC = Object.Instantiate(cObj, new Vector3(3.2f, 0f, 0.8f), Quaternion.Euler(0f, 195f, 0f));
-            tempEnemyShowcase.Add(instC);
-            Transform tel = instC.transform.Find("TelegraphLine");
-            if (tel != null)
-            {
-                LineRenderer lr = tel.GetComponent<LineRenderer>();
-                if (lr != null)
-                {
-                    lr.enabled = true;
-                    lr.SetPosition(0, new Vector3(3.2f, 0.05f, 0.8f));
-                    lr.SetPosition(1, new Vector3(0f, 0.05f, -2.5f));
-                }
-            }
-        }
-
-        SaveCaptureToAllDirs("Showcase_Boss_Detail.png", cam, outputDirs, 1920, 1080);
-
-        foreach (var obj in tempEnemyShowcase)
-        {
-            if (obj != null) Object.DestroyImmediate(obj);
-        }
-
-        // 1f. Shot 1f: Weapon Arsenal Showcase (All 5 Primitive Gun Models)
-        List<GameObject> tempWeaponShowcase = new List<GameObject>();
-        cam.transform.position = new Vector3(0f, 1.35f, -3.0f);
-        cam.transform.rotation = Quaternion.Euler(12f, 0f, 0f);
-
-        string[] weaponPrefabs = {
-            "Assets/_Project/Weapons/Gun_Pistol.prefab",
-            "Assets/_Project/Weapons/Gun_SMG.prefab",
-            "Assets/_Project/Weapons/Gun_Rifle.prefab",
-            "Assets/_Project/Weapons/Gun_Shotgun.prefab",
-            "Assets/_Project/Weapons/Gun_Launcher.prefab"
-        };
-
-        float[] weaponXPositions = { -2.8f, -1.4f, 0.0f, 1.4f, 2.8f };
-
-        for (int i = 0; i < weaponPrefabs.Length; i++)
-        {
-            float posX = weaponXPositions[i];
-            GameObject wPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(weaponPrefabs[i]);
+            GameObject wPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(w.prefab);
             if (wPrefab != null)
             {
-                // Floating gun angled at 3/4 perspective to show length, barrel, stock, and magazine
-                GameObject gunInst = Object.Instantiate(wPrefab, new Vector3(posX, 0.88f, 0f), Quaternion.Euler(12f, -50f, 0f));
-                tempWeaponShowcase.Add(gunInst);
-
-                // Sleek museum plinth/pedestal
-                GameObject pedestal = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                pedestal.transform.position = new Vector3(posX, 0.30f, 0f);
-                pedestal.transform.localScale = new Vector3(0.55f, 0.60f, 0.55f);
-                if (p != null && p.ArenaWall != null) pedestal.GetComponent<MeshRenderer>().sharedMaterial = p.ArenaWall;
-                Collider colP = pedestal.GetComponent<Collider>();
-                if (colP != null) Object.DestroyImmediate(colP);
-                tempWeaponShowcase.Add(pedestal);
-
-                // Glowing trim cap
-                GameObject cap = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                cap.transform.position = new Vector3(posX, 0.62f, 0f);
-                cap.transform.localScale = new Vector3(0.60f, 0.04f, 0.60f);
-                if (p != null && p.ArenaWallTrim != null) cap.GetComponent<MeshRenderer>().sharedMaterial = p.ArenaWallTrim;
-                Collider colC = cap.GetComponent<Collider>();
-                if (colC != null) Object.DestroyImmediate(colC);
-                tempWeaponShowcase.Add(cap);
+                // Instantiate rotated so barrel points horizontally to the right in pure side profile
+                GameObject gunInst = Object.Instantiate(wPrefab, Vector3.zero, Quaternion.Euler(0f, 90f, 0f));
+                cam.transform.position = new Vector3(0f, w.camY, -w.camDist);
+                SaveCaptureToAllDirs(w.outName, cam, outputDirs, 1920, 1080);
+                Object.DestroyImmediate(gunInst);
             }
         }
 
-        SaveCaptureToAllDirs("Showcase_Weapons.png", cam, outputDirs, 1920, 1080);
-
-        foreach (var obj in tempWeaponShowcase)
+        // ==========================================
+        // 3. INDIVIDUAL MOB SCREENSHOTS (SOLID BG, FRONT VIEW)
+        // ==========================================
+        var mobConfigs = new (string prefab, string outName, float camDist, float camY, bool isBoss)[]
         {
-            if (obj != null) Object.DestroyImmediate(obj);
+            ("Assets/_Project/Enemy.prefab", "Enemy_Basic.png", 2.2f, 0.65f, false),
+            ("Assets/_Project/Enemy_Fast.prefab", "Enemy_Fast.png", 2.4f, 0.65f, false),
+            ("Assets/_Project/Enemy_Charger.prefab", "Enemy_Charger.png", 2.7f, 0.6f, false),
+            ("Assets/_Project/Enemy_Ranged.prefab", "Enemy_Ranged.png", 2.4f, 0.65f, false),
+            ("Assets/_Project/Enemy_Tank.prefab", "Enemy_Tank.png", 3.4f, 0.65f, false),
+            ("Assets/_Project/Enemy_Boss.prefab", "Enemy_Boss.png", 7.0f, 1.55f, true)
+        };
+
+        foreach (var m in mobConfigs)
+        {
+            GameObject mPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(m.prefab);
+            if (mPrefab != null)
+            {
+                // Instantiate facing camera (Y rotation 180 degrees)
+                GameObject mobInst = Object.Instantiate(mPrefab, Vector3.zero, Quaternion.Euler(0f, 180f, 0f));
+
+                if (m.isBoss)
+                {
+                    Transform pRL = mobInst.transform.Find("Visual/Pylon_Phase2_RL");
+                    if (pRL != null) pRL.gameObject.SetActive(true);
+                    Transform pRR = mobInst.transform.Find("Visual/Pylon_Phase2_RR");
+                    if (pRR != null) pRR.gameObject.SetActive(true);
+                    Transform wings = mobInst.transform.Find("Visual/Wings_Phase3");
+                    if (wings != null) wings.gameObject.SetActive(true);
+                }
+
+                cam.transform.position = new Vector3(0f, m.camY, -m.camDist);
+                SaveCaptureToAllDirs(m.outName, cam, outputDirs, 1920, 1080);
+                Object.DestroyImmediate(mobInst);
+            }
         }
+
+        // Player front view
+        if (scenePlayer != null)
+        {
+            scenePlayer.gameObject.SetActive(true);
+            Vector3 savedPlayerPos = scenePlayer.transform.position;
+            Quaternion savedPlayerRot = scenePlayer.transform.rotation;
+            scenePlayer.transform.position = Vector3.zero;
+            scenePlayer.transform.rotation = Quaternion.Euler(0f, 180f, 0f); // face camera
+
+            cam.transform.position = new Vector3(0f, 0.65f, -2.1f);
+            SaveCaptureToAllDirs("Player.png", cam, outputDirs, 1920, 1080);
+
+            scenePlayer.transform.position = savedPlayerPos;
+            scenePlayer.transform.rotation = savedPlayerRot;
+            scenePlayer.gameObject.SetActive(false);
+        }
+
+        // Restore environment for combat and UI screenshots
+        if (envObj != null) envObj.SetActive(envPrevActive);
 
         // Restore scene player and scene enemies before combat shot
         if (scenePlayer != null) scenePlayer.gameObject.SetActive(scenePlayerPrevActive);
