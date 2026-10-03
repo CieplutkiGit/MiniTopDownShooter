@@ -46,7 +46,7 @@ MonoBehaviour:
   _burstCount: 3
   _burstInterval: 0.08
   _aimTurnSpeed: 180
-  _deliveryMode: 1
+  _deliveryMode: 0
   _infiniteAmmo: 0
   _autoReloadOnEmpty: 1
   _cancelReloadOnFire: 1

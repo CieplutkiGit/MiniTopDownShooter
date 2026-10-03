@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.EnhancedTouch;
+using UnityEngine.UI;
 using Touch = UnityEngine.InputSystem.EnhancedTouch.Touch;
 
 namespace Game.Lobby
@@ -11,6 +12,7 @@ namespace Game.Lobby
     /// Freezes gameplay movement and shooting so the character stands proudly facing front to the camera,
     /// and allows interactive horizontal turntable dragging to rotate and inspect the hero and weapon in 3D.
     /// </summary>
+    [ExecuteAlways]
     public class LobbyHeroShowcase : MonoBehaviour
     {
         [Header("Orientation")]
@@ -27,7 +29,11 @@ namespace Game.Lobby
         private float _currentYaw = 180f; // Facing -Z
         private float _yawVelocity = 0f;
         private bool _isDragging = false;
+        private bool _pressOriginatedOnUI;
+        private int _activePointerId = int.MinValue;
         private Vector2 _lastPointerPos;
+        private static readonly System.Collections.Generic.List<RaycastResult> s_RaycastResults =
+            new System.Collections.Generic.List<RaycastResult>();
 
         private void Awake()
         {
@@ -49,12 +55,17 @@ namespace Game.Lobby
         private void OnEnable()
         {
             FreezeLobbyHero();
-            try { EnhancedTouchSupport.Enable(); } catch { }
+            if (UnityEngine.Application.isPlaying)
+            {
+                try { EnhancedTouchSupport.Enable(); } catch { }
+            }
         }
 
         private void OnDisable()
         {
             _isDragging = false;
+            _pressOriginatedOnUI = false;
+            _activePointerId = int.MinValue;
         }
 
         private void Start()
@@ -62,9 +73,21 @@ namespace Game.Lobby
             FreezeLobbyHero();
         }
 
-        private void FreezeLobbyHero()
+        public void FreezeLobbyHero()
         {
             transform.position = Vector3.zero;
+
+            if (_rigidbody == null)
+                _rigidbody = GetComponent<Rigidbody>();
+
+            if (_movement == null)
+                _movement = GetComponent<PlayerMovement>();
+
+            if (_rotation == null)
+                _rotation = GetComponent<PlayerRotation>();
+
+            if (_shoot == null)
+                _shoot = GetComponent<PlayerShoot>();
 
             if (_rigidbody != null)
             {
@@ -83,6 +106,8 @@ namespace Game.Lobby
 
         private void FixedUpdate()
         {
+            if (!UnityEngine.Application.isPlaying) return;
+
             // Lock position firmly at origin in physics loop
             transform.position = Vector3.zero;
             if (_rigidbody != null)
@@ -93,6 +118,8 @@ namespace Game.Lobby
 
         private void Update()
         {
+            if (!UnityEngine.Application.isPlaying) return;
+
             transform.position = Vector3.zero;
             if (_rigidbody != null)
             {
@@ -118,19 +145,24 @@ namespace Game.Lobby
             // Touch input
             if (EnhancedTouchSupport.enabled && Touch.activeTouches.Count > 0)
             {
+                if (Touch.activeTouches.Count > 1)
+                {
+                    _isDragging = false;
+                    _activePointerId = int.MinValue;
+                    return;
+                }
+
                 var touch = Touch.activeTouches[0];
                 if (touch.phase == UnityEngine.InputSystem.TouchPhase.Began)
                 {
-                    if (IsPointerOverUI(touch.touchId))
-                    {
-                        _isDragging = false;
-                        return;
-                    }
-                    _isDragging = true;
+                    _activePointerId = touch.touchId;
+                    _pressOriginatedOnUI = IsPointerOverUI(touch.screenPosition);
+                    _isDragging = !_pressOriginatedOnUI;
                     _lastPointerPos = touch.screenPosition;
                     _yawVelocity = 0f;
                 }
-                else if (touch.phase == UnityEngine.InputSystem.TouchPhase.Moved && _isDragging)
+                else if (touch.phase == UnityEngine.InputSystem.TouchPhase.Moved && _isDragging &&
+                    !_pressOriginatedOnUI && touch.touchId == _activePointerId)
                 {
                     float deltaX = touch.delta.x;
                     _lastPointerPos = touch.screenPosition;
@@ -139,6 +171,8 @@ namespace Game.Lobby
                 else if (touch.phase == UnityEngine.InputSystem.TouchPhase.Ended || touch.phase == UnityEngine.InputSystem.TouchPhase.Canceled)
                 {
                     _isDragging = false;
+                    _pressOriginatedOnUI = false;
+                    _activePointerId = int.MinValue;
                 }
                 return;
             }
@@ -149,16 +183,13 @@ namespace Game.Lobby
             {
                 if (mouse.leftButton.wasPressedThisFrame)
                 {
-                    if (IsPointerOverUI(-1))
-                    {
-                        _isDragging = false;
-                        return;
-                    }
-                    _isDragging = true;
                     _lastPointerPos = mouse.position.ReadValue();
+                    _pressOriginatedOnUI = IsPointerOverUI(_lastPointerPos);
+                    _isDragging = !_pressOriginatedOnUI;
+                    _activePointerId = -1;
                     _yawVelocity = 0f;
                 }
-                else if (mouse.leftButton.isPressed && _isDragging)
+                else if (mouse.leftButton.isPressed && _isDragging && !_pressOriginatedOnUI && _activePointerId == -1)
                 {
                     Vector2 currentPos = mouse.position.ReadValue();
                     float deltaX = currentPos.x - _lastPointerPos.x;
@@ -168,6 +199,8 @@ namespace Game.Lobby
                 else if (mouse.leftButton.wasReleasedThisFrame)
                 {
                     _isDragging = false;
+                    _pressOriginatedOnUI = false;
+                    _activePointerId = int.MinValue;
                 }
             }
         }
@@ -196,19 +229,9 @@ namespace Game.Lobby
             }
         }
 
-        private static bool IsPointerOverUI(int pointerId)
+        private static bool IsPointerOverUI(Vector2 screenPosition)
         {
-            try
-            {
-                if (EventSystem.current == null) return false;
-                return pointerId >= 0
-                    ? EventSystem.current.IsPointerOverGameObject(pointerId)
-                    : EventSystem.current.IsPointerOverGameObject();
-            }
-            catch
-            {
-                return false;
-            }
+            return InputReader.IsPointerOverUI(screenPosition);
         }
     }
 }

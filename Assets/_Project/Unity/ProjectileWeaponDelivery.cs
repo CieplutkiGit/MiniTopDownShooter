@@ -50,19 +50,23 @@ namespace Game
             int minSize = Mathf.Max(1, defaultPoolSize);
             int maxSize = Mathf.Max(minSize, maxPoolSize);
 
-            if (_prefab != null)
+            if (_prefab == null)
             {
-                _pool = new ObjectPool<Projectile>(
-                    CreateProjectile,
-                    OnGetProjectile,
-                    OnReleaseProjectile,
-                    OnDestroyProjectile,
-                    true,
-                    minSize,
-                    maxSize);
-
-                PrewarmPool(minSize);
+#if UNITY_EDITOR
+                _prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<Projectile>("Assets/_Project/Projectile.prefab");
+#endif
             }
+
+            _pool = new ObjectPool<Projectile>(
+                CreateProjectile,
+                OnGetProjectile,
+                OnReleaseProjectile,
+                OnDestroyProjectile,
+                true,
+                minSize,
+                maxSize);
+
+            PrewarmPool(minSize);
         }
 
         public void Deliver(
@@ -215,7 +219,21 @@ namespace Game
 
         private Projectile CreateProjectile()
         {
-            Projectile instance = UnityEngine.Object.Instantiate(_prefab);
+            Projectile instance;
+            if (_prefab != null)
+            {
+                instance = UnityEngine.Object.Instantiate(_prefab);
+            }
+            else
+            {
+                GameObject go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                go.name = "Fallback_Projectile";
+                go.transform.localScale = new Vector3(0.15f, 0.15f, 0.35f);
+                Collider col = go.GetComponent<Collider>();
+                if (col != null) col.isTrigger = true;
+                instance = go.AddComponent<Projectile>();
+            }
+
             if (_scene.IsValid() && _scene.isLoaded && instance.gameObject.scene != _scene)
                 SceneManager.MoveGameObjectToScene(instance.gameObject, _scene);
             instance.gameObject.SetActive(false);

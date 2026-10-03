@@ -48,34 +48,64 @@ namespace Game
             remove { _diedObservers -= value; }
         }
 
-        private void Awake()
+        public void EnsureInitialized()
         {
-            if (_gameStateRef == null)
+            if (_gameState == null)
             {
-                _gameStateRef = FindFirstObjectByType<GameStateController>();
+                if (_gameStateRef == null)
+                {
+                    _gameStateRef = FindFirstObjectByType<GameStateController>();
+                }
+                _gameState = _gameStateRef;
             }
-            _gameState = _gameStateRef;
 
-            _movement = GetComponent<EnemyMovement>();
-            _attack = GetComponent<EnemyAttack>();
-            _health = GetComponent<HealthComponent>();
-            _deadState = new DeadState(_movement);
-            _stats = _statsRef;
-
+            if (_movement == null)
+            {
+                _movement = GetComponent<EnemyMovement>();
+            }
+            if (_attack == null)
+            {
+                _attack = GetComponent<EnemyAttack>();
+            }
+            if (_health == null)
+            {
+                _health = GetComponent<HealthComponent>();
+            }
+            if (_health != null)
+            {
+                _health.OnDead -= HandleDead;
+                _health.OnDead += HandleDead;
+            }
+            if (_deadState == null && _movement != null)
+            {
+                _deadState = new DeadState(_movement);
+            }
+            if (_stats == null)
+            {
+                _stats = _statsRef;
+            }
             if (_behavior == null)
             {
                 _behavior = GetComponent<EnemyBehaviorBase>();
             }
         }
 
+        private void Awake()
+        {
+            EnsureInitialized();
+        }
+
         private void OnEnable()
         {
-            _health.OnDead += HandleDead;
+            EnsureInitialized();
         }
 
         private void OnDisable()
         {
-            _health.OnDead -= HandleDead;
+            if (_health != null)
+            {
+                _health.OnDead -= HandleDead;
+            }
             CancelInvoke();
 
             if (_behavior != null && _behaviorInitialized)
@@ -87,7 +117,11 @@ namespace Game
 
         public void Spawn(Vector3 position, Transform target)
         {
+            EnsureInitialized();
             CancelInvoke();
+            // Subscribe before the enemy can receive damage in this spawn. This also
+            // remains idempotent when pooled instances are spawned repeatedly.
+            global::Game.Economy.EnemySalvageEmitter.Attach(this);
             transform.position = position;
 
             if (_movement != null)
@@ -115,6 +149,14 @@ namespace Game
             {
                 _health.ResetHealth();
             }
+
+            var visuals = GetComponent<Combat.EnemyDamageVisuals>();
+            if (visuals == null)
+            {
+                visuals = gameObject.AddComponent<Combat.EnemyDamageVisuals>();
+            }
+            visuals.EnsureSubscribed();
+            visuals.ResetToPristine();
 
             _target = target;
             _targetDamageable = target != null ? target.GetComponent<IDamageable>() : null;

@@ -38,6 +38,16 @@ namespace Game
                 }
             }
 
+            if (_slider != null)
+            {
+                _slider.interactable = false;
+                _slider.transition = Selectable.Transition.None;
+                foreach (var img in _slider.GetComponentsInChildren<Image>(true))
+                {
+                    img.raycastTarget = false;
+                }
+            }
+
             _health = _healthRef;
         }
 

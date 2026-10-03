@@ -4501,7 +4501,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0, g: 0, b: 0, a: 0}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -6169,6 +6169,12 @@ MonoBehaviour:
   _bossHealthBarUI: {fileID: 778198067}
   _settingsUI: {fileID: 1693480369}
   _weaponCatalog: {fileID: 11400000, guid: 16ef09190f2249f6842989201576fe0c, type: 2}
+  _weaponPrefabs:
+  - {fileID: 11400000, guid: 11af3565a982441c81645a35157e6a11, type: 3}
+  - {fileID: 11400000, guid: 12c28a760e5a4319a932f9ad8662c352, type: 3}
+  - {fileID: 11400000, guid: 13d2c4057f5943fc9218747c739c2c4a, type: 3}
+  - {fileID: 11400000, guid: 14e5cdd08e034101a28990f723403cbd, type: 3}
+  - {fileID: 11400000, guid: 15f99ef7aa764f3c8c1c74a149a5fba2, type: 3}
   _weaponVisualProfiles:
   - {fileID: 11400000, guid: 9b3e532c87f944febee4bbbb8562a224, type: 2}
   - {fileID: 11400000, guid: 2808557717334afc860d4efd1348b119, type: 2}

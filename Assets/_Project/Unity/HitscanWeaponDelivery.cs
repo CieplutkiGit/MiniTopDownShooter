@@ -111,8 +111,18 @@ namespace Game
                             out IDamageable damageable,
                             out Component owner))
                     {
-                        SpawnImpact(hits[i].point, effectPool);
-                        break;
+                        Combat.DestructibleProp prop = collider.GetComponentInParent<Combat.DestructibleProp>();
+                        if (prop != null && !prop.IsDestroyed)
+                        {
+                            damageable = prop;
+                            owner = prop;
+                        }
+                        else
+                        {
+                            Combat.CombatImpactPool.SpawnMark(hits[i].point, hits[i].normal, rayDir, collider.transform);
+                            SpawnImpact(hits[i].point, effectPool);
+                            break;
+                        }
                     }
 
                     targetTeam = targetAffiliation != null &&
@@ -140,7 +150,20 @@ namespace Game
 
                     if (resolvedDamage > 0)
                     {
-                        damageable.TakeDamage(new DamageData(resolvedDamage));
+                        HitContext hitCtx = new HitContext(hits[i].point, hits[i].normal, rayDir, sourceRoot);
+                        if (damageable is HealthComponent hc)
+                        {
+                            hc.TakeDamage(new DamageData(resolvedDamage), hitCtx);
+                        }
+                        else if (damageable is Combat.DestructibleProp dp)
+                        {
+                            dp.TakeDamage(new DamageData(resolvedDamage), hitCtx);
+                        }
+                        else
+                        {
+                            damageable.TakeDamage(new DamageData(resolvedDamage));
+                            Combat.CombatImpactPool.SpawnMark(hits[i].point, hits[i].normal, rayDir, collider.transform);
+                        }
                     }
 
                     SpawnImpact(hits[i].point, effectPool);

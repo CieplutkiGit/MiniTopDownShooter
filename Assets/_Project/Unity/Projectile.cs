@@ -140,10 +140,28 @@ namespace Game
                 return false;
             }
 
-            if (DamageAffiliation.TryGetDamageable(
+            Vector3 normal = -_direction;
+            Ray probeRay = new Ray(hitPosition - _direction * 0.2f, _direction);
+            if (other.Raycast(probeRay, out RaycastHit hitInfo, 0.5f))
+            {
+                normal = hitInfo.normal;
+                hitPosition = hitInfo.point;
+            }
+
+            if (!DamageAffiliation.TryGetDamageable(
                     other,
                     out IDamageable damageable,
                     out Component owner))
+            {
+                Combat.DestructibleProp prop = other.GetComponentInParent<Combat.DestructibleProp>();
+                if (prop != null && !prop.IsDestroyed)
+                {
+                    damageable = prop;
+                    owner = prop;
+                }
+            }
+
+            if (damageable != null)
             {
                 CombatTeam ownerTeam =
                     targetAffiliation != null &&
@@ -157,7 +175,20 @@ namespace Game
                         targetAffiliation,
                         ownerTeam))
                 {
-                    damageable.TakeDamage(new DamageData(_damage));
+                    HitContext hitCtx = new HitContext(hitPosition, normal, _direction, _sourceRoot);
+                    if (damageable is HealthComponent hc)
+                    {
+                        hc.TakeDamage(new DamageData(_damage), hitCtx);
+                    }
+                    else if (damageable is Combat.DestructibleProp dp)
+                    {
+                        dp.TakeDamage(new DamageData(_damage), hitCtx);
+                    }
+                    else
+                    {
+                        damageable.TakeDamage(new DamageData(_damage));
+                        Combat.CombatImpactPool.SpawnMark(hitPosition, normal, _direction, other.transform);
+                    }
                 }
 
                 SpawnImpact(hitPosition);
@@ -165,6 +196,7 @@ namespace Game
                 return true;
             }
 
+            Combat.CombatImpactPool.SpawnMark(hitPosition, normal, _direction, other.transform);
             SpawnImpact(hitPosition);
             Return();
             return true;

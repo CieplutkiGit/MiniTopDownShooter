@@ -84,36 +84,16 @@ namespace Game.Editor
 
         private static void RemoveArenaClutter()
         {
-            string[] objectNamesToDestroy = new string[]
-            {
-                "ArenaEnvironment", "Bastion_NE", "Bastion_NW", "Bastion_SE", "Bastion_SW",
-                "Conduit_N", "Conduit_E", "Conduit_S", "Conduit_W",
-                "SpawnPad_East", "SpawnPad_West", "SpawnPad_South",
-                "Wall_North", "Wall_East", "Wall_South", "Wall_West",
-                "Wall_North_Trim", "Wall_East_Trim", "Wall_South_Trim", "Wall_West_Trim",
-                "Cover_NE", "Cover_NW", "Cover_SE", "Cover_SW",
-                "Pylon_East", "Pylon_West", "LowBarricade_1",
-                "FiringRange", "Target_1", "Target_2", "Target_3",
-                "Sign_Bench", "Sign_Terminal", "Sign_Range",
-                "BenchPrompt", "TerminalPrompt", "WorkshopBench"
-            };
-
-            foreach (string name in objectNamesToDestroy)
-            {
-                var go = GameObject.Find(name);
-                if (go != null) UnityEngine.Object.DestroyImmediate(go);
-            }
-
-            // Remove any 3D TextMeshPro world signs
-            foreach (var tmp in UnityEngine.Object.FindObjectsByType<TextMeshPro>(FindObjectsInactive.Include, FindObjectsSortMode.None))
-            {
-                UnityEngine.Object.DestroyImmediate(tmp.gameObject);
-            }
-
-            // Disable old combat / overlay panels
+            // Non-destructive: disable old combat / overlay panels without destroying scene objects
             DisablePanelByName("HUD");
             DisablePanelByName("MainMenu");
             DisablePanelByName("WorkshopPanel");
+
+            // Deactivate combat spawners if any exist in BaseHub
+            foreach (var spawner in UnityEngine.Object.FindObjectsByType<SpawnZone>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            {
+                spawner.gameObject.SetActive(false);
+            }
         }
 
         private static void DisablePanelByName(string name)
@@ -374,8 +354,8 @@ namespace Game.Editor
             topBarRt.anchorMin = new Vector2(0f, 1f);
             topBarRt.anchorMax = new Vector2(1f, 1f);
             topBarRt.pivot = new Vector2(0.5f, 1f);
-            topBarRt.sizeDelta = new Vector2(0f, 90f);
-            topBar.GetComponent<Image>().color = new Color(0.06f, 0.08f, 0.11f, 0.85f);
+            topBarRt.sizeDelta = new Vector2(0f, 75f);
+            topBar.GetComponent<Image>().color = Game.UI.UITheme.ColorPanelSurface;
 
             // Profile info (Left)
             var profileBox = new GameObject("ProfileBox", typeof(RectTransform));
@@ -384,27 +364,27 @@ namespace Game.Editor
             profileRt.anchorMin = new Vector2(0f, 0.5f);
             profileRt.anchorMax = new Vector2(0f, 0.5f);
             profileRt.pivot = new Vector2(0f, 0.5f);
-            profileRt.anchoredPosition = new Vector2(30f, 0f);
-            profileRt.sizeDelta = new Vector2(300f, 70f);
+            profileRt.anchoredPosition = new Vector2(25f, 0f);
+            profileRt.sizeDelta = new Vector2(250f, 60f);
 
-            var nameText = CreateTMPText(profileBox.transform, "PlayerName", "COMMANDER", 22, FontStyles.Bold, new Vector2(0f, 14f), new Vector2(280f, 30f), Color.white, TextAlignmentOptions.Left);
-            var levelText = CreateTMPText(profileBox.transform, "PlayerLevel", "LV. 5 VETERAN", 14, FontStyles.Normal, new Vector2(0f, -14f), new Vector2(280f, 25f), new Color(0.0f, 0.85f, 0.8f, 1f), TextAlignmentOptions.Left);
+            var nameText = CreateTMPText(profileBox.transform, "PlayerName", "COMMANDER", 20, FontStyles.Bold, new Vector2(0f, 12f), new Vector2(240f, 28f), Game.UI.UITheme.ColorTextPrimary, TextAlignmentOptions.Left);
+            var levelText = CreateTMPText(profileBox.transform, "PlayerLevel", "LV. 5 VETERAN", 13, FontStyles.Normal, new Vector2(0f, -12f), new Vector2(240f, 22f), Game.UI.UITheme.ColorAccentCyan, TextAlignmentOptions.Left);
 
-            // Currencies & Best Score (Center-Right)
+            // Currencies & Best Score (Right)
             var statsBox = new GameObject("StatsBox", typeof(RectTransform));
             statsBox.transform.SetParent(topBar.transform, false);
             var statsRt = statsBox.GetComponent<RectTransform>();
             statsRt.anchorMin = new Vector2(1f, 0.5f);
             statsRt.anchorMax = new Vector2(1f, 0.5f);
             statsRt.pivot = new Vector2(1f, 0.5f);
-            statsRt.anchoredPosition = new Vector2(-120f, 0f);
-            statsRt.sizeDelta = new Vector2(380f, 70f);
+            statsRt.anchoredPosition = new Vector2(-90f, 0f);
+            statsRt.sizeDelta = new Vector2(260f, 60f);
 
-            var highScoreText = CreateTMPText(statsBox.transform, "HighScore", "BEST: 14,500", 16, FontStyles.Bold, new Vector2(-100f, 14f), new Vector2(220f, 28f), new Color(1f, 0.8f, 0.2f, 1f), TextAlignmentOptions.Right);
-            var creditsText = CreateTMPText(statsBox.transform, "Credits", "SCRAP: 2,500", 14, FontStyles.Normal, new Vector2(-100f, -14f), new Vector2(220f, 25f), new Color(0.8f, 0.85f, 0.9f, 1f), TextAlignmentOptions.Right);
+            var highScoreText = CreateTMPText(statsBox.transform, "HighScore", "BEST: 14,500", 15, FontStyles.Bold, new Vector2(-10f, 12f), new Vector2(240f, 26f), Game.UI.UITheme.ColorAccentAmber, TextAlignmentOptions.Right);
+            var creditsText = CreateTMPText(statsBox.transform, "Credits", "", 13, FontStyles.Normal, new Vector2(-10f, -12f), new Vector2(240f, 22f), Game.UI.UITheme.ColorTextSecondary, TextAlignmentOptions.Right);
 
             // Settings button (Far Right)
-            var settingsBtnObj = CreateStyledButton(topBar.transform, "SettingsBtn", "⚙", new Vector2(60f, 60f), new Vector2(-30f, 0f), new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Color(0.18f, 0.22f, 0.28f, 1f));
+            var settingsBtnObj = CreateStyledButton(topBar.transform, "SettingsBtn", "⚙", new Vector2(48f, 48f), new Vector2(-22f, 0f), new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), Game.UI.UITheme.ColorButtonNormal);
 
             // --- Center Equipped Weapon Badge ---
             var weaponBadge = new GameObject("WeaponBadge", typeof(RectTransform), typeof(Image));
@@ -413,11 +393,11 @@ namespace Game.Editor
             badgeRt.anchorMin = new Vector2(0.5f, 0f);
             badgeRt.anchorMax = new Vector2(0.5f, 0f);
             badgeRt.pivot = new Vector2(0.5f, 0f);
-            badgeRt.anchoredPosition = new Vector2(0f, 160f);
-            badgeRt.sizeDelta = new Vector2(360f, 50f);
-            weaponBadge.GetComponent<Image>().color = new Color(0.08f, 0.11f, 0.15f, 0.85f);
+            badgeRt.anchoredPosition = new Vector2(0f, 175f);
+            badgeRt.sizeDelta = new Vector2(340f, 42f);
+            weaponBadge.GetComponent<Image>().color = Game.UI.UITheme.ColorCardSurface;
 
-            var weaponNameText = CreateTMPText(weaponBadge.transform, "EquippedWeaponText", "EQUIPPED: ASSAULT RIFLE", 16, FontStyles.Bold, Vector2.zero, new Vector2(340f, 40f), Color.white, TextAlignmentOptions.Center);
+            var weaponNameText = CreateTMPText(weaponBadge.transform, "EquippedWeaponText", "EQUIPPED: ASSAULT RIFLE", 15, FontStyles.Bold, Vector2.zero, new Vector2(320f, 36f), Game.UI.UITheme.ColorTextPrimary, TextAlignmentOptions.Center);
 
             // Weapon quick switch bar
             var switchBar = new GameObject("QuickSwitchContainer", typeof(RectTransform), typeof(HorizontalLayoutGroup));
@@ -426,12 +406,12 @@ namespace Game.Editor
             switchRt.anchorMin = new Vector2(0.5f, 0f);
             switchRt.anchorMax = new Vector2(0.5f, 0f);
             switchRt.pivot = new Vector2(0.5f, 0f);
-            switchRt.anchoredPosition = new Vector2(0f, 110f);
-            switchRt.sizeDelta = new Vector2(360f, 45f);
+            switchRt.anchoredPosition = new Vector2(0f, 120f);
+            switchRt.sizeDelta = new Vector2(360f, 44f);
 
             var switchLayout = switchBar.GetComponent<HorizontalLayoutGroup>();
             switchLayout.childAlignment = TextAnchor.MiddleCenter;
-            switchLayout.spacing = 10f;
+            switchLayout.spacing = 8f;
             switchLayout.childControlWidth = false;
             switchLayout.childControlHeight = false;
 
@@ -442,15 +422,15 @@ namespace Game.Editor
             bottomRt.anchorMin = new Vector2(0f, 0f);
             bottomRt.anchorMax = new Vector2(1f, 0f);
             bottomRt.pivot = new Vector2(0.5f, 0f);
-            bottomRt.sizeDelta = new Vector2(0f, 110f);
+            bottomRt.sizeDelta = new Vector2(0f, 95f);
 
             // WORKSHOP BUTTON (Left-Center)
-            var workshopBtnObj = CreateStyledButton(bottomBar.transform, "WorkshopButton", "WEAPONS\n<size=11><color=#8B949E>CUSTOMIZE</color></size>", new Vector2(180f, 68f), new Vector2(-150f, 25f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Color(0.16f, 0.20f, 0.27f, 1f));
+            var workshopBtnObj = CreateStyledButton(bottomBar.transform, "WorkshopButton", "WEAPONS\n<size=11><color=#8B949E>CUSTOMIZE</color></size>", new Vector2(170f, 62f), new Vector2(-145f, 16f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), Game.UI.UITheme.ColorButtonNormal);
 
-            // DEPLOY BUTTON (Right-Center) - Vibrant Primary CTA!
-            var deployBtnObj = CreateStyledButton(bottomBar.transform, "LobbyDeployButton", "<size=22><b>DEPLOY</b></size>\n<size=11><color=#001A18>ARENA SWEEP</color></size>", new Vector2(250f, 76f), new Vector2(90f, 25f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Color(0.0f, 0.85f, 0.75f, 1f));
+            // DEPLOY BUTTON (Right-Center) - Primary CTA
+            var deployBtnObj = CreateStyledButton(bottomBar.transform, "LobbyDeployButton", "<size=20><b>DEPLOY</b></size>\n<size=11><color=#001A18>ARENA SWEEP</color></size>", new Vector2(240f, 66f), new Vector2(85f, 16f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), Game.UI.UITheme.ColorAccentCyan);
             var deployTmp = deployBtnObj.GetComponentInChildren<TextMeshProUGUI>();
-            if (deployTmp != null) deployTmp.color = new Color(0.04f, 0.1f, 0.09f, 1f);
+            if (deployTmp != null) deployTmp.color = Game.UI.UITheme.ColorTextDark;
 
             // Wire SerializedObject properties
             var soLobby = new SerializedObject(lobbyUI);
@@ -523,18 +503,34 @@ namespace Game.Editor
         // =========================================================================
         public static void BuildWeaponEditScene()
         {
-            Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            Scene scene;
+            if (File.Exists(WeaponEditScenePath))
+            {
+                scene = EditorSceneManager.OpenScene(WeaponEditScenePath, OpenSceneMode.Single);
+            }
+            else
+            {
+                scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            }
 
             // 1. Camera & Lighting
-            Camera cam = CreateWeaponEditCamera();
-            CreateWeaponEditLighting();
+            Camera cam = Camera.main ?? CreateWeaponEditCamera();
+            if (UnityEngine.Object.FindObjectsByType<Light>(FindObjectsSortMode.None).Length == 0)
+            {
+                CreateWeaponEditLighting();
+            }
 
             // 2. Canvas & EventSystem
             Canvas canvas = EnsureMainCanvas();
             EnsureEventSystem();
 
             // 3. 3D Weapon Preview Rig with Assembler & PinchRotateController
-            (WeaponPreviewView previewView, WeaponPinchRotateController rotateController) = CreateWeaponEditRig(cam);
+            var previewView = UnityEngine.Object.FindFirstObjectByType<WeaponPreviewView>();
+            var rotateController = UnityEngine.Object.FindFirstObjectByType<WeaponPinchRotateController>();
+            if (previewView == null || rotateController == null)
+            {
+                (previewView, rotateController) = CreateWeaponEditRig(cam);
+            }
 
             // 4. Clean Mobile WeaponEdit UI
             WeaponEditUI editUI = CreateWeaponEditUI(canvas.transform, rotateController);
@@ -546,7 +542,7 @@ namespace Game.Editor
             Directory.CreateDirectory(Path.GetDirectoryName(WeaponEditScenePath));
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene, WeaponEditScenePath);
-            Debug.Log("[LobbyAndWeaponEditBuilder] WeaponEdit scene built successfully.");
+            Debug.Log("[LobbyAndWeaponEditBuilder] WeaponEdit scene preserved and updated successfully.");
         }
 
         private static Camera CreateWeaponEditCamera()
@@ -554,13 +550,13 @@ namespace Game.Editor
             var camGo = new GameObject("Main Camera", typeof(Camera), typeof(AudioListener));
             camGo.tag = "MainCamera";
             var cam = camGo.GetComponent<Camera>();
-            cam.transform.position = new Vector3(0f, 0.1f, -1.8f);
+            cam.transform.position = new Vector3(0f, 0.20f, -1.90f);
             cam.transform.rotation = Quaternion.identity;
-            cam.fieldOfView = 40f;
+            cam.fieldOfView = 38f;
             cam.nearClipPlane = 0.1f;
             cam.farClipPlane = 100f;
             cam.clearFlags = CameraClearFlags.SolidColor;
-            cam.backgroundColor = new Color(0.07f, 0.09f, 0.12f, 1f);
+            cam.backgroundColor = Game.UI.UITheme.ColorBackgroundDeep;
             return cam;
         }
 
@@ -609,6 +605,7 @@ namespace Game.Editor
             var rotateController = turntable.AddComponent<WeaponPinchRotateController>();
             rotateController.TargetTransform = turntable.transform;
             rotateController.InspectionCamera = cam;
+            rotateController.PreviewView = previewView;
 
             return (previewView, rotateController);
         }
@@ -631,91 +628,112 @@ namespace Game.Editor
             headerRt.anchorMin = new Vector2(0f, 1f);
             headerRt.anchorMax = new Vector2(1f, 1f);
             headerRt.pivot = new Vector2(0.5f, 1f);
-            headerRt.sizeDelta = new Vector2(0f, 80f);
-            header.GetComponent<Image>().color = new Color(0.06f, 0.08f, 0.11f, 0.9f);
+            headerRt.sizeDelta = new Vector2(0f, 70f);
+            header.GetComponent<Image>().color = Game.UI.UITheme.ColorPanelSurface;
 
-            var backBtnObj = CreateStyledButton(header.transform, "BackButton", "◀ LOBBY", new Vector2(120f, 50f), new Vector2(20f, 0f), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Color(0.16f, 0.20f, 0.26f, 1f));
-            var titleText = CreateTMPText(header.transform, "WeaponTitle", "ASSAULT RIFLE", 22, FontStyles.Bold, Vector2.zero, new Vector2(400f, 50f), Color.white, TextAlignmentOptions.Center);
-            var explodeBtnObj = CreateStyledButton(header.transform, "ExplodeButton", "EXPLODE", new Vector2(110f, 48f), new Vector2(-140f, 0f), new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Color(0.16f, 0.20f, 0.26f, 1f));
-            var resetBtnObj = CreateStyledButton(header.transform, "ResetButton", "⟲ RESET", new Vector2(100f, 48f), new Vector2(-20f, 0f), new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Color(0.16f, 0.20f, 0.26f, 1f));
+            var backBtnObj = CreateStyledButton(header.transform, "BackButton", "◀ LOBBY", new Vector2(100f, 40f), new Vector2(15f, 0f), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), Game.UI.UITheme.ColorButtonNormal);
+            var titleText = CreateTMPText(header.transform, "WeaponTitle", "ASSAULT RIFLE", 18, FontStyles.Bold, Vector2.zero, Vector2.zero, Game.UI.UITheme.ColorTextPrimary, TextAlignmentOptions.Center);
+            var titleRt = titleText.GetComponent<RectTransform>();
+            titleRt.anchorMin = new Vector2(0f, 0f);
+            titleRt.anchorMax = new Vector2(1f, 1f);
+            titleRt.offsetMin = new Vector2(120f, 0f);
+            titleRt.offsetMax = new Vector2(-215f, 0f);
+            titleText.enableAutoSizing = true;
+            titleText.fontSizeMin = 11f;
+            titleText.fontSizeMax = 18f;
 
-            // --- Slot Selector (Horizontal Tabs under header) ---
-            var slotsBar = new GameObject("SlotSelector", typeof(RectTransform), typeof(HorizontalLayoutGroup), typeof(Image));
-            slotsBar.transform.SetParent(uiRoot.transform, false);
-            var slotsRt = slotsBar.GetComponent<RectTransform>();
-            slotsRt.anchorMin = new Vector2(0f, 1f);
-            slotsRt.anchorMax = new Vector2(1f, 1f);
-            slotsRt.pivot = new Vector2(0.5f, 1f);
-            slotsRt.anchoredPosition = new Vector2(0f, -85f);
-            slotsRt.sizeDelta = new Vector2(0f, 52f);
-            slotsBar.GetComponent<Image>().color = new Color(0.09f, 0.11f, 0.15f, 0.8f);
+            var explodeBtnObj = CreateStyledButton(header.transform, "ExplodeButton", "EXPLODE", new Vector2(95f, 40f), new Vector2(-115f, 0f), new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), Game.UI.UITheme.ColorButtonNormal);
+            var resetBtnObj = CreateStyledButton(header.transform, "ResetButton", "⟲ RESET", new Vector2(90f, 40f), new Vector2(-15f, 0f), new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), Game.UI.UITheme.ColorButtonNormal);
 
-            var slotsLayout = slotsBar.GetComponent<HorizontalLayoutGroup>();
-            slotsLayout.childAlignment = TextAnchor.MiddleCenter;
-            slotsLayout.spacing = 8f;
-            slotsLayout.childControlWidth = false;
-            slotsLayout.childControlHeight = false;
+            // --- Slot Selector (Scrollable Horizontal Tabs flexibly stretched across screen width) ---
+            var slotsScrollRt = Game.UI.UITheme.CreateHorizontalScrollView(
+                uiRoot.transform, "SlotSelector", new Vector2(0f, 44f), new Vector2(0f, -72f),
+                new Vector2(0f, 1f), new Vector2(1f, 1f), out RectTransform slotsContent);
+            slotsScrollRt.offsetMin = new Vector2(10f, -116f);
+            slotsScrollRt.offsetMax = new Vector2(-10f, -72f);
 
-            // --- Part Selector (Bottom Panel) ---
+            // --- Preview Viewport (Interactive 3D Touch/Click Catcher) ---
+            var previewViewport = new GameObject("PreviewViewport", typeof(RectTransform), typeof(Image));
+            previewViewport.transform.SetParent(uiRoot.transform, false);
+            var vpRt = previewViewport.GetComponent<RectTransform>();
+            vpRt.anchorMin = new Vector2(0f, 0f);
+            vpRt.anchorMax = new Vector2(1f, 1f);
+            vpRt.offsetMin = new Vector2(0f, 215f);
+            vpRt.offsetMax = new Vector2(0f, -125f);
+            var vpImg = previewViewport.GetComponent<Image>();
+            vpImg.color = new Color(0f, 0f, 0f, 0.001f);
+            vpImg.raycastTarget = true;
+
+            rotateController.PreviewViewport = vpRt;
+            editUI.PreviewViewport = vpRt;
+
+            // --- Bottom Customization Panel ---
             var bottomCard = new GameObject("BottomCustomizationPanel", typeof(RectTransform), typeof(Image));
             bottomCard.transform.SetParent(uiRoot.transform, false);
             var bottomRt = bottomCard.GetComponent<RectTransform>();
             bottomRt.anchorMin = new Vector2(0f, 0f);
             bottomRt.anchorMax = new Vector2(1f, 0f);
             bottomRt.pivot = new Vector2(0.5f, 0f);
-            bottomRt.sizeDelta = new Vector2(0f, 210f);
-            bottomCard.GetComponent<Image>().color = new Color(0.06f, 0.08f, 0.11f, 0.92f);
+            bottomRt.sizeDelta = new Vector2(0f, 215f);
+            bottomCard.GetComponent<Image>().color = Game.UI.UITheme.ColorPanelSurface;
 
-            var slotLabel = CreateTMPText(bottomCard.transform, "SlotLabel", "SLOT: BARREL", 14, FontStyles.Bold, new Vector2(25f, 85f), new Vector2(250f, 30f), new Color(0.0f, 0.85f, 0.8f, 1f), TextAlignmentOptions.Left);
-            slotLabel.rectTransform.anchorMin = new Vector2(0f, 0.5f);
-            slotLabel.rectTransform.anchorMax = new Vector2(0f, 0.5f);
+            // Slot header & Economy wallet placeholder
+            var slotLabel = CreateTMPText(bottomCard.transform, "SlotLabel", "SLOT: BARREL", 13, FontStyles.Bold, new Vector2(25f, 185f), new Vector2(200f, 26f), Game.UI.UITheme.ColorAccentCyan, TextAlignmentOptions.Left);
+            slotLabel.rectTransform.anchorMin = new Vector2(0f, 0f);
+            slotLabel.rectTransform.anchorMax = new Vector2(0f, 0f);
+            slotLabel.rectTransform.pivot = new Vector2(0f, 0.5f);
 
-            var partsContainer = new GameObject("PartsContainer", typeof(RectTransform), typeof(HorizontalLayoutGroup));
-            partsContainer.transform.SetParent(bottomCard.transform, false);
-            var partsRt = partsContainer.GetComponent<RectTransform>();
-            partsRt.anchorMin = new Vector2(0f, 0f);
-            partsRt.anchorMax = new Vector2(0.68f, 1f);
-            partsRt.offsetMin = new Vector2(20f, 65f);
-            partsRt.offsetMax = new Vector2(-10f, -40f);
+            var walletGo = new GameObject("WalletPanel", typeof(RectTransform));
+            walletGo.transform.SetParent(bottomCard.transform, false);
+            var walletRt = walletGo.GetComponent<RectTransform>();
+            walletRt.anchorMin = new Vector2(0.68f, 0f);
+            walletRt.anchorMax = new Vector2(0.68f, 0f);
+            walletRt.pivot = new Vector2(1f, 0.5f);
+            walletRt.anchoredPosition = new Vector2(-15f, 185f);
+            walletRt.sizeDelta = new Vector2(180f, 26f);
+            var walletText = CreateTMPText(walletGo.transform, "WalletText", "", 13, FontStyles.Bold, Vector2.zero, new Vector2(180f, 26f), Game.UI.UITheme.ColorAccentAmber, TextAlignmentOptions.Right);
 
-            var partsLayout = partsContainer.GetComponent<HorizontalLayoutGroup>();
-            partsLayout.childAlignment = TextAnchor.MiddleLeft;
-            partsLayout.spacing = 10f;
-            partsLayout.childControlWidth = false;
-            partsLayout.childControlHeight = false;
+            // Scrollable Parts Container
+            var partsScrollRt = Game.UI.UITheme.CreateHorizontalScrollView(
+                bottomCard.transform, "PartsScrollView", new Vector2(0f, 72f), Vector2.zero,
+                new Vector2(0f, 0f), new Vector2(0.68f, 0f), out RectTransform partsContent);
+            partsScrollRt.pivot = new Vector2(0.5f, 0.5f);
+            partsScrollRt.anchoredPosition = new Vector2(20f, 105f);
+            partsScrollRt.sizeDelta = new Vector2(-30f, 72f);
+            partsScrollRt.anchorMax = new Vector2(0.68f, 0f);
 
-            // --- Stats Card (Right docked in bottom panel) ---
+            // Stats Card (Right docked in bottom panel)
             var statsCard = new GameObject("StatsPanel", typeof(RectTransform), typeof(Image));
             statsCard.transform.SetParent(bottomCard.transform, false);
             var statsRt = statsCard.GetComponent<RectTransform>();
             statsRt.anchorMin = new Vector2(0.70f, 0f);
             statsRt.anchorMax = new Vector2(1f, 1f);
-            statsRt.offsetMin = new Vector2(10f, 15f);
-            statsRt.offsetMax = new Vector2(-20f, -15f);
-            statsCard.GetComponent<Image>().color = new Color(0.10f, 0.13f, 0.18f, 0.9f);
+            statsRt.offsetMin = new Vector2(10f, 14f);
+            statsRt.offsetMax = new Vector2(-20f, -14f);
+            statsCard.GetComponent<Image>().color = Game.UI.UITheme.ColorCardSurface;
 
-            var statsSummaryText = CreateTMPText(statsCard.transform, "StatsSummary", "DAMAGE: 20\nFIRE RATE: 10/s\nMAGAZINE: 30\nRELOAD: 1.8s", 13, FontStyles.Normal, Vector2.zero, Vector2.zero, Color.white, TextAlignmentOptions.TopLeft);
+            var statsSummaryText = CreateTMPText(statsCard.transform, "StatsSummary", "DAMAGE: 20\nFIRE RATE: 10/s\nMAGAZINE: 30\nRELOAD: 1.8s", 13, FontStyles.Normal, Vector2.zero, Vector2.zero, Game.UI.UITheme.ColorTextPrimary, TextAlignmentOptions.TopLeft);
             statsSummaryText.rectTransform.anchorMin = Vector2.zero;
             statsSummaryText.rectTransform.anchorMax = Vector2.one;
             statsSummaryText.rectTransform.offsetMin = new Vector2(12f, 10f);
             statsSummaryText.rectTransform.offsetMax = new Vector2(-12f, -10f);
 
-            // --- Action Buttons (Bottom Left) ---
-            var discardBtnObj = CreateStyledButton(bottomCard.transform, "DiscardButton", "DISCARD", new Vector2(120f, 44f), new Vector2(20f, 15f), new Vector2(0f, 0f), new Vector2(0f, 0f), new Color(0.18f, 0.22f, 0.28f, 1f));
-            var applyBtnObj = CreateStyledButton(bottomCard.transform, "ApplyButton", "APPLY CHANGES", new Vector2(160f, 44f), new Vector2(150f, 15f), new Vector2(0f, 0f), new Vector2(0f, 0f), new Color(0.0f, 0.85f, 0.75f, 1f));
+            // Action Buttons (Bottom Left)
+            var discardBtnObj = CreateStyledButton(bottomCard.transform, "DiscardButton", "DISCARD", new Vector2(115f, 42f), new Vector2(20f, 14f), new Vector2(0f, 0f), new Vector2(0f, 0f), Game.UI.UITheme.ColorButtonNormal);
+            var applyBtnObj = CreateStyledButton(bottomCard.transform, "ApplyButton", "APPLY CHANGES", new Vector2(155f, 42f), new Vector2(145f, 14f), new Vector2(0f, 0f), new Vector2(0f, 0f), Game.UI.UITheme.ColorAccentCyan);
             var applyTmp = applyBtnObj.GetComponentInChildren<TextMeshProUGUI>();
-            if (applyTmp != null) applyTmp.color = Color.black;
+            if (applyTmp != null) applyTmp.color = Game.UI.UITheme.ColorTextDark;
 
-            // --- Error banner ---
+            // Error banner
             var errorRoot = new GameObject("ErrorRoot", typeof(RectTransform), typeof(Image));
             errorRoot.transform.SetParent(uiRoot.transform, false);
             var errorRt = errorRoot.GetComponent<RectTransform>();
             errorRt.anchorMin = new Vector2(0.5f, 0.5f);
             errorRt.anchorMax = new Vector2(0.5f, 0.5f);
-            errorRt.sizeDelta = new Vector2(400f, 50f);
-            errorRoot.GetComponent<Image>().color = new Color(0.6f, 0.1f, 0.1f, 0.9f);
+            errorRt.sizeDelta = new Vector2(400f, 46f);
+            errorRoot.GetComponent<Image>().color = Game.UI.UITheme.ColorAccentRed;
 
-            var errorText = CreateTMPText(errorRoot.transform, "ErrorText", "Invalid Build Configuration", 15, FontStyles.Bold, Vector2.zero, new Vector2(380f, 40f), Color.white, TextAlignmentOptions.Center);
+            var errorText = CreateTMPText(errorRoot.transform, "ErrorText", "Invalid Build Configuration", 14, FontStyles.Bold, Vector2.zero, new Vector2(380f, 38f), Color.white, TextAlignmentOptions.Center);
             errorRoot.SetActive(false);
 
             // Wire SerializedObject properties
@@ -725,12 +743,17 @@ namespace Game.Editor
             SetRef(soEdit, "_explodeButton", explodeBtnObj.GetComponent<Button>());
             SetRef(soEdit, "_explodeButtonText", explodeBtnObj.GetComponentInChildren<TMP_Text>());
             SetRef(soEdit, "_resetViewButton", resetBtnObj.GetComponent<Button>());
-            SetRef(soEdit, "_slotsContainer", slotsRt);
-            SetRef(soEdit, "_partsContainer", partsRt);
+            SetRef(soEdit, "_slotsContainer", slotsContent);
+            SetRef(soEdit, "_slotsScrollRect", slotsScrollRt.GetComponent<ScrollRect>());
+            SetRef(soEdit, "_partsContainer", partsContent);
+            SetRef(soEdit, "_partsScrollRect", partsScrollRt.GetComponent<ScrollRect>());
             SetRef(soEdit, "_currentSlotLabel", slotLabel);
             SetRef(soEdit, "_statsSummaryText", statsSummaryText);
             SetRef(soEdit, "_applyButton", applyBtnObj.GetComponent<Button>());
             SetRef(soEdit, "_discardButton", discardBtnObj.GetComponent<Button>());
+            SetRef(soEdit, "_previewViewport", vpRt);
+            SetRef(soEdit, "_walletPanel", walletGo);
+            SetRef(soEdit, "_walletText", walletText);
             SetRef(soEdit, "_errorRoot", errorRoot);
             SetRef(soEdit, "_errorText", errorText);
             SetRef(soEdit, "_rotateController", rotateController);
@@ -841,6 +864,9 @@ namespace Game.Editor
             tmp.color = color;
             tmp.alignment = alignment;
             tmp.raycastTarget = false;
+            tmp.enableAutoSizing = true;
+            tmp.fontSizeMin = Mathf.Max(9f, fontSize * 0.7f);
+            tmp.fontSizeMax = fontSize;
 
             return tmp;
         }
@@ -884,6 +910,9 @@ namespace Game.Editor
             tmp.alignment = TextAlignmentOptions.Center;
             tmp.color = Color.white;
             tmp.raycastTarget = false;
+            tmp.enableAutoSizing = true;
+            tmp.fontSizeMin = 10f;
+            tmp.fontSizeMax = 18f;
 
             return go;
         }

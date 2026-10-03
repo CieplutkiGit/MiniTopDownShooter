@@ -12,8 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1f21a7b4ce134b52a7c1d5e7a4150e7a, type: 3}
   m_Name: Weapon_Pistol
   m_EditorClassIdentifier: Unity::Game.WeaponDefinition
+  _weaponId: weapon.pistol
   _fireMode: 0
-  _deliveryMode: 1
+  _deliveryMode: 0
   _damage: 24
   _fireInterval: 0.28
   _projectilesPerShot: 1
@@ -30,7 +31,7 @@ MonoBehaviour:
   _reloadDuration: 1.1
   _autoReloadOnEmpty: 1
   _cancelReloadOnFire: 1
-  _projectilePrefab: {fileID: 0}
+  _projectilePrefab: {fileID: 6247917408618948358, guid: 9c8a4317ddcb4ff4d90474e6455082ac, type: 3}
   _overrideProjectileMotion: 1
   _projectileSpeed: 20
   _projectileLifetime: 3

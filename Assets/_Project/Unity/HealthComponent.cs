@@ -5,6 +5,24 @@ using UnityEngine;
 
 namespace Game
 {
+    public struct HitContext
+    {
+        public bool IsValid;
+        public Vector3 Point;
+        public Vector3 Normal;
+        public Vector3 Direction;
+        public Component Source;
+
+        public HitContext(Vector3 point, Vector3 normal, Vector3 direction, Component source = null)
+        {
+            IsValid = true;
+            Point = point;
+            Normal = normal;
+            Direction = direction;
+            Source = source;
+        }
+    }
+
     public class HealthComponent : MonoBehaviour, IDamageable, IHealthReadable
     {
         [SerializeField] private int _maxHealth = 100;
@@ -40,6 +58,10 @@ namespace Game
             UnsubscribeHealth();
         }
 
+        private HitContext _lastHitContext;
+        public HitContext LastHit => _lastHitContext;
+        public event Action<int, HitContext> OnDamagedWithContext;
+
         public void SetMaxHealth(int maxHealth)
         {
             UnsubscribeHealth();
@@ -49,12 +71,22 @@ namespace Game
 
         public void TakeDamage(int damage)
         {
-            TakeDamage(new DamageData(damage));
+            TakeDamage(new DamageData(damage), default);
         }
 
         public void TakeDamage(DamageData data)
         {
+            TakeDamage(data, default);
+        }
+
+        public void TakeDamage(DamageData data, HitContext context)
+        {
             EnsureHealthInitialized();
+
+            if (_health != null && _health.IsDead)
+            {
+                return;
+            }
 
             DamageData resolved = data;
 
@@ -68,11 +100,19 @@ namespace Game
                 return;
             }
 
+            _lastHitContext = context;
+            bool wasAlive = _health != null && !_health.IsDead;
             _health.TakeDamage(resolved);
+
+            if (wasAlive && _health != null && !_health.IsDead)
+            {
+                OnDamagedWithContext?.Invoke(resolved.Damage, context);
+            }
         }
 
         public void ResetHealth()
         {
+            _lastHitContext = default;
             EnsureHealthInitialized();
             _health.Reset();
         }

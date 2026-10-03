@@ -1,16 +1,36 @@
 using System;
 using System.Collections.Generic;
+using Application.Economy;
 using Application.Weapons;
 
 namespace Game
 {
     public class SaveManagerWeaponBuildStore : IWeaponBuildStore
     {
+        public static IEconomyPolicy ActivePolicy { get; set; }
+        public IEconomyPolicy EconomyPolicy { get; set; }
+        private IEconomyPolicy EffectivePolicy => EconomyPolicy ?? ActivePolicy ?? EconomyPolicyProvider.DefaultPolicy;
+
+        public SaveManagerWeaponBuildStore()
+        {
+        }
+
+        public SaveManagerWeaponBuildStore(IEconomyPolicy economyPolicy)
+        {
+            EconomyPolicy = economyPolicy;
+        }
+
         public BuildLoadResult Load(string weaponId)
         {
             if (string.IsNullOrWhiteSpace(weaponId))
             {
                 return BuildLoadResult.Failure("No saved build for weapon (empty weapon ID).");
+            }
+
+            var policy = EffectivePolicy;
+            if (policy != null && !policy.IsWeaponUnlocked(weaponId))
+            {
+                return BuildLoadResult.Failure($"Cannot load build: Weapon '{weaponId}' is locked.");
             }
 
             try
@@ -28,6 +48,29 @@ namespace Game
                 }
 
                 WeaponBuild build = dto.ToDomain();
+                if (policy != null && build.Selections != null)
+                {
+                    var sanitized = new Dictionary<string, string>();
+                    bool repaired = false;
+                    foreach (var kvp in build.Selections)
+                    {
+                        if (string.IsNullOrEmpty(kvp.Value) || policy.IsPartUnlocked(weaponId, kvp.Key, kvp.Value))
+                        {
+                            sanitized[kvp.Key] = kvp.Value;
+                        }
+                        else
+                        {
+                            repaired = true;
+                        }
+                    }
+
+                    if (repaired)
+                    {
+                        build = new WeaponBuild(weaponId, sanitized);
+                        return BuildLoadResult.Success(build, wasMigratedOrRepaired: true);
+                    }
+                }
+
                 return BuildLoadResult.Success(build, data.WasMigratedOrRepaired);
             }
             catch (Exception ex)
@@ -46,6 +89,26 @@ namespace Game
             if (string.IsNullOrWhiteSpace(build.WeaponId))
             {
                 return SaveResult.Failure("Weapon build must have a valid WeaponId.");
+            }
+
+            var policy = EffectivePolicy;
+            if (policy != null)
+            {
+                if (!policy.IsWeaponUnlocked(build.WeaponId))
+                {
+                    return SaveResult.Failure($"Cannot save build: Weapon platform '{build.WeaponId}' is locked.");
+                }
+
+                if (build.Selections != null)
+                {
+                    foreach (var kvp in build.Selections)
+                    {
+                        if (!string.IsNullOrEmpty(kvp.Value) && !policy.IsPartUnlocked(build.WeaponId, kvp.Key, kvp.Value))
+                        {
+                            return SaveResult.Failure($"Cannot save build: Part '{kvp.Value}' is unowned.");
+                        }
+                    }
+                }
             }
 
             try

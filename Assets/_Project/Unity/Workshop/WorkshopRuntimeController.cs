@@ -1,3 +1,4 @@
+using Application.Economy;
 using Application.Weapons;
 using Application.Workshop;
 using Application;
@@ -31,6 +32,8 @@ namespace Game.Workshop
         private IWeaponBuildStore _buildStore;
         private WeaponLoadout _loadout;
         private GameStateController _gameState;
+        private IEconomyPolicy _economyPolicy;
+        public void SetEconomyPolicy(IEconomyPolicy policy) => _economyPolicy = policy;
 
         // ── Public session accessor ────────────────────────────────────────
         public IWeaponWorkshopSession ActiveSession => _activeSession;
@@ -112,6 +115,7 @@ namespace Game.Workshop
                 initialBuild = loadResult.Build;
 
             var resolver = new WeaponBuildResolver();
+            var policy = _economyPolicy ?? SaveManagerWeaponBuildStore.ActivePolicy ?? WeaponLoadout.ActivePolicy;
 
             _activeSession = new WorkshopSession(
                 weaponId,
@@ -119,7 +123,8 @@ namespace Game.Workshop
                 _catalogAsset,
                 resolver,
                 _buildStore,
-                _combatAdapter);
+                _combatAdapter,
+                policy);
 
             // Bind UI
             if (_uiController != null)

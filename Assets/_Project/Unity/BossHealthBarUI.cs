@@ -18,6 +18,17 @@ namespace Game
         private void Awake()
         {
             SetPanelActive(false);
+            if (_healthSlider != null)
+            {
+                _healthSlider.interactable = false;
+                _healthSlider.transition = Selectable.Transition.None;
+                foreach (var img in _healthSlider.GetComponentsInChildren<Image>(true))
+                {
+                    img.raycastTarget = false;
+                }
+            }
+            if (_bossNameLabel != null) _bossNameLabel.raycastTarget = false;
+            if (_phaseLabel != null) _phaseLabel.raycastTarget = false;
         }
 
         private void SetPanelActive(bool active)

@@ -87,7 +87,7 @@ namespace Game.Flow
             }
 
             string missionId = _missionDefinition != null ? _missionDefinition.MissionId : "Mission_ArenaSweep";
-            DeploymentLoadoutSnapshot snapshot = _playerSession?.CreateDeploymentSnapshot()
+            DeploymentLoadoutSnapshot snapshot = _playerSession?.CreateDeploymentSnapshot(Game.Workshop.WeaponBuildApplier.DefaultCatalog)
                                                  ?? DeploymentLoadoutSnapshot.Empty;
             if (snapshot.OrderedWeaponIds.Count == 0)
             {

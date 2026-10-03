@@ -15,6 +15,10 @@ namespace Game
         private void Awake()
         {
             _health = _healthRef;
+            if (GetComponent<Combat.EnemyDamageVisuals>() == null)
+            {
+                gameObject.AddComponent<Combat.EnemyDamageVisuals>();
+            }
         }
 
         public void SetEffectPool(EffectPool pool)

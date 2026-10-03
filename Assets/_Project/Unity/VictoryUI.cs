@@ -77,6 +77,16 @@ namespace Game
             _score = _scoreRef;
             _highScore = _highScoreRef;
             _waves = _waveRef;
+
+            TMP_Text[] texts = { _titleLabel, _scoreLabel, _highScoreLabel, _wavesLabel };
+            foreach (var t in texts)
+            {
+                if (t != null)
+                {
+                    t.raycastTarget = false;
+                    t.enableAutoSizing = true;
+                }
+            }
         }
 
         private void OnEnable()

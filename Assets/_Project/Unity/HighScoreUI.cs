@@ -31,6 +31,11 @@ namespace Game
             }
 
             _highScore = _highScoreRef;
+            if (_label != null)
+            {
+                _label.raycastTarget = false;
+                _label.enableAutoSizing = true;
+            }
         }
 
         private void OnEnable()

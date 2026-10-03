@@ -28,6 +28,8 @@ namespace Game.Flow
         [SerializeField] private bool _showTitleOnEntry = false;
 
         private AppCompositionRoot _app;
+        private global::Application.Economy.IEconomyService _economy;
+        private WeaponLoadout _loadout;
         public bool IsInitialized { get; private set; }
 
         private IEnumerator Start()
@@ -52,23 +54,37 @@ namespace Game.Flow
                 ? _gameCompositionRoot.Player.GetComponent<WeaponLoadout>()
                 : SceneComponents.Find<WeaponLoadout>(gameObject.scene);
 
-            if (_app != null && loadout != null)
+            _loadout = loadout;
+            _economy = global::Game.Economy.UnityEconomyService.Instance;
+            _gameCompositionRoot?.EnsureOwnedWeapons();
+            _economy.OnWeaponUnlocked += HandleWeaponUnlocked;
+
+            if (loadout != null)
             {
+                bool equipped = false;
                 if (!string.IsNullOrEmpty(savedEquippedId))
                 {
                     for (int i = 0; i < loadout.Weapons.Count; i++)
                     {
                         if (loadout.Weapons[i] != null && loadout.Weapons[i].WeaponId == savedEquippedId)
                         {
-                            loadout.EquipSlot(i);
+                            equipped = loadout.EquipSlot(i);
                             break;
                         }
                     }
                 }
 
-                _app.PlayerSession?.SetLoadout(
-                    loadout.Weapons.Where(gun => gun != null).Select(gun => gun.WeaponId),
-                    loadout.ActiveGun != null ? loadout.ActiveGun.WeaponId : null);
+                if (!equipped && loadout.ActiveGun == null)
+                {
+                    loadout.EquipDefaultSlot();
+                }
+
+                if (_app != null)
+                {
+                    _app.PlayerSession?.SetLoadout(
+                        loadout.Weapons.Where(gun => gun != null && _economy.IsWeaponUnlocked(gun.WeaponId)).Select(gun => gun.WeaponId),
+                        loadout.ActiveGun != null ? loadout.ActiveGun.WeaponId : null);
+                }
             }
 
             if (_workshopRuntimeController != null)
@@ -105,6 +121,24 @@ namespace Game.Flow
         {
             if (_gameStateController != null)
                 _gameStateController.EnterWorkshopRoaming();
+        }
+
+        private void HandleWeaponUnlocked(string weaponId)
+        {
+            _gameCompositionRoot?.EnsureOwnedWeapons();
+            if (_loadout != null && _loadout.ActiveGun == null)
+            {
+                _loadout.EquipDefaultSlot();
+            }
+            if (_app?.PlayerSession == null || _loadout == null) return;
+            _app.PlayerSession.SetLoadout(
+                _loadout.Weapons.Where(gun => gun != null && _economy.IsWeaponUnlocked(gun.WeaponId)).Select(gun => gun.WeaponId),
+                _loadout.ActiveGun != null ? _loadout.ActiveGun.WeaponId : null);
+        }
+
+        private void OnDestroy()
+        {
+            if (_economy != null) _economy.OnWeaponUnlocked -= HandleWeaponUnlocked;
         }
     }
 }

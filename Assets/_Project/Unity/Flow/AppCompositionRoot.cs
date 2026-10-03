@@ -69,6 +69,10 @@ namespace Game.Flow
             {
                 _weaponCatalog = catalog;
                 WeaponBuildApplier.SetCatalog(catalog);
+                // Saved builds must pass ownership checks before entering the session cache.
+                // The automatic economy bootstrap runs after Boot's Awake methods.
+                if (UnityEngine.Application.isPlaying)
+                    Game.Economy.EconomyProductionBootstrapper.WireProductionPolicy();
             }
             WeaponBuildApplier.SetStore(BuildStore);
             if (visualProfiles != null)

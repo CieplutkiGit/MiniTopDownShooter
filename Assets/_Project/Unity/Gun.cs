@@ -47,7 +47,27 @@ namespace Game
         public event Action<int, int> AmmoChanged;
 
         public WeaponDefinition Definition => _definition;
-        public string WeaponId => _definition != null ? _definition.WeaponId : WeaponWorkshopIds.Rifle;
+        public string WeaponId
+        {
+            get
+            {
+                if (_definition != null && !string.IsNullOrEmpty(_definition.WeaponId) && _definition.WeaponId != WeaponWorkshopIds.Rifle)
+                {
+                    return _definition.WeaponId;
+                }
+
+                if (!string.IsNullOrEmpty(name))
+                {
+                    if (name.IndexOf("pistol", StringComparison.OrdinalIgnoreCase) >= 0) return WeaponWorkshopIds.Pistol;
+                    if (name.IndexOf("smg", StringComparison.OrdinalIgnoreCase) >= 0) return WeaponWorkshopIds.SMG;
+                    if (name.IndexOf("shotgun", StringComparison.OrdinalIgnoreCase) >= 0) return WeaponWorkshopIds.Shotgun;
+                    if (name.IndexOf("launcher", StringComparison.OrdinalIgnoreCase) >= 0) return WeaponWorkshopIds.Launcher;
+                    if (name.IndexOf("rifle", StringComparison.OrdinalIgnoreCase) >= 0) return WeaponWorkshopIds.Rifle;
+                }
+
+                return _definition != null ? _definition.WeaponId : WeaponWorkshopIds.Rifle;
+            }
+        }
         public WeaponBuild CurrentBuild { get; private set; }
         public ResolvedWeaponStats CurrentStats { get; private set; }
         public WeaponRuntime Runtime
@@ -82,6 +102,10 @@ namespace Game
 
         private void Awake()
         {
+            if (_spawnPoint == null)
+            {
+                _spawnPoint = transform;
+            }
             _damageSourceRoot = transform.root;
             _damageAffiliation = DamageAffiliation.Find(this);
             _sourceTeam = _damageAffiliation != null && _damageAffiliation.Team != CombatTeam.Neutral
@@ -443,6 +467,16 @@ namespace Game
                     Projectile prefab = _definition != null && _definition.ProjectilePrefab != null
                         ? _definition.ProjectilePrefab
                         : _prefab;
+#if UNITY_EDITOR
+                    if (prefab == null)
+                    {
+                        prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<Projectile>("Assets/_Project/Projectile.prefab");
+                    }
+#endif
+                    if (_prefab == null && prefab != null)
+                    {
+                        _prefab = prefab;
+                    }
                     int defaultPool = _definition != null ? _definition.DefaultPoolSize : _defaultPoolSize;
                     int maxPool = _definition != null ? _definition.MaxPoolSize : _maxPoolSize;
 
@@ -535,6 +569,16 @@ namespace Game
                 Projectile prefab = _definition != null && _definition.ProjectilePrefab != null
                     ? _definition.ProjectilePrefab
                     : _prefab;
+#if UNITY_EDITOR
+                if (prefab == null)
+                {
+                    prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<Projectile>("Assets/_Project/Projectile.prefab");
+                }
+#endif
+                if (_prefab == null && prefab != null)
+                {
+                    _prefab = prefab;
+                }
 
                 int defaultPool = _definition != null ? _definition.DefaultPoolSize : _defaultPoolSize;
                 int maxPool = _definition != null ? _definition.MaxPoolSize : _maxPoolSize;
@@ -593,6 +637,14 @@ namespace Game
             if (_equippedVisualRoot != null)
             {
                 _equippedVisualRoot.SetActive(equipped);
+            }
+            else
+            {
+                var renderers = GetComponentsInChildren<Renderer>(true);
+                for (int i = 0; i < renderers.Length; i++)
+                {
+                    renderers[i].enabled = equipped;
+                }
             }
         }
 

@@ -22,34 +22,53 @@ namespace Game
         private IEnemyEvents _enemy;
         private UnityEngine.Pool.ObjectPool<DebrisChunk> _pool;
 
+        public void EnsureInitialized()
+        {
+            if (_enemyRef == null)
+            {
+                _enemyRef = GetComponent<EnemyController>();
+            }
+            _enemy = _enemyRef;
+            if (_renderer == null)
+            {
+                _renderer = GetComponentInChildren<MeshRenderer>();
+            }
+            if (_pool == null)
+            {
+                _pool = new UnityEngine.Pool.ObjectPool<DebrisChunk>(CreateChunk, OnGetChunk, OnReleaseChunk, OnDestroyChunk, true, _chunkCount, _chunkCount * 4);
+            }
+            if (_enemy != null)
+            {
+                _enemy.Died -= HandleDied;
+                _enemy.Died += HandleDied;
+            }
+        }
+
         private void Awake()
         {
-            _enemy = _enemyRef;
-            _pool = new UnityEngine.Pool.ObjectPool<DebrisChunk>(CreateChunk, OnGetChunk, OnReleaseChunk, OnDestroyChunk, true, _chunkCount, _chunkCount * 4);
+            EnsureInitialized();
         }
 
         private void OnEnable()
         {
-            if (_enemy == null)
-            {
-                return;
-            }
-
-            _enemy.Died += HandleDied;
+            EnsureInitialized();
         }
 
         private void OnDisable()
         {
-            if (_enemy == null)
+            if (_enemy != null)
             {
-                return;
+                _enemy.Died -= HandleDied;
             }
-
-            _enemy.Died -= HandleDied;
         }
 
         private void HandleDied()
         {
+            EnsureInitialized();
+            if (_chunkMesh == null)
+            {
+                _chunkMesh = Combat.CombatDebrisPool.GetOrCreateDefaultChunkMesh();
+            }
             if (_chunkMesh == null)
             {
                 return;

@@ -1,4 +1,5 @@
 using System;
+using Application.Economy;
 using Application.Weapons;
 
 namespace Application.Workshop
@@ -8,6 +9,7 @@ namespace Application.Workshop
         private readonly IWeaponCatalog _catalog;
         private readonly IWeaponBuildResolver _resolver;
         private readonly IWeaponBuildStore _store;
+        private readonly IEconomyPolicy _economyPolicy;
 
         public string WeaponId { get; private set; }
         public WeaponBuild CommittedBuild { get; private set; }
@@ -19,6 +21,7 @@ namespace Application.Workshop
         public bool LastSaveFailed { get; private set; }
         public string LastSaveError { get; private set; }
         public IWeaponBuildTarget Target { get; private set; }
+        public IEconomyPolicy EconomyPolicy => _economyPolicy;
 
         public event Action<IWeaponWorkshopSession> SessionChanged;
 
@@ -28,11 +31,13 @@ namespace Application.Workshop
             IWeaponCatalog catalog,
             IWeaponBuildResolver resolver,
             IWeaponBuildStore store,
-            IWeaponBuildTarget target = null)
+            IWeaponBuildTarget target = null,
+            IEconomyPolicy economyPolicy = null)
         {
             _catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
             _resolver = resolver ?? throw new ArgumentNullException(nameof(resolver));
             _store = store ?? throw new ArgumentNullException(nameof(store));
+            _economyPolicy = economyPolicy ?? EconomyPolicyProvider.DefaultPolicy;
 
             if (string.IsNullOrWhiteSpace(weaponId) && initialBuild != null)
             {
@@ -82,6 +87,26 @@ namespace Application.Workshop
                     : "Draft build is invalid.";
                 var affected = DraftResolution?.AffectedSlotOrPartIds;
                 return ApplyResult.Failure("InvalidDraft", errorMsg, affected);
+            }
+
+            // Gating: check weapon platform ownership
+            if (_economyPolicy != null && !_economyPolicy.IsWeaponUnlocked(WeaponId))
+            {
+                return ApplyResult.Failure("WeaponLocked", $"Weapon platform '{WeaponId}' is locked.");
+            }
+
+            // Gating: check part ownership
+            if (_economyPolicy != null && DraftBuild?.Selections != null)
+            {
+                foreach (var kvp in DraftBuild.Selections)
+                {
+                    string slotId = kvp.Key;
+                    string partId = kvp.Value;
+                    if (!string.IsNullOrEmpty(partId) && !_economyPolicy.IsPartUnlocked(WeaponId, slotId, partId))
+                    {
+                        return ApplyResult.Failure("PartUnowned", $"Weapon part '{partId}' is not unlocked or owned.", partId);
+                    }
+                }
             }
 
             if (Target != null)

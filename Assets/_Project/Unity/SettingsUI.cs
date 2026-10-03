@@ -138,7 +138,8 @@ namespace Game
             if (IsOpen) return;
             IsOpen = true;
             _modalGameState = Game.Flow.SceneComponents.Find<GameStateController>(gameObject.scene);
-            _pausedForSettings = _modalGameState != null && _modalGameState.CanEnterState(GameState.Paused);
+            bool wasAlreadyPaused = _modalGameState != null && _modalGameState.CurrentState == GameState.Paused;
+            _pausedForSettings = !wasAlreadyPaused && _modalGameState != null && _modalGameState.CanEnterState(GameState.Paused);
             if (_pausedForSettings) _modalGameState.Pause();
             ClearGameplayInput();
             _currentSettings = SaveManager.LoadSettings();
@@ -146,6 +147,12 @@ namespace Game
 
             SetPanelActive(true);
             transform.SetAsLastSibling();
+
+            Canvas canvas = GetComponentInParent<Canvas>();
+            if (canvas != null && canvas.sortingOrder < 500)
+            {
+                canvas.sortingOrder = 500;
+            }
 
             if (_firstSelected != null && EventSystem.current != null)
             {

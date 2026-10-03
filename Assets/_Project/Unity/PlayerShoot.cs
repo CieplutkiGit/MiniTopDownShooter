@@ -12,6 +12,11 @@ namespace Game
         {
             get
             {
+                if (_loadout == null)
+                {
+                    _loadout = GetComponent<WeaponLoadout>();
+                }
+
                 if (_loadout != null && _loadout.ActiveGun != null)
                 {
                     return _loadout.ActiveGun;

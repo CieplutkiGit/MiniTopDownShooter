@@ -160,6 +160,7 @@ namespace Game.Flow.Editor
             SetRect(rt, new Vector2(0.5f, 1f), pos, new Vector2(200f, 60f));
             TextMeshProUGUI tmp = btn.GetComponentInChildren<TextMeshProUGUI>(true) ?? GetOrCreateTMP(rt, "Text", font);
             tmp.text = caption; tmp.fontSize = 20f; tmp.alignment = TextAlignmentOptions.Center; tmp.raycastTarget = false;
+            tmp.enableAutoSizing = true; tmp.fontSizeMin = 13f; tmp.fontSizeMax = 20f;
             if (font != null) tmp.font = font;
             tmp.rectTransform.anchorMin = Vector2.zero; tmp.rectTransform.anchorMax = Vector2.one;
             tmp.rectTransform.sizeDelta = tmp.rectTransform.anchoredPosition = Vector2.zero;

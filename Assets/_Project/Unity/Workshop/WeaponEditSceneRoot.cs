@@ -71,9 +71,16 @@ namespace Game.Workshop
             // Determine active weapon to edit
             _activeWeaponId = _app?.PlayerSession?.EquippedWeaponId;
             if (string.IsNullOrEmpty(_activeWeaponId))
-                _activeWeaponId = "Rifle";
+                _activeWeaponId = WeaponWorkshopIds.Pistol;
 
             OpenSession(_activeWeaponId);
+
+            if (_rotateController != null)
+            {
+                if (_previewView != null) _rotateController.PreviewView = _previewView;
+                if (_editUI != null && _editUI.PreviewViewport != null) _rotateController.PreviewViewport = _editUI.PreviewViewport;
+                _rotateController.FrameModelBounds(false);
+            }
 
             if (_editUI != null)
             {

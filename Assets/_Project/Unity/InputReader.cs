@@ -25,6 +25,7 @@ namespace Game
         private bool _interactPressedQueued;
         private bool _previousLookShootHeld;
         private bool _requireFireNeutralBeforeRearm;
+        private bool _mousePressOriginatedOnUI;
 
         public InputReader(
             Camera aimCamera,
@@ -132,11 +133,41 @@ namespace Game
             _requireFireNeutralBeforeRearm = false;
         }
 
+        public bool IsFireButtonHeld()
+        {
+            // Gamepad right trigger is immune to pointer UI hover
+            if (Gamepad.current != null && Gamepad.current.rightTrigger.isPressed)
+            {
+                return true;
+            }
+
+            // Mouse left button: held only if press did NOT originate on UI
+            if (Mouse.current != null)
+            {
+                if (Mouse.current.leftButton.wasPressedThisFrame)
+                {
+                    _mousePressOriginatedOnUI = IsPointerOverUI(Mouse.current.position.ReadValue());
+                }
+
+                if (Mouse.current.leftButton.isPressed)
+                {
+                    if (!_mousePressOriginatedOnUI)
+                        return true;
+                }
+                else
+                {
+                    _mousePressOriginatedOnUI = false;
+                }
+            }
+
+            return false;
+        }
+
         public bool IsShootHeld(float lookThreshold)
         {
             Vector2 look = _input.Player.Look.ReadValue<Vector2>();
             bool lookHeld = look.magnitude > lookThreshold;
-            bool buttonHeld = _fireAction.IsPressed();
+            bool buttonHeld = IsFireButtonHeld();
             bool mobileHeld = _mobileInput != null && _mobileInput.FireHeld;
 
             if (_requireFireNeutralBeforeRearm)
@@ -161,13 +192,21 @@ namespace Game
             out bool isHeld,
             out bool wasPressed)
         {
-            bool lookHeld =
-                _input.Player.Look.ReadValue<Vector2>().magnitude > lookThreshold;
+            Vector2 look =
+                _input.Player.Look.ReadValue<Vector2>().magnitude > lookThreshold
+                    ? _input.Player.Look.ReadValue<Vector2>()
+                    : Vector2.zero;
+            bool lookHeld = look.magnitude > lookThreshold;
 
-            bool buttonHeld = _fireAction.IsPressed();
+            bool buttonHeld = IsFireButtonHeld();
             bool mobileHeld = _mobileInput != null && _mobileInput.FireHeld;
             bool mobilePressed =
                 _mobileInput != null && _mobileInput.ConsumeFirePressed();
+
+            if (_mousePressOriginatedOnUI)
+            {
+                _firePressedQueued = false;
+            }
 
             if (_requireFireNeutralBeforeRearm)
             {
@@ -374,7 +413,23 @@ namespace Game
 
         private void HandleFirePerformed(InputAction.CallbackContext context)
         {
-            _firePressedQueued = true;
+            if (context.control.device is Gamepad)
+            {
+                _firePressedQueued = true;
+                return;
+            }
+
+            Vector2 pointerPos = Mouse.current != null ? Mouse.current.position.ReadValue() : Vector2.zero;
+            if (IsPointerOverUI(pointerPos))
+            {
+                _mousePressOriginatedOnUI = true;
+                _firePressedQueued = false;
+            }
+            else
+            {
+                _mousePressOriginatedOnUI = false;
+                _firePressedQueued = true;
+            }
         }
 
         private void HandleReloadPerformed(InputAction.CallbackContext context)
@@ -472,20 +527,15 @@ namespace Game
             lookDirection = Vector2.zero;
 
             Mouse mouse = Mouse.current;
-
-            if (mouse == null ||
-                _aimCamera == null ||
-                _playerTransform == null)
+            if (mouse == null || _aimCamera == null || _playerTransform == null)
             {
                 return false;
             }
 
-            Ray ray =
-                _aimCamera.ScreenPointToRay(
-                    mouse.position.ReadValue());
+            Vector2 mousePos = mouse.position.ReadValue();
 
-            Plane groundPlane =
-                new Plane(Vector3.up, _playerTransform.position);
+            Ray ray = _aimCamera.ScreenPointToRay(mousePos);
+            Plane groundPlane = new Plane(Vector3.up, _playerTransform.position);
 
             if (!groundPlane.Raycast(ray, out float distance))
             {
@@ -504,6 +554,98 @@ namespace Game
             delta.Normalize();
             lookDirection = new Vector2(delta.x, delta.z);
             return true;
+        }
+
+        private static readonly System.Collections.Generic.List<UnityEngine.EventSystems.RaycastResult> s_RaycastResults =
+            new System.Collections.Generic.List<UnityEngine.EventSystems.RaycastResult>();
+
+        public static bool IsPointerOverUI(Vector2 screenPosition)
+        {
+            try
+            {
+                if (UnityEngine.EventSystems.EventSystem.current != null)
+                {
+                    var eventData = new UnityEngine.EventSystems.PointerEventData(UnityEngine.EventSystems.EventSystem.current)
+                    {
+                        position = screenPosition
+                    };
+
+                    s_RaycastResults.Clear();
+                    UnityEngine.EventSystems.EventSystem.current.RaycastAll(eventData, s_RaycastResults);
+                    bool overUI = false;
+                    for (int i = 0; i < s_RaycastResults.Count; i++)
+                    {
+                        var go = s_RaycastResults[i].gameObject;
+                        if (go != null)
+                        {
+                            var graphic = go.GetComponent<UnityEngine.UI.Graphic>();
+                            if (graphic != null && graphic.raycastTarget)
+                            {
+                                // Skip root container GameObjects
+                                if (string.Equals(go.name, "HUD", StringComparison.OrdinalIgnoreCase) ||
+                                    string.Equals(go.name, "Canvas", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    continue;
+                                }
+
+                                var selectable = go.GetComponentInParent<UnityEngine.UI.Selectable>();
+                                bool isSelectable = selectable != null && selectable.isActiveAndEnabled && selectable.interactable;
+                                bool hasClickHandler = go.GetComponentInParent<UnityEngine.EventSystems.IPointerClickHandler>() != null;
+                                bool hasDragHandler = go.GetComponentInParent<UnityEngine.EventSystems.IDragHandler>() != null;
+                                bool hasScroll = go.GetComponentInParent<UnityEngine.UI.ScrollRect>() != null;
+
+                                if (isSelectable || hasClickHandler || hasDragHandler || hasScroll)
+                                {
+                                    overUI = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    s_RaycastResults.Clear();
+                    if (overUI) return true;
+                }
+
+                // Fallback for EditMode tests or environments where EventSystem GraphicRaycaster
+                // projection misses due to headless / simulated camera viewports:
+                var selectables = UnityEngine.UI.Selectable.allSelectablesArray;
+                for (int i = 0; i < selectables.Length; i++)
+                {
+                    var sel = selectables[i];
+                    if (sel == null || !sel.isActiveAndEnabled || !sel.interactable) continue;
+                    var rt = sel.transform as RectTransform;
+                    if (rt == null) continue;
+                    var canvas = sel.GetComponentInParent<Canvas>();
+                    if (canvas == null || !canvas.enabled || !canvas.gameObject.activeInHierarchy) continue;
+                    Camera cam = (canvas.renderMode != RenderMode.ScreenSpaceOverlay) ? canvas.worldCamera : null;
+                    if (RectTransformUtility.RectangleContainsScreenPoint(rt, screenPosition, cam))
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public static bool IsPointerOverUI()
+        {
+            if (UnityEngine.InputSystem.Mouse.current != null)
+            {
+                return IsPointerOverUI(UnityEngine.InputSystem.Mouse.current.position.ReadValue());
+            }
+
+            if (UnityEngine.EventSystems.EventSystem.current != null)
+            {
+                return UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject();
+            }
+
+            return false;
         }
     }
 }

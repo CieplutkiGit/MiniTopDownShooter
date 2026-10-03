@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Application.Economy;
 using Application.Flow;
 using Application.Weapons;
 using UnityEngine;
@@ -16,6 +17,10 @@ namespace Game
 
         public event Action<Gun, int> WeaponEquipped;
         public event Action<Gun, int> WeaponAdded;
+
+        public static IEconomyPolicy ActivePolicy { get; set; }
+        public IEconomyPolicy EconomyPolicy { get; set; }
+        private IEconomyPolicy EffectivePolicy => EconomyPolicy ?? ActivePolicy;
 
         public Gun ActiveGun =>
             _activeIndex >= 0 && _activeIndex < _weapons.Count
@@ -59,7 +64,12 @@ namespace Game
                 if (_deploymentSnapshot != null)
                     EquipDeploymentWeapon();
                 else
-                    EquipSlot(Mathf.Clamp(_startingSlot, 0, _weapons.Count - 1));
+                    EquipDefaultSlot();
+            }
+
+            if (ActiveGun == null)
+            {
+                EnsureStarterWeapon();
             }
         }
 
@@ -106,8 +116,38 @@ namespace Game
                 if (_deploymentSnapshot != null)
                     EquipDeploymentWeapon();
                 else
-                    EquipSlot(Mathf.Clamp(_startingSlot, 0, _weapons.Count - 1));
+                    EquipDefaultSlot();
             }
+        }
+
+        public void EquipDefaultSlot()
+        {
+            if (_weapons.Count == 0) return;
+            int preferred = Mathf.Clamp(_startingSlot, 0, _weapons.Count - 1);
+            if (EquipSlot(preferred)) return;
+
+            // If preferred slot weapon is locked, fall back to first equippable unlocked weapon
+            for (int i = 0; i < _weapons.Count; i++)
+            {
+                if (EquipSlot(i)) return;
+            }
+        }
+
+        public void EnsureStarterWeapon()
+        {
+            if (ActiveGun != null) return;
+            EquipDefaultSlot();
+            if (ActiveGun != null) return;
+
+#if UNITY_EDITOR
+            var pistolPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<Gun>("Assets/_Project/Weapons/Gun_Pistol.prefab");
+            if (pistolPrefab != null)
+            {
+                Transform mount = _weaponMount != null ? _weaponMount : transform;
+                Gun instance = Instantiate(pistolPrefab, mount, false);
+                AddWeapon(instance, true);
+            }
+#endif
         }
 
         public bool EquipSlot(int index)
@@ -117,11 +157,19 @@ namespace Game
                 return false;
             }
 
+            // Gating: check whether weapon is unlocked
+            Gun gunToEquip = _weapons[index];
+            var policy = EffectivePolicy;
+            if (policy != null && !policy.IsWeaponUnlocked(gunToEquip.WeaponId))
+            {
+                return false;
+            }
+
             if (_activeIndex >= 0 && _activeIndex < _weapons.Count)
             {
                 Gun previous = _weapons[_activeIndex];
 
-                if (previous != null && previous != _weapons[index])
+                if (previous != null && previous != gunToEquip)
                 {
                     previous.SetEquipped(false);
                 }
@@ -158,7 +206,7 @@ namespace Game
             gun.SetEquipped(false);
             WeaponAdded?.Invoke(gun, index);
 
-            if (equipImmediately || _activeIndex < 0)
+            if (equipImmediately || _activeIndex < 0 || ActiveGun == null)
             {
                 EquipSlot(index);
             }
@@ -183,6 +231,7 @@ namespace Game
         {
             if (snapshot == null || catalog == null) return false;
 
+            var policy = EffectivePolicy;
             var availableById = new Dictionary<string, Gun>(StringComparer.Ordinal);
             for (int i = 0; i < _weapons.Count; i++)
             {
@@ -196,10 +245,23 @@ namespace Game
             foreach (string weaponId in snapshot.OrderedWeaponIds)
             {
                 if (string.IsNullOrWhiteSpace(weaponId) || !deployedIds.Add(weaponId) ||
+                    (policy != null && !policy.IsWeaponUnlocked(weaponId)) ||
                     !availableById.TryGetValue(weaponId, out Gun gun) ||
                     !snapshot.CommittedBuilds.TryGetValue(weaponId, out WeaponBuild build) ||
                     build == null || build.WeaponId != weaponId)
                     return false;
+
+                if (policy != null && build.Selections != null)
+                {
+                    foreach (var kvp in build.Selections)
+                    {
+                        if (!string.IsNullOrEmpty(kvp.Value) && !policy.IsPartUnlocked(weaponId, kvp.Key, kvp.Value))
+                        {
+                            return false;
+                        }
+                    }
+                }
+
                 ordered.Add(gun);
             }
 
@@ -261,13 +323,18 @@ namespace Game
                     return;
                 }
             }
-            if (_weapons.Count > 0) EquipSlot(0);
+            if (_weapons.Count > 0) EquipDefaultSlot();
         }
 
         private void ApplySavedBuildToGun(Gun gun)
         {
             if (gun != null && gun.Definition != null)
             {
+                var policy = EffectivePolicy;
+                if (policy != null && !policy.IsWeaponUnlocked(gun.WeaponId))
+                {
+                    return;
+                }
                 Game.Workshop.WeaponBuildApplier.ApplySavedBuild(gun);
             }
         }
@@ -298,6 +365,7 @@ namespace Game
             }
 
             int start = _activeIndex >= 0 ? _activeIndex : 0;
+            var policy = EffectivePolicy;
 
             for (int step = 1; step <= _weapons.Count; step++)
             {
@@ -310,6 +378,10 @@ namespace Game
 
                 if (_weapons[index] != null)
                 {
+                    if (policy != null && !policy.IsWeaponUnlocked(_weapons[index].WeaponId))
+                    {
+                        continue;
+                    }
                     return EquipSlot(index);
                 }
             }

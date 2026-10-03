@@ -44,6 +44,7 @@ namespace Game
 
         [Header("Weapon Workshop")]
         [SerializeField] private WeaponCatalog _weaponCatalog;
+        [SerializeField] private Gun[] _weaponPrefabs;
         [SerializeField] private WeaponVisualProfile[] _weaponVisualProfiles;
         [SerializeField] private Game.Workshop.WorkshopUIController _workshopUIController;
         [SerializeField] private Game.Workshop.WorkshopBenchTrigger _workshopBenchTrigger;
@@ -77,12 +78,43 @@ namespace Game
         {
             ResolveMissingReferences();
             WireDependencies();
+            EnsureOwnedWeapons();
         }
 
         public void BindAppContext(PlayerSession playerSession, SessionWeaponBuildStore buildStore)
         {
             PlayerSession = playerSession;
             BuildStore = buildStore;
+        }
+
+        public void EnsureOwnedWeapons()
+        {
+            WeaponLoadout loadout = _player != null ? _player.GetComponent<WeaponLoadout>() : null;
+            if (loadout == null || _weaponPrefabs == null) return;
+            var policy = loadout.EconomyPolicy ?? WeaponLoadout.ActivePolicy
+                ?? global::Application.Economy.EconomyPolicyProvider.DefaultPolicy;
+            foreach (Gun prefab in _weaponPrefabs)
+            {
+                if (prefab == null || (policy != null && !policy.IsWeaponUnlocked(prefab.WeaponId))) continue;
+                bool exists = false;
+                Gun alignment = null;
+                foreach (Gun gun in loadout.Weapons)
+                {
+                    if (gun == null) continue;
+                    if (alignment == null) alignment = gun;
+                    if (gun.WeaponId == prefab.WeaponId) { exists = true; break; }
+                }
+                if (exists) continue;
+                Gun instance = Instantiate(prefab, loadout.WeaponMount, false);
+                instance.transform.localPosition = alignment != null ? alignment.transform.localPosition : Vector3.zero;
+                instance.transform.localRotation = alignment != null ? alignment.transform.localRotation : Quaternion.identity;
+                loadout.AddWeapon(instance, false);
+            }
+
+            if (loadout.ActiveGun == null || (policy != null && !policy.IsWeaponUnlocked(loadout.ActiveGun.WeaponId)))
+            {
+                loadout.EquipDefaultSlot();
+            }
         }
 
         private void ResolveMissingReferences()
@@ -221,6 +253,20 @@ namespace Game
             if (_workshopFiringRangeTrigger == null)
             {
                 _workshopFiringRangeTrigger = SceneComponents.Find<Game.Workshop.WorkshopFiringRangeTrigger>(gameObject.scene);
+            }
+
+            if (_weaponPrefabs == null || _weaponPrefabs.Length == 0)
+            {
+#if UNITY_EDITOR
+                _weaponPrefabs = new Gun[]
+                {
+                    UnityEditor.AssetDatabase.LoadAssetAtPath<Gun>("Assets/_Project/Weapons/Gun_Rifle.prefab"),
+                    UnityEditor.AssetDatabase.LoadAssetAtPath<Gun>("Assets/_Project/Weapons/Gun_Pistol.prefab"),
+                    UnityEditor.AssetDatabase.LoadAssetAtPath<Gun>("Assets/_Project/Weapons/Gun_Shotgun.prefab"),
+                    UnityEditor.AssetDatabase.LoadAssetAtPath<Gun>("Assets/_Project/Weapons/Gun_SMG.prefab"),
+                    UnityEditor.AssetDatabase.LoadAssetAtPath<Gun>("Assets/_Project/Weapons/Gun_Launcher.prefab")
+                };
+#endif
             }
         }
 

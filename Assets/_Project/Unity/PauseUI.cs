@@ -18,6 +18,8 @@ namespace Game
         private IGameStateController _gameState;
         private bool _isSubscribed;
 
+        public bool IsVisible => _panel != null && _panel.activeInHierarchy;
+
         public void Initialize(GameStateController gameState, SettingsUI settings = null)
         {
             UnsubscribeEvents();

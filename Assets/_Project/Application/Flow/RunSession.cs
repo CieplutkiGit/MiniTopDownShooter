@@ -16,6 +16,17 @@ namespace Application.Flow
         public int Score { get; private set; }
         public int Kills { get; private set; }
         public int WavesCleared { get; private set; }
+        public int ScrapCollected { get; private set; }
+        public int AlloyCollected { get; private set; }
+        public int CoreCollected { get; private set; }
+
+        public void SetSalvage(int scrap, int alloy, int core)
+        {
+            if (IsCompleted) return;
+            ScrapCollected = Math.Max(0, scrap);
+            AlloyCollected = Math.Max(0, alloy);
+            CoreCollected = Math.Max(0, core);
+        }
 
         public RunSession(string runId, string missionId, DeploymentLoadoutSnapshot deploymentLoadout = null)
         {
@@ -97,7 +108,10 @@ namespace Application.Flow
                 ElapsedActiveTime,
                 Score,
                 Kills,
-                WavesCleared);
+                WavesCleared,
+                scrapCollected: ScrapCollected,
+                alloyCollected: AlloyCollected,
+                coreCollected: CoreCollected);
 
             return true;
         }

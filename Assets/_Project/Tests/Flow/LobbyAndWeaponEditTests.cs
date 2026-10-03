@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Reflection;
 using Application;
 using Application.Flow;
 using Game;
@@ -75,7 +76,7 @@ namespace MiniTopDownShooter.Tests.Flow
 
             controller.ResetView();
 
-            Assert.AreEqual(40f, cam.fieldOfView, 0.1f);
+            Assert.AreEqual(38f, cam.fieldOfView, 0.1f, "ResetView must restore the current weapon-inspection default FOV.");
             Assert.AreEqual(10f, rig.transform.rotation.eulerAngles.x, 1f);
 
             UnityEngine.Object.DestroyImmediate(rig);
@@ -87,6 +88,8 @@ namespace MiniTopDownShooter.Tests.Flow
         {
             var go = new GameObject("Hero_Test", typeof(PlayerMovement), typeof(PlayerShoot), typeof(PlayerRotation));
             var showcase = go.AddComponent<LobbyHeroShowcase>();
+            InvokeLifecycle(showcase, "Awake");
+            InvokeLifecycle(showcase, "OnEnable");
 
             Assert.DoesNotThrow(() =>
             {
@@ -96,6 +99,13 @@ namespace MiniTopDownShooter.Tests.Flow
             });
 
             UnityEngine.Object.DestroyImmediate(go);
+        }
+
+        private static void InvokeLifecycle(MonoBehaviour component, string methodName)
+        {
+            MethodInfo method = component.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.IsNotNull(method, $"Expected Unity lifecycle method {component.GetType().Name}.{methodName} to exist.");
+            method.Invoke(component, null);
         }
 
         [Test]
@@ -149,6 +159,7 @@ namespace MiniTopDownShooter.Tests.Flow
             rb.constraints = RigidbodyConstraints.None;
 
             var showcase = go.AddComponent<LobbyHeroShowcase>();
+            showcase.FreezeLobbyHero();
 
             Assert.IsTrue(rb.isKinematic, "Hero Rigidbody must be kinematic in lobby.");
             Assert.IsFalse(rb.useGravity, "Hero Rigidbody must have gravity disabled in lobby.");
@@ -241,6 +252,60 @@ namespace MiniTopDownShooter.Tests.Flow
 
             var mainMenu = GameObject.Find("MainMenu");
             Assert.IsTrue(mainMenu == null || !mainMenu.activeSelf, "MainMenu panel in ArenaShowcase must be inactive so it does not block combat gameplay.");
+        }
+
+        [Test]
+        public void StarterWeapon_Pistol_IsEquippedOnStart_WhenOtherWeaponsLocked()
+        {
+            var playerGo = new GameObject("PlayerTest");
+            var player = playerGo.AddComponent<PlayerController>();
+            var loadout = playerGo.AddComponent<WeaponLoadout>();
+
+            var originalProfile = SaveManager.LoadProfile();
+            try
+            {
+                // Setup profile where only Pistol is unlocked
+                var profile = new UserProfileData();
+                profile.ValidateAndMigrate();
+                SaveManager.SaveProfile(profile);
+                var service = new Game.Economy.UnityEconomyService();
+                loadout.EconomyPolicy = service;
+
+                // Load gun prefabs
+                var pistolPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Weapons/Gun_Pistol.prefab");
+                var riflePrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Weapons/Gun_Rifle.prefab");
+                Assert.IsNotNull(pistolPrefab, "Gun_Pistol prefab must exist");
+                Assert.IsNotNull(riflePrefab, "Gun_Rifle prefab must exist");
+
+                Assert.AreEqual(Application.Weapons.WeaponWorkshopIds.Pistol, pistolPrefab.GetComponent<Gun>().WeaponId);
+                Assert.AreEqual(Application.Weapons.WeaponWorkshopIds.Rifle, riflePrefab.GetComponent<Gun>().WeaponId);
+
+                // Simulate pre-existing locked rifle in loadout (as in BaseHub / ArenaShowcase)
+                var rifleInstance = UnityEngine.Object.Instantiate(riflePrefab, playerGo.transform).GetComponent<Gun>();
+                loadout.AddWeapon(rifleInstance, false);
+
+                var compGo = new GameObject("CompRoot");
+                var compRoot = compGo.AddComponent<GameCompositionRoot>();
+                var soComp = new SerializedObject(compRoot);
+                soComp.FindProperty("_player").objectReferenceValue = player;
+                var prefabsProp = soComp.FindProperty("_weaponPrefabs");
+                prefabsProp.arraySize = 2;
+                prefabsProp.GetArrayElementAtIndex(0).objectReferenceValue = pistolPrefab.GetComponent<Gun>();
+                prefabsProp.GetArrayElementAtIndex(1).objectReferenceValue = riflePrefab.GetComponent<Gun>();
+                soComp.ApplyModifiedPropertiesWithoutUndo();
+
+                compRoot.EnsureOwnedWeapons();
+
+                Assert.IsNotNull(loadout.ActiveGun, "ActiveGun must not be null on start");
+                Assert.AreEqual(Application.Weapons.WeaponWorkshopIds.Pistol, loadout.ActiveGun.WeaponId, "Starter weapon must be Pistol");
+
+                UnityEngine.Object.DestroyImmediate(compGo);
+                UnityEngine.Object.DestroyImmediate(playerGo);
+            }
+            finally
+            {
+                SaveManager.SaveProfile(originalProfile);
+            }
         }
     }
 }

@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using Application.Economy;
 using Application.Weapons;
 using Application.Workshop;
+using Game.Economy;
+using Game.UI;
 using Game.Workshop.Presentation;
 using TMPro;
 using UnityEngine;
@@ -14,11 +16,13 @@ namespace Game.Workshop.UI
     /// <summary>
     /// Clean, mobile-first UI controller for the dedicated WeaponEdit scene.
     /// Features:
-    /// - Header with Back to Lobby, Weapon Title, and Explode/Inspect toggles
-    /// - Horizontal slot selector tabs (Receiver, Barrel, Magazine, Stock, etc.)
-    /// - Part cards with active selection badges
-    /// - Live stat diff indicators (Damage, Fire Rate, Reload, Range, Mag Size)
+    /// - Header with Back to Lobby, Weapon Title, Explode/Inspect toggles, and Reset view
+    /// - Horizontally scrollable slot selector tabs (Receiver, Barrel, Magazine, Stock, etc.)
+    /// - Horizontally scrollable part cards with active selection badges
+    /// - Live stat diff indicators (Damage, Fire Rate, Reload, Range, Accuracy)
     /// - Apply & Discard action buttons with validation feedback
+    /// - Dedicated preview viewport with deterministic pointer routing
+    /// - Reserved space for compact wallet and locked-weapon purchase controls
     /// </summary>
     public class WeaponEditUI : MonoBehaviour
     {
@@ -31,9 +35,11 @@ namespace Game.Workshop.UI
 
         [Header("Slot Selector")]
         [SerializeField] private RectTransform _slotsContainer;
+        [SerializeField] private ScrollRect _slotsScrollRect;
 
         [Header("Part Selector")]
         [SerializeField] private RectTransform _partsContainer;
+        [SerializeField] private ScrollRect _partsScrollRect;
         [SerializeField] private TMP_Text _currentSlotLabel;
 
         [Header("Stats Panel")]
@@ -43,9 +49,17 @@ namespace Game.Workshop.UI
         [SerializeField] private Button _applyButton;
         [SerializeField] private Button _discardButton;
 
+        [Header("Preview Viewport")]
+        [SerializeField] private RectTransform _previewViewport;
+
         [Header("Error Display")]
         [SerializeField] private GameObject _errorRoot;
         [SerializeField] private TMP_Text _errorText;
+
+        [Header("Economy Placeholders (For Independent Worker)")]
+        [SerializeField] private GameObject _walletPanel;
+        [SerializeField] private TMP_Text _walletText;
+        [SerializeField] private GameObject _lockedPurchasePrompt;
 
         [Header("Pinch Rotate Controller Hook")]
         [SerializeField] private WeaponPinchRotateController _rotateController;
@@ -53,6 +67,10 @@ namespace Game.Workshop.UI
         private IWeaponWorkshopSession _session;
         private IWeaponPreviewView _previewView;
         private IWeaponCatalog _catalog;
+        private EconomyPanel _economyPanel;
+        private GameObject _economyOverlay;
+        private Button _economyToggle;
+        private UnityEconomyService _economyService;
 
         private string _selectedSlot;
         private bool _isExploded;
@@ -61,6 +79,12 @@ namespace Game.Workshop.UI
         private readonly List<WeaponPartSpec> _availableParts = new List<WeaponPartSpec>();
 
         public event Action OnBackClicked;
+
+        public RectTransform PreviewViewport
+        {
+            get => _previewViewport;
+            set => _previewViewport = value;
+        }
 
         private void Awake()
         {
@@ -72,6 +96,235 @@ namespace Game.Workshop.UI
 
             if (_rotateController == null)
                 _rotateController = FindFirstObjectByType<WeaponPinchRotateController>();
+
+            if (_rotateController != null && _previewViewport != null)
+            {
+                _rotateController.PreviewViewport = _previewViewport;
+            }
+
+            SetupEconomyPanel();
+
+            EnsureResponsiveLayout();
+        }
+
+        private void SetupEconomyPanel()
+        {
+            if (_walletPanel == null || _walletText == null) return;
+
+            var walletImage = _walletPanel.GetComponent<Image>();
+            if (walletImage == null) walletImage = _walletPanel.AddComponent<Image>();
+            walletImage.color = UITheme.ColorButtonNormal;
+            walletImage.raycastTarget = true;
+
+            _economyToggle = _walletPanel.GetComponent<Button>();
+            if (_economyToggle == null) _economyToggle = _walletPanel.AddComponent<Button>();
+            UITheme.ApplyButtonColors(_economyToggle, UITheme.ColorButtonNormal);
+            _economyToggle.onClick.AddListener(ToggleEconomyPanel);
+
+            var labelRect = _walletText.rectTransform;
+            labelRect.anchorMin = Vector2.zero;
+            labelRect.anchorMax = Vector2.one;
+            labelRect.offsetMin = new Vector2(4f, 1f);
+            labelRect.offsetMax = new Vector2(-4f, -1f);
+            _walletText.alignment = TextAlignmentOptions.Center;
+            _walletText.color = UITheme.ColorTextPrimary;
+            _walletText.fontSize = 12f;
+
+            CreateEconomyOverlay();
+            _economyService = UnityEconomyService.Instance;
+            _economyService.OnEconomyStateChanged += RefreshEconomyWallet;
+            RefreshEconomyWallet();
+        }
+
+        private void OnDestroy()
+        {
+            if (_economyService != null)
+                _economyService.OnEconomyStateChanged -= RefreshEconomyWallet;
+        }
+
+        private void CreateEconomyOverlay()
+        {
+            if (_economyOverlay != null) return;
+
+            _economyOverlay = new GameObject("EconomyOverlay", typeof(RectTransform), typeof(Image));
+            _economyOverlay.transform.SetParent(transform, false);
+            var overlayRect = _economyOverlay.GetComponent<RectTransform>();
+            overlayRect.anchorMin = Vector2.zero;
+            overlayRect.anchorMax = Vector2.one;
+            overlayRect.offsetMin = Vector2.zero;
+            overlayRect.offsetMax = Vector2.zero;
+            var overlayImage = _economyOverlay.GetComponent<Image>();
+            overlayImage.color = new Color(0f, 0f, 0f, 0.50f);
+            overlayImage.raycastTarget = true;
+
+            var panel = new GameObject("EconomyPanelFrame", typeof(RectTransform), typeof(Image));
+            panel.transform.SetParent(_economyOverlay.transform, false);
+            var panelRect = panel.GetComponent<RectTransform>();
+            panelRect.anchorMin = new Vector2(1f, 0f);
+            panelRect.anchorMax = new Vector2(1f, 1f);
+            panelRect.pivot = new Vector2(1f, 0.5f);
+            panelRect.offsetMin = new Vector2(-330f, 92f);
+            panelRect.offsetMax = new Vector2(-12f, -82f);
+            panel.GetComponent<Image>().color = UITheme.ColorPanelSurface;
+
+            var closeGo = new GameObject("CloseMarket", typeof(RectTransform), typeof(Image), typeof(Button));
+            closeGo.transform.SetParent(panel.transform, false);
+            var closeRect = closeGo.GetComponent<RectTransform>();
+            closeRect.anchorMin = new Vector2(1f, 1f);
+            closeRect.anchorMax = new Vector2(1f, 1f);
+            closeRect.pivot = new Vector2(1f, 1f);
+            closeRect.anchoredPosition = new Vector2(-10f, -10f);
+            closeRect.sizeDelta = new Vector2(70f, 32f);
+            closeGo.GetComponent<Image>().color = UITheme.ColorButtonNormal;
+            var closeButton = closeGo.GetComponent<Button>();
+            UITheme.ApplyButtonColors(closeButton, UITheme.ColorButtonNormal);
+            closeButton.onClick.AddListener(ToggleEconomyPanel);
+            var closeLabel = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+            closeLabel.transform.SetParent(closeGo.transform, false);
+            var closeLabelRect = closeLabel.GetComponent<RectTransform>();
+            closeLabelRect.anchorMin = Vector2.zero;
+            closeLabelRect.anchorMax = Vector2.one;
+            closeLabelRect.offsetMin = Vector2.zero;
+            closeLabelRect.offsetMax = Vector2.zero;
+            var closeText = closeLabel.GetComponent<TextMeshProUGUI>();
+            closeText.text = "CLOSE";
+            closeText.alignment = TextAlignmentOptions.Center;
+            closeText.fontSize = 12f;
+            closeText.color = UITheme.ColorTextPrimary;
+
+            var scrollGo = new GameObject("EconomyScroll", typeof(RectTransform), typeof(ScrollRect), typeof(Image), typeof(Mask));
+            scrollGo.transform.SetParent(panel.transform, false);
+            var scrollRt = scrollGo.GetComponent<RectTransform>();
+            scrollRt.anchorMin = Vector2.zero;
+            scrollRt.anchorMax = Vector2.one;
+            scrollRt.offsetMin = new Vector2(12f, 12f);
+            scrollRt.offsetMax = new Vector2(-12f, -54f);
+            scrollGo.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.01f);
+            scrollGo.GetComponent<Mask>().showMaskGraphic = false;
+
+            var contentGo = new GameObject("EconomyContent", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
+            contentGo.transform.SetParent(scrollGo.transform, false);
+            var contentRt = contentGo.GetComponent<RectTransform>();
+            contentRt.anchorMin = new Vector2(0f, 1f);
+            contentRt.anchorMax = new Vector2(1f, 1f);
+            contentRt.pivot = new Vector2(0.5f, 1f);
+            contentRt.anchoredPosition = Vector2.zero;
+            contentRt.sizeDelta = Vector2.zero;
+            var contentLayout = contentGo.GetComponent<VerticalLayoutGroup>();
+            contentLayout.spacing = 6f;
+            contentLayout.padding = new RectOffset(6, 6, 6, 6);
+            contentLayout.childControlWidth = true;
+            contentLayout.childControlHeight = true;
+            contentLayout.childForceExpandWidth = true;
+            contentLayout.childForceExpandHeight = false;
+            contentGo.GetComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            var scroll = scrollGo.GetComponent<ScrollRect>();
+            scroll.viewport = scrollRt;
+            scroll.content = contentRt;
+            scroll.horizontal = false;
+            scroll.vertical = true;
+            scroll.movementType = ScrollRect.MovementType.Clamped;
+            _economyService = UnityEconomyService.Instance;
+            _economyPanel = EconomyPanel.Create(contentGo.transform, _economyService, _catalog);
+            _economyOverlay.SetActive(false);
+        }
+
+        private void ToggleEconomyPanel()
+        {
+            if (_economyOverlay == null) return;
+            bool opening = !_economyOverlay.activeSelf;
+            _economyOverlay.SetActive(opening);
+            if (opening && _session != null)
+            {
+                _economyPanel?.SelectWeapon(_session.WeaponId);
+                RefreshEconomyPartContext();
+            }
+        }
+
+        private void RefreshEconomyWallet()
+        {
+            if (_walletText != null)
+                _walletText.text = $"MARKET  ·  {_economyService?.Coins ?? 0:N0} CR";
+        }
+
+        private void RefreshEconomyPartContext()
+        {
+            if (_economyPanel == null || _session == null || string.IsNullOrEmpty(_selectedSlot)) return;
+            string partId = null;
+            _session.DraftBuild?.Selections?.TryGetValue(_selectedSlot, out partId);
+            if (string.IsNullOrEmpty(partId) && _availableParts.Count > 0)
+                partId = _availableParts[0]?.PartId;
+            if (!string.IsNullOrEmpty(partId))
+                _economyPanel.SelectPart(_session.WeaponId, _selectedSlot, partId);
+        }
+
+        private void EnsureResponsiveLayout()
+        {
+            if (_slotsScrollRect != null)
+            {
+                var rt = _slotsScrollRect.GetComponent<RectTransform>();
+                if (rt != null)
+                {
+                    rt.anchorMin = new Vector2(0f, 1f);
+                    rt.anchorMax = new Vector2(1f, 1f);
+                    rt.offsetMin = new Vector2(10f, -116f);
+                    rt.offsetMax = new Vector2(-10f, -72f);
+                }
+            }
+
+            if (_previewViewport != null)
+            {
+                _previewViewport.anchorMin = new Vector2(0f, 0f);
+                _previewViewport.anchorMax = new Vector2(1f, 1f);
+                _previewViewport.offsetMin = new Vector2(0f, 215f);
+                _previewViewport.offsetMax = new Vector2(0f, -125f);
+            }
+
+            // Ensure non-overlapping layout for bottom card rows (PartsScrollView, Action buttons, SlotLabel)
+            var bottomPanel = transform.Find("BottomCustomizationPanel");
+            if (bottomPanel != null)
+            {
+                var partsRt = bottomPanel.Find("PartsScrollView") as RectTransform;
+                if (partsRt != null)
+                {
+                    partsRt.anchorMin = new Vector2(0f, 0f);
+                    partsRt.anchorMax = new Vector2(0.68f, 0f);
+                    partsRt.pivot = new Vector2(0.5f, 0.5f);
+                    partsRt.anchoredPosition = new Vector2(20f, 105f);
+                    partsRt.sizeDelta = new Vector2(-30f, 72f);
+                }
+
+                var discardBtn = bottomPanel.Find("DiscardButton") as RectTransform;
+                if (discardBtn != null)
+                {
+                    discardBtn.anchorMin = new Vector2(0f, 0f);
+                    discardBtn.anchorMax = new Vector2(0f, 0f);
+                    discardBtn.pivot = new Vector2(0f, 0f);
+                    discardBtn.anchoredPosition = new Vector2(20f, 14f);
+                    discardBtn.sizeDelta = new Vector2(115f, 42f);
+                }
+
+                var applyBtn = bottomPanel.Find("ApplyButton") as RectTransform;
+                if (applyBtn != null)
+                {
+                    applyBtn.anchorMin = new Vector2(0f, 0f);
+                    applyBtn.anchorMax = new Vector2(0f, 0f);
+                    applyBtn.pivot = new Vector2(0f, 0f);
+                    applyBtn.anchoredPosition = new Vector2(145f, 14f);
+                    applyBtn.sizeDelta = new Vector2(155f, 42f);
+                }
+
+                var slotLabel = bottomPanel.Find("SlotLabel") as RectTransform;
+                if (slotLabel != null)
+                {
+                    slotLabel.anchorMin = new Vector2(0f, 0f);
+                    slotLabel.anchorMax = new Vector2(0f, 0f);
+                    slotLabel.pivot = new Vector2(0f, 0.5f);
+                    slotLabel.anchoredPosition = new Vector2(25f, 185f);
+                    slotLabel.sizeDelta = new Vector2(200f, 26f);
+                }
+            }
         }
 
         public void Bind(IWeaponWorkshopSession session, IWeaponPreviewView previewView, IWeaponCatalog catalog)
@@ -81,6 +334,13 @@ namespace Game.Workshop.UI
             _session = session;
             _previewView = previewView;
             _catalog = catalog;
+            _economyPanel?.Bind(UnityEconomyService.Instance, catalog);
+
+            if (_rotateController != null)
+            {
+                if (_previewViewport != null) _rotateController.PreviewViewport = _previewViewport;
+                if (previewView is Presentation.WeaponPreviewView pView) _rotateController.PreviewView = pView;
+            }
 
             if (_session != null)
             {
@@ -98,12 +358,15 @@ namespace Game.Workshop.UI
             }
 
             RefreshSlots();
+            if (_session != null)
+                _economyPanel?.SelectWeapon(_session.WeaponId);
             if (_availableSlots.Count > 0)
             {
                 SelectSlot(_availableSlots[0]);
             }
 
             RefreshUI();
+            RefreshEconomyPartContext();
         }
 
         public void Unbind()
@@ -137,6 +400,7 @@ namespace Game.Workshop.UI
             RefreshSlotButtons();
             RefreshParts();
             RefreshUI();
+            RefreshEconomyPartContext();
         }
 
         public void SelectPart(string partId)
@@ -148,6 +412,7 @@ namespace Game.Workshop.UI
             _previewView?.ShowBuild(_session.DraftBuild);
             RefreshParts();
             RefreshUI();
+            RefreshEconomyPartContext();
         }
 
         public void ToggleExploded()
@@ -347,7 +612,7 @@ namespace Game.Workshop.UI
             bool isPositive = delta > 0f;
             bool isGood = isPositive == higherIsBetter;
             string sign = isPositive ? "+" : "";
-            string color = isGood ? "#2EC4B6" : "#E63946";
+            string color = isGood ? "#00F5D4" : "#E63946";
 
             return $"<color=#8B949E>{statName}:</color> <color=#FFFFFF>{current:0.#}{unit}</color> <color={color}>({sign}{delta:0.#}{unit})</color>";
         }
@@ -394,18 +659,19 @@ namespace Game.Workshop.UI
             btnObj.transform.SetParent(parent, false);
 
             var rect = btnObj.GetComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(120f, 44f);
+            rect.sizeDelta = new Vector2(115f, 40f);
 
             var img = btnObj.GetComponent<Image>();
-            img.color = isSelected ? new Color(0.0f, 0.76f, 0.74f, 1f) : new Color(0.13f, 0.16f, 0.20f, 0.9f);
+            img.color = isSelected ? UITheme.ColorAccentCyan : UITheme.ColorButtonNormal;
 
             var btn = btnObj.GetComponent<Button>();
+            UITheme.ApplyButtonColors(btn, isSelected ? UITheme.ColorAccentCyan : UITheme.ColorButtonNormal);
             if (onClick != null) btn.onClick.AddListener(onClick);
 
             var layout = btnObj.GetComponent<LayoutElement>();
-            layout.preferredWidth = 120f;
-            layout.preferredHeight = 44f;
-            layout.minHeight = 44f;
+            layout.preferredWidth = 115f;
+            layout.preferredHeight = 40f;
+            layout.minHeight = 38f;
 
             GameObject textObj = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI));
             textObj.transform.SetParent(btnObj.transform, false);
@@ -417,14 +683,9 @@ namespace Game.Workshop.UI
             textRect.offsetMax = new Vector2(-6f, -2f);
 
             var tmp = textObj.GetComponent<TextMeshProUGUI>();
-            if (TMP_Settings.defaultFontAsset != null) tmp.font = TMP_Settings.defaultFontAsset;
-            tmp.text = label.ToUpperInvariant();
-            tmp.fontSize = 14f;
-            tmp.fontStyle = FontStyles.Bold;
-            tmp.alignment = TextAlignmentOptions.Center;
-            tmp.color = isSelected ? Color.black : Color.white;
-            tmp.raycastTarget = false;
+            UITheme.ApplyTextStyle(tmp, 13f, FontStyles.Bold, TextAlignmentOptions.Center, isSelected ? UITheme.ColorTextDark : UITheme.ColorTextPrimary);
 
+            tmp.text = label.ToUpperInvariant();
             return btnObj;
         }
 
@@ -434,18 +695,19 @@ namespace Game.Workshop.UI
             cardObj.transform.SetParent(parent, false);
 
             var rect = cardObj.GetComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(150f, 70f);
+            rect.sizeDelta = new Vector2(140f, 64f);
 
             var img = cardObj.GetComponent<Image>();
-            img.color = isEquipped ? new Color(0.18f, 0.28f, 0.35f, 1f) : new Color(0.11f, 0.13f, 0.17f, 0.9f);
+            img.color = isEquipped ? UITheme.ColorCardSurfaceAlt : UITheme.ColorCardSurface;
 
             var btn = cardObj.GetComponent<Button>();
+            UITheme.ApplyButtonColors(btn, isEquipped ? UITheme.ColorCardSurfaceAlt : UITheme.ColorCardSurface);
             if (onClick != null) btn.onClick.AddListener(onClick);
 
             var layout = cardObj.GetComponent<LayoutElement>();
-            layout.preferredWidth = 150f;
-            layout.preferredHeight = 70f;
-            layout.minHeight = 60f;
+            layout.preferredWidth = 140f;
+            layout.preferredHeight = 64f;
+            layout.minHeight = 58f;
 
             GameObject textObj = new GameObject("Title", typeof(RectTransform), typeof(TextMeshProUGUI));
             textObj.transform.SetParent(cardObj.transform, false);
@@ -453,16 +715,14 @@ namespace Game.Workshop.UI
             var textRect = textObj.GetComponent<RectTransform>();
             textRect.anchorMin = Vector2.zero;
             textRect.anchorMax = Vector2.one;
-            textRect.offsetMin = new Vector2(8f, 6f);
-            textRect.offsetMax = new Vector2(-8f, -6f);
+            textRect.offsetMin = new Vector2(6f, 4f);
+            textRect.offsetMax = new Vector2(-6f, -4f);
 
             var tmp = textObj.GetComponent<TextMeshProUGUI>();
-            if (TMP_Settings.defaultFontAsset != null) tmp.font = TMP_Settings.defaultFontAsset;
-            string badge = isEquipped ? "\n<color=#00F5D4><size=11>[EQUIPPED]</size></color>" : "";
-            tmp.text = $"<size=13><b>{title}</b></size>{badge}";
-            tmp.alignment = TextAlignmentOptions.Center;
-            tmp.color = Color.white;
-            tmp.raycastTarget = false;
+            UITheme.ApplyTextStyle(tmp, 12f, FontStyles.Normal, TextAlignmentOptions.Center, UITheme.ColorTextPrimary);
+
+            string badge = isEquipped ? "\n<color=#00F5D4><size=10>[EQUIPPED]</size></color>" : "";
+            tmp.text = $"<b>{title}</b>{badge}";
 
             return cardObj;
         }

@@ -100,6 +100,13 @@ namespace Game.Workshop.Presentation
         public bool IsExploded => _isExploded;
         public float ExplosionProgress => _explosionProgress;
 
+        private WeaponPinchRotateController _ownerController;
+
+        public void SetOwnerController(WeaponPinchRotateController controller)
+        {
+            _ownerController = controller;
+        }
+
         private void Awake()
         {
             SanitizeCombatComponents();
@@ -124,8 +131,27 @@ namespace Game.Workshop.Presentation
                 _inspectionRigRoot.Rotate(Vector3.up, _turntableSpeed * dt, Space.World);
             }
 
-            // 3. User interaction raycast selection
-            HandleInputRaycast();
+            // 3. Fallback input inspection when no WeaponPinchRotateController is attached (e.g. legacy workshop)
+            if (_ownerController == null)
+            {
+                HandleFallbackInput();
+            }
+        }
+
+        private void HandleFallbackInput()
+        {
+            var mouse = Mouse.current;
+            if (mouse != null && mouse.leftButton.wasPressedThisFrame)
+            {
+                Vector2 pos = mouse.position.ReadValue();
+                if (_previewSurface != null)
+                {
+                    if (RectTransformUtility.RectangleContainsScreenPoint(_previewSurface, pos))
+                    {
+                        HandlePointerClick(pos);
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -326,28 +352,31 @@ namespace Game.Workshop.Presentation
             }
         }
 
-        private void HandleInputRaycast()
+        /// <summary>
+        /// Handles pointer click dispatched from the preview viewport controller.
+        /// Performs raycast into 3D weapon space to select clicked slot.
+        /// UI button presses or rotation drags never trigger this.
+        /// </summary>
+        public bool HandlePointerClick(Vector2 position)
         {
-            var pointer = Pointer.current;
-            if (pointer != null && pointer.press.wasPressedThisFrame)
+            Camera cam = _previewCamera != null ? _previewCamera : Camera.main;
+            if (cam == null) return false;
+
+            Ray ray;
+            if (_previewSurface != null)
             {
-                Camera cam = _previewCamera != null ? _previewCamera : Camera.main;
-                if (cam != null)
-                {
-                    Vector2 position = pointer.position.ReadValue();
-                    Ray ray;
-                    if (_previewSurface != null)
-                    {
-                        if (!_previewSurface.gameObject.activeInHierarchy ||
-                            !RectTransformUtility.RectangleContainsScreenPoint(_previewSurface, position)) return;
-                        RectTransformUtility.ScreenPointToLocalPointInRectangle(_previewSurface, position, null, out var local);
-                        var rect = _previewSurface.rect;
-                        ray = cam.ViewportPointToRay(new Vector3((local.x - rect.xMin) / rect.width, (local.y - rect.yMin) / rect.height, 0));
-                    }
-                    else ray = cam.ScreenPointToRay(position);
-                    HandleRaycast(ray);
-                }
+                if (!_previewSurface.gameObject.activeInHierarchy ||
+                    !RectTransformUtility.RectangleContainsScreenPoint(_previewSurface, position)) return false;
+                RectTransformUtility.ScreenPointToLocalPointInRectangle(_previewSurface, position, null, out var local);
+                var rect = _previewSurface.rect;
+                ray = cam.ViewportPointToRay(new Vector3((local.x - rect.xMin) / rect.width, (local.y - rect.yMin) / rect.height, 0));
             }
+            else
+            {
+                ray = cam.ScreenPointToRay(position);
+            }
+
+            return HandleRaycast(ray);
         }
 
         private void EnsureComponents()

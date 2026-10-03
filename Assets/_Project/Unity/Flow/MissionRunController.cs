@@ -77,10 +77,15 @@ namespace Game.Flow
 
         private IEnumerator BeginMissionWhenReady()
         {
+            float timeout = Time.realtimeSinceStartup + 0.5f;
             while (_app != null &&
                    (_app.FlowCoordinator.ActiveRun == null ||
                     _app.FlowCoordinator.FlowState != GameFlowState.InMission))
             {
+                if (Time.realtimeSinceStartup > timeout)
+                {
+                    break;
+                }
                 yield return null;
             }
 
@@ -101,8 +106,8 @@ namespace Game.Flow
         public bool PrepareMission()
         {
             if (_missionPrepared) return true;
-            if (_app != null && (_app.FlowCoordinator.ActiveRun == null ||
-                                 _app.FlowCoordinator.FlowState != GameFlowState.InMission)) return false;
+            if (_app != null && _app.FlowCoordinator.ActiveRun != null &&
+                _app.FlowCoordinator.FlowState != GameFlowState.InMission) return false;
 
             _activeRun = _app?.FlowCoordinator.ActiveRun;
 
@@ -113,6 +118,7 @@ namespace Game.Flow
             }
 
             DeploymentLoadoutSnapshot snapshot = _app?.FlowCoordinator.ActiveRun?.DeploymentLoadout;
+            _sceneRoot?.EnsureOwnedWeapons();
 
             if (snapshot != null && snapshot.OrderedWeaponIds.Count > 0)
             {
@@ -124,12 +130,23 @@ namespace Game.Flow
                 if (loadout == null || catalog == null || !loadout.ApplyDeploymentSnapshot(snapshot, catalog))
                     return false;
             }
+            else
+            {
+                PlayerController player = _sceneRoot != null ? _sceneRoot.Player : null;
+                WeaponLoadout loadout = player != null ? player.GetComponent<WeaponLoadout>() : null;
+                if (loadout != null && loadout.ActiveGun == null)
+                {
+                    loadout.EquipDefaultSlot();
+                }
+            }
 
             HealthComponent health = _sceneRoot?.Player != null
                 ? _sceneRoot.Player.GetComponent<HealthComponent>()
                 : null;
             health?.ResetHealth();
             PrewarmMissionPools();
+            if (_activeRun != null)
+                global::Game.Economy.RunSalvageTracker.Instance?.BeginRun(_activeRun.RunId);
             _missionPrepared = true;
             return true;
         }
@@ -256,6 +273,9 @@ namespace Game.Flow
             _activeRun.SetScore(_sceneRoot?.ScoreController != null ? _sceneRoot.ScoreController.Score : 0);
             _activeRun.SetKills(_kills);
             _activeRun.SetWavesCleared(_wavesCleared);
+            var salvage = global::Game.Economy.RunSalvageTracker.Instance;
+            if (salvage != null && salvage.RunId == _activeRun.RunId)
+                _activeRun.SetSalvage(salvage.ScrapCollected, salvage.AlloyCollected, salvage.CoreCollected);
         }
 
         private void ReportOutcome(RunOutcome outcome)

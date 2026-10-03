@@ -1,9 +1,11 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Application;
 using Application.Flow;
+using Application.Weapons;
 using Game;
 using Game.Flow;
 using Game.Workshop;
@@ -40,6 +42,49 @@ namespace MiniTopDownShooter.PlayModeTests
             SaveManager.CustomSaveDirectory = null;
             RunFinalizer.ResetForTesting();
             if (Directory.Exists(_saveDirectory)) Directory.Delete(_saveDirectory, true);
+        }
+
+        [UnityTest]
+        public IEnumerator SavedUnownedUpgrades_AreRepairedBeforeCaching_AndMissionStarts()
+        {
+            // Reproduce an older workshop save loaded before production policy wiring.
+            Game.Economy.UnityEconomyService.ResetInstance();
+            WeaponLoadout.ActivePolicy = null;
+            SaveManagerWeaponBuildStore.ActivePolicy = null;
+            Application.Economy.EconomyPolicyProvider.ResetForTesting();
+            var profile = new UserProfileData();
+            profile.ValidateAndMigrate();
+            profile.UnlockWeapon(WeaponWorkshopIds.Rifle);
+            Assert.IsTrue(SaveManager.SaveProfile(profile));
+            var legacyBuild = new WeaponBuild(WeaponWorkshopIds.Rifle, new Dictionary<string, string>
+            {
+                { WeaponWorkshopIds.RifleSlots.Barrel, "rifle.barrel.long" },
+                { WeaponWorkshopIds.RifleSlots.Magazine, "rifle.magazine.drum" },
+                { WeaponWorkshopIds.RifleSlots.Grip, "rifle.grip.vertical" },
+                { WeaponWorkshopIds.RifleSlots.Stock, "rifle.stock.heavy" }
+            });
+            var workshop = new WeaponWorkshopSaveData();
+            workshop.Builds.Add(new WeaponBuildDto(legacyBuild));
+            Assert.IsTrue(SaveManager.SaveWorkshopData(workshop));
+
+            // Boot replaces the initial test scene; keep the coroutine host alive.
+            var runner = GameObject.Find("Code-based tests runner");
+            if (runner != null) Object.DontDestroyOnLoad(runner);
+            yield return SceneManager.LoadSceneAsync("Boot", LoadSceneMode.Single);
+            yield return WaitForHub();
+            var app = AppCompositionRoot.Instance;
+            var repaired = app.PlayerSession.GetCommittedBuild(WeaponWorkshopIds.Rifle);
+            Assert.IsNotNull(repaired);
+            foreach (var selection in repaired.Selections)
+                Assert.IsTrue(Game.Economy.UnityEconomyService.Instance.IsPartUnlocked(
+                    repaired.WeaponId, selection.Key, selection.Value), "Cached unowned part: " + selection.Value);
+            Assert.IsFalse(Game.Economy.UnityEconomyService.Instance.IsWeaponUnlocked(WeaponWorkshopIds.Launcher));
+            app.PlayerSession.SetEquippedWeapon(WeaponWorkshopIds.Rifle);
+            Assert.IsTrue(app.FlowCoordinator.TryDeploy("Mission_ArenaSweep", app.PlayerSession.CreateDeploymentSnapshot()));
+            app.SceneFlow.GoToArena();
+            yield return WaitUntil(() => SceneManager.GetActiveScene().name == "ArenaShowcase" && !app.SceneFlow.IsTransitioning, 20);
+            Assert.IsTrue(Find<MissionRunController>().IsMissionStarted);
+            Assert.AreEqual(WeaponWorkshopIds.Rifle, Find<PlayerController>().GetComponent<WeaponLoadout>().ActiveGun.WeaponId);
         }
 
         [UnityTest]

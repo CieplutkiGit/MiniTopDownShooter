@@ -100,8 +100,9 @@ namespace Application.Flow
         /// <summary>
         /// Creates an immutable snapshot of the current loadout for deployment.
         /// Pending builds are included so the run uses the latest committed state.
+        /// Uncustomized weapons receive their default platform builds.
         /// </summary>
-        public DeploymentLoadoutSnapshot CreateDeploymentSnapshot()
+        public DeploymentLoadoutSnapshot CreateDeploymentSnapshot(IWeaponCatalog catalog = null)
         {
             var buildsByWeapon = new Dictionary<string, WeaponBuild>(StringComparer.Ordinal);
             // First copy durable builds, then overwrite with pending (authoritative)
@@ -109,6 +110,21 @@ namespace Application.Flow
                 buildsByWeapon[kv.Key] = kv.Value;
             foreach (var kv in _pendingBuilds)
                 buildsByWeapon[kv.Key] = kv.Value;
+
+            foreach (string weaponId in _loadoutIds)
+            {
+                if (!buildsByWeapon.ContainsKey(weaponId))
+                {
+                    if (catalog != null && catalog.TryGetPlatform(weaponId, out var platform))
+                    {
+                        buildsByWeapon[weaponId] = platform.CreateDefaultBuild();
+                    }
+                    else
+                    {
+                        buildsByWeapon[weaponId] = new WeaponBuild(weaponId, new Dictionary<string, string>());
+                    }
+                }
+            }
 
             return new DeploymentLoadoutSnapshot(
                 new List<string>(_loadoutIds),

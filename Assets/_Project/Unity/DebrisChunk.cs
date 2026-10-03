@@ -14,10 +14,36 @@ namespace Game
         private float _gravity;
         private float _bounce;
         private float _floorY;
+        private MeshRenderer _cachedRenderer;
+        private MeshFilter _cachedFilter;
+        private MaterialPropertyBlock _propBlock;
+
+        public float Age => _age;
+        public float Lifetime => _lifetime;
+        public bool IsActive => gameObject.activeSelf && _age < _lifetime;
 
         public void SetReturnCallback(Action<DebrisChunk> callback)
         {
             _onFinished = callback;
+        }
+
+        public void SetVisuals(Mesh mesh, Material material, Color? color = null)
+        {
+            if (_cachedFilter == null) _cachedFilter = GetComponent<MeshFilter>();
+            if (_cachedFilter == null) _cachedFilter = gameObject.AddComponent<MeshFilter>();
+            if (mesh != null) _cachedFilter.sharedMesh = mesh;
+
+            if (_cachedRenderer == null) _cachedRenderer = GetComponent<MeshRenderer>();
+            if (_cachedRenderer == null) _cachedRenderer = gameObject.AddComponent<MeshRenderer>();
+            if (material != null) _cachedRenderer.sharedMaterial = material;
+
+            if (color.HasValue)
+            {
+                if (_propBlock == null) _propBlock = new MaterialPropertyBlock();
+                _cachedRenderer.GetPropertyBlock(_propBlock);
+                _propBlock.SetColor("_BaseColor", color.Value);
+                _cachedRenderer.SetPropertyBlock(_propBlock);
+            }
         }
 
         public void Initialize(Vector3 velocity, Vector3 spin, float lifetime, float gravity, float bounce, float floorY)

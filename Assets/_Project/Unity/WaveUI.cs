@@ -31,6 +31,11 @@ namespace Game
             }
 
             _waves = _waveRef;
+            if (_label != null)
+            {
+                _label.raycastTarget = false;
+                _label.enableAutoSizing = true;
+            }
         }
 
         private void OnEnable()

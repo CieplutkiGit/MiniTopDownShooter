@@ -22,6 +22,13 @@ namespace Game.Flow.Editor
         {
             EditorApplication.delayCall += () =>
             {
+                // The test runner owns its initial scene. Redirecting it to Boot
+                // lets the hub transition remove the runner before tests begin.
+                if (Environment.GetCommandLineArgs().Any(arg => string.Equals(arg, "-runTests", StringComparison.OrdinalIgnoreCase)))
+                {
+                    EditorSceneManager.playModeStartScene = null;
+                    return;
+                }
                 var entry = AssetDatabase.LoadAssetAtPath<SceneAsset>("Assets/Scenes/Boot.unity");
                 if (entry != null && EditorBuildSettings.scenes.FirstOrDefault(scene => scene.enabled)?.path == "Assets/Scenes/Boot.unity")
                     EditorSceneManager.playModeStartScene = entry;

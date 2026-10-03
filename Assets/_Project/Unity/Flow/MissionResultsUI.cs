@@ -1,4 +1,5 @@
 using Application.Flow;
+using Application.Economy;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -19,10 +20,13 @@ namespace Game.Flow
         [SerializeField] private TMP_Text _killsText;
         [SerializeField] private TMP_Text _wavesText;
         [SerializeField] private TMP_Text _saveStatusText;
+        [SerializeField] private TMP_Text _rewardSummaryText;
         [SerializeField] private Button _retrySaveButton;
         [SerializeField] private Button _returnButton;
 
         private AppCompositionRoot _app;
+
+        public bool IsVisible => _panel != null && _panel.activeInHierarchy;
 
         private void Awake()
         {
@@ -42,6 +46,18 @@ namespace Game.Flow
 
             if (_panel != null)
                 _panel.SetActive(false);
+
+            TMP_Text[] texts = { _outcomeText, _scoreText, _timeText, _killsText, _wavesText, _saveStatusText };
+            foreach (var t in texts)
+            {
+                if (t != null)
+                {
+                    t.raycastTarget = false;
+                    t.enableAutoSizing = true;
+                }
+            }
+
+            EnsureRewardSummaryText();
         }
 
         private void OnEnable()
@@ -78,6 +94,12 @@ namespace Game.Flow
             if (_wavesText != null)
                 _wavesText.text = $"Waves: {result.WavesCleared}";
 
+            EconomyRewardCalculator.CalculateReward(result, out int coins, out int xp, out int scrap, out int alloy, out int core);
+            if (_rewardSummaryText != null)
+            {
+                _rewardSummaryText.text = $"REWARDS  +{coins:N0} CR  ·  +{xp:N0} XP\nSALVAGE  Scrap {scrap}  |  Alloy {alloy}  |  Core {core}";
+            }
+
             HandleSaveStatusChanged(RunFinalizer.CurrentSaveStatus);
 
             if (_panel != null)
@@ -85,6 +107,28 @@ namespace Game.Flow
 
             // Freeze time while showing results
             Time.timeScale = 0f;
+        }
+
+        private void EnsureRewardSummaryText()
+        {
+            if (_rewardSummaryText != null || _panel == null) return;
+
+            var labelObject = new GameObject("RewardSummary", typeof(RectTransform), typeof(TextMeshProUGUI));
+            labelObject.transform.SetParent(_panel.transform, false);
+            var rect = labelObject.GetComponent<RectTransform>();
+            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = new Vector2(0f, -104f);
+            rect.sizeDelta = new Vector2(580f, 62f);
+            _rewardSummaryText = labelObject.GetComponent<TextMeshProUGUI>();
+            _rewardSummaryText.font = TMP_Settings.defaultFontAsset;
+            _rewardSummaryText.fontSize = 17f;
+            _rewardSummaryText.fontSizeMin = 14f;
+            _rewardSummaryText.fontSizeMax = 17f;
+            _rewardSummaryText.enableAutoSizing = true;
+            _rewardSummaryText.alignment = TextAlignmentOptions.Center;
+            _rewardSummaryText.color = Game.UI.UITheme.ColorAccentAmber;
+            _rewardSummaryText.raycastTarget = false;
         }
 
         private void RetrySave()

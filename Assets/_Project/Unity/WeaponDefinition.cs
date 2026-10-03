@@ -94,7 +94,24 @@ namespace Game
 
         public string WeaponId
         {
-            get => !string.IsNullOrEmpty(_weaponId) ? _weaponId : WeaponWorkshopIds.Rifle;
+            get
+            {
+                if (!string.IsNullOrEmpty(_weaponId) && _weaponId != WeaponWorkshopIds.Rifle)
+                {
+                    return _weaponId;
+                }
+
+                if (!string.IsNullOrEmpty(name))
+                {
+                    if (name.IndexOf("pistol", System.StringComparison.OrdinalIgnoreCase) >= 0) return WeaponWorkshopIds.Pistol;
+                    if (name.IndexOf("smg", System.StringComparison.OrdinalIgnoreCase) >= 0) return WeaponWorkshopIds.SMG;
+                    if (name.IndexOf("shotgun", System.StringComparison.OrdinalIgnoreCase) >= 0) return WeaponWorkshopIds.Shotgun;
+                    if (name.IndexOf("launcher", System.StringComparison.OrdinalIgnoreCase) >= 0) return WeaponWorkshopIds.Launcher;
+                    if (name.IndexOf("rifle", System.StringComparison.OrdinalIgnoreCase) >= 0) return WeaponWorkshopIds.Rifle;
+                }
+
+                return !string.IsNullOrEmpty(_weaponId) ? _weaponId : WeaponWorkshopIds.Rifle;
+            }
             set => _weaponId = value;
         }
 

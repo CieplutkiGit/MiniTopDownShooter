@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1f21a7b4ce134b52a7c1d5e7a4150e7a, type: 3}
   m_Name: Weapon_Launcher
   m_EditorClassIdentifier: Unity::Game.WeaponDefinition
+  _weaponId: weapon.launcher
   _fireMode: 0
   _deliveryMode: 0
   _damage: 60
