@@ -23,7 +23,7 @@ namespace Application
 
     public class WeaponRuntime
     {
-        private readonly WeaponRuntimeConfig _config;
+        private WeaponRuntimeConfig _config;
         private readonly WeaponAmmoState _ammo;
 
         private float _lastShootTime = float.NegativeInfinity;
@@ -228,6 +228,24 @@ namespace Application
             _currentDynamicSpread = 0f;
             _lastShootTime = float.NegativeInfinity;
             _ammo.ResetToInitial(_config.StartingReserveAmmo);
+            AmmoChanged?.Invoke(_ammo.InMagazine, _ammo.ReserveAmmo);
+        }
+
+        public void ApplyConfig(WeaponRuntimeConfig newConfig)
+        {
+            if (newConfig == null)
+            {
+                throw new ArgumentNullException(nameof(newConfig));
+            }
+
+            _config = newConfig;
+            CancelBurst();
+            CancelReload();
+            _ammo.AdaptCapacity(newConfig.MagazineSize, newConfig.MaxReserveAmmo, newConfig.InfiniteAmmo);
+
+            float maxDynamic = Math.Max(0f, _config.MaxSpreadAngle - _config.BaseSpreadAngle);
+            _currentDynamicSpread = Math.Min(maxDynamic, _currentDynamicSpread);
+
             AmmoChanged?.Invoke(_ammo.InMagazine, _ammo.ReserveAmmo);
         }
 

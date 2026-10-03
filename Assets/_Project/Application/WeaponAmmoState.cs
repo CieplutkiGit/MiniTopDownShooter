@@ -4,9 +4,9 @@ namespace Application
 {
     public sealed class WeaponAmmoState
     {
-        private readonly int _magazineSize;
-        private readonly int _maxReserveAmmo;
-        private readonly bool _infiniteAmmo;
+        private int _magazineSize;
+        private int _maxReserveAmmo;
+        private bool _infiniteAmmo;
 
         public WeaponAmmoState(
             int magazineSize,
@@ -27,6 +27,7 @@ namespace Application
         public int InMagazine { get; private set; }
         public int ReserveAmmo { get; private set; }
         public int MagazineSize => _magazineSize;
+        public int MaxReserveAmmo => _maxReserveAmmo;
         public bool InfiniteAmmo => _infiniteAmmo;
 
         public bool CanFire => _infiniteAmmo || InMagazine > 0;
@@ -94,6 +95,45 @@ namespace Application
             ReserveAmmo = _infiniteAmmo
                 ? 0
                 : Math.Min(Math.Max(0, startingReserveAmmo), _maxReserveAmmo);
+        }
+
+        /// <summary>
+        /// Adapts magazine capacity and reserve ammo limits according to weapon workshop ammo conservation rules:
+        /// - Customizing grants no free ammo.
+        /// - If new magazine capacity >= InMagazine: InMagazine is preserved.
+        /// - If new magazine capacity < InMagazine: excess rounds (InMagazine - newMagazineCapacity) are returned to ReserveAmmo.
+        /// - If ReserveAmmo exceeds newMaxReserveAmmo: clamp to newMaxReserveAmmo.
+        /// - Updates internal capacity limits.
+        /// </summary>
+        public void AdaptCapacity(int newMagazineCapacity, int newMaxReserveAmmo)
+        {
+            _magazineSize = Math.Max(1, newMagazineCapacity);
+            _maxReserveAmmo = Math.Max(0, newMaxReserveAmmo);
+
+            if (_infiniteAmmo)
+            {
+                InMagazine = Math.Min(InMagazine, _magazineSize);
+                ReserveAmmo = 0;
+                return;
+            }
+
+            if (InMagazine > _magazineSize)
+            {
+                int excess = InMagazine - _magazineSize;
+                InMagazine = _magazineSize;
+                ReserveAmmo += excess;
+            }
+
+            if (ReserveAmmo > _maxReserveAmmo)
+            {
+                ReserveAmmo = _maxReserveAmmo;
+            }
+        }
+
+        public void AdaptCapacity(int newMagazineCapacity, int newMaxReserveAmmo, bool infiniteAmmo)
+        {
+            _infiniteAmmo = infiniteAmmo;
+            AdaptCapacity(newMagazineCapacity, newMaxReserveAmmo);
         }
     }
 }

@@ -7,12 +7,26 @@ namespace Game
 {
     public class HitscanWeaponDelivery : IWeaponDelivery
     {
-        private readonly float _range;
+        private float _range;
         private readonly LayerMask _mask;
         private readonly int _maxPenetrations;
-        private readonly int _projectilesPerShot;
-        private readonly Func<float, float> _falloffEvaluator;
+        private int _projectilesPerShot;
+        private Func<float, float> _falloffEvaluator;
         private readonly ParticleSystem _impactEffect;
+
+        public float Range => _range;
+        public int ProjectilesPerShot => _projectilesPerShot;
+        public Func<float, float> FalloffEvaluator => _falloffEvaluator;
+
+        public void UpdateParameters(int pelletCount, float range, Func<float, float> falloffEvaluator = null)
+        {
+            _projectilesPerShot = Mathf.Max(1, pelletCount);
+            _range = Mathf.Max(0.1f, range);
+            if (falloffEvaluator != null)
+            {
+                _falloffEvaluator = falloffEvaluator;
+            }
+        }
 
         public HitscanWeaponDelivery(
             float range,
