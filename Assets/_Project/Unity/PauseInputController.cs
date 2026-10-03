@@ -44,9 +44,17 @@ namespace Game
             _input.Disable();
         }
 
+        private static bool CanPauseFrom(GameState state)
+        {
+            return state == GameState.Playing ||
+                   state == GameState.WorkshopRoaming ||
+                   state == GameState.WorkshopEditing ||
+                   state == GameState.WorkshopFiringRange;
+        }
+
         private void OnApplicationFocus(bool hasFocus)
         {
-            if (!hasFocus && _gameState != null && _gameState.CurrentState == GameState.Playing)
+            if (!hasFocus && _gameState != null && CanPauseFrom(_gameState.CurrentState))
             {
                 _gameState.Pause();
             }
@@ -54,7 +62,7 @@ namespace Game
 
         private void OnApplicationPause(bool pauseStatus)
         {
-            if (pauseStatus && _gameState != null && _gameState.CurrentState == GameState.Playing)
+            if (pauseStatus && _gameState != null && CanPauseFrom(_gameState.CurrentState))
             {
                 _gameState.Pause();
             }
@@ -62,7 +70,7 @@ namespace Game
 
         private void HandleDeviceChange(InputDevice device, InputDeviceChange change)
         {
-            if (change == InputDeviceChange.Disconnected && _gameState != null && _gameState.CurrentState == GameState.Playing)
+            if (change == InputDeviceChange.Disconnected && _gameState != null && CanPauseFrom(_gameState.CurrentState))
             {
                 _gameState.Pause();
             }
@@ -90,7 +98,7 @@ namespace Game
             TogglePause();
         }
 
-        private void TogglePause()
+        public void TogglePause()
         {
             if (_gameState == null)
             {
@@ -99,7 +107,7 @@ namespace Game
 
             GameState current = _gameState.CurrentState;
 
-            if (current == GameState.Playing)
+            if (CanPauseFrom(current))
             {
                 _gameState.Pause();
             }

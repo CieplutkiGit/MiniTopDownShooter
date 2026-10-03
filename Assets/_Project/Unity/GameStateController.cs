@@ -152,6 +152,23 @@ namespace Game
             _manager.Resume();
         }
 
+        public GameState PreviousStateBeforePause => _manager.PreviousStateBeforePause;
+
+        public void EnterWorkshopRoaming()
+        {
+            _manager.EnterWorkshopRoaming();
+        }
+
+        public void EnterWorkshopEditing()
+        {
+            _manager.EnterWorkshopEditing();
+        }
+
+        public void EnterWorkshopFiringRange()
+        {
+            _manager.EnterWorkshopFiringRange();
+        }
+
         public void ReturnToMenu()
         {
             _manager.ReturnToMenu();

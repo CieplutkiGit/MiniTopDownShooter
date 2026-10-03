@@ -1,5 +1,6 @@
 using System;
 using Application;
+using Application.Workshop;
 using UnityEngine;
 
 namespace Game
@@ -32,6 +33,7 @@ namespace Game
         private DeadPlayerState _deadState;
 
         public event Action Died;
+        public InputReader Input => _input;
 
         public void Initialize(GameStateController gameState, Camera aimCamera = null, MobileInputState mobileInput = null)
         {
@@ -49,6 +51,11 @@ namespace Game
             if (mobileInput != null)
             {
                 _mobileInput = mobileInput;
+            }
+
+            if (_input != null)
+            {
+                _aliveState = new AlivePlayerState(_input, _movement, _rotation, _shoot, _shootThreshold, _gameState);
             }
 
             if (_gameState != null && enabled)
@@ -82,7 +89,7 @@ namespace Game
             _shoot = GetComponent<PlayerShoot>();
             _health = GetComponent<HealthComponent>();
 
-            _aliveState = new AlivePlayerState(_input, _movement, _rotation, _shoot, _shootThreshold);
+            _aliveState = new AlivePlayerState(_input, _movement, _rotation, _shoot, _shootThreshold, _gameState);
             _deadState = new DeadPlayerState(_movement);
         }
 
@@ -113,12 +120,13 @@ namespace Game
 
         private void HandleGameStateChanged(GameState oldState, GameState newState)
         {
-            if (newState != GameState.Playing)
+            if (!GameActivityPolicy.CanMove(newState))
             {
                 _movement?.Move(Vector2.zero);
-                _input?.ClearQueuedActions();
-                _shoot?.CancelActions();
             }
+            _input?.ClearQueuedActions();
+            _input?.RequireNeutralToRearm();
+            _shoot?.CancelActions();
         }
 
         private void OnApplicationFocus(bool hasFocus)
@@ -127,6 +135,7 @@ namespace Game
             {
                 _movement?.Move(Vector2.zero);
                 _input?.ClearQueuedActions();
+                _input?.RequireNeutralToRearm();
                 _shoot?.CancelActions();
             }
         }
@@ -137,16 +146,18 @@ namespace Game
             {
                 _movement?.Move(Vector2.zero);
                 _input?.ClearQueuedActions();
+                _input?.RequireNeutralToRearm();
                 _shoot?.CancelActions();
             }
         }
 
         private void FixedUpdate()
         {
-            if (_gameState != null && _gameState.CurrentState != GameState.Playing)
+            GameState state = _gameState != null ? _gameState.CurrentState : GameState.Playing;
+
+            if (!GameActivityPolicy.CanMove(state))
             {
                 _movement?.Move(Vector2.zero);
-                return;
             }
 
             if (_currentState != null)
@@ -232,6 +243,7 @@ namespace Game
             if (_input != null)
             {
                 _input.ResetGameplayTransientState();
+                _input.RequireNeutralToRearm();
                 _input.ClearQueuedActions();
             }
 
@@ -239,7 +251,7 @@ namespace Game
 
             if (_aliveState == null)
             {
-                _aliveState = new AlivePlayerState(_input, _movement, _rotation, _shoot, _shootThreshold);
+                _aliveState = new AlivePlayerState(_input, _movement, _rotation, _shoot, _shootThreshold, _gameState);
                 _deadState = new DeadPlayerState(_movement);
             }
 

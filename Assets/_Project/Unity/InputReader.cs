@@ -16,12 +16,15 @@ namespace Game
         private readonly InputAction _reloadAction;
         private readonly InputAction _nextWeaponAction;
         private readonly InputAction _previousWeaponAction;
+        private readonly InputAction _interactAction;
 
         private bool _firePressedQueued;
         private bool _reloadPressedQueued;
         private bool _nextWeaponPressedQueued;
         private bool _previousWeaponPressedQueued;
+        private bool _interactPressedQueued;
         private bool _previousLookShootHeld;
+        private bool _requireFireNeutralBeforeRearm;
 
         public InputReader(
             Camera aimCamera,
@@ -49,6 +52,10 @@ namespace Game
             _previousWeaponAction.AddBinding("<Keyboard>/q");
             _previousWeaponAction.AddBinding("<Gamepad>/leftShoulder");
 
+            _interactAction = new InputAction("Interact", InputActionType.Button);
+            _interactAction.AddBinding("<Keyboard>/e");
+            _interactAction.AddBinding("<Gamepad>/buttonSouth");
+
             LoadBindings();
             SubscribeButtonEvents();
             _input.Enable();
@@ -56,6 +63,7 @@ namespace Game
             _reloadAction.Enable();
             _nextWeaponAction.Enable();
             _previousWeaponAction.Enable();
+            _interactAction.Enable();
         }
 
         public float MoveDeadzone { get; set; } = 0.1f;
@@ -110,13 +118,41 @@ namespace Game
             }
         }
 
+        public bool IsFireArmed => !_requireFireNeutralBeforeRearm;
+
+        public void RequireNeutralToRearm()
+        {
+            _requireFireNeutralBeforeRearm = true;
+            _firePressedQueued = false;
+            _previousLookShootHeld = false;
+        }
+
+        public void ArmFire()
+        {
+            _requireFireNeutralBeforeRearm = false;
+        }
+
         public bool IsShootHeld(float lookThreshold)
         {
             Vector2 look = _input.Player.Look.ReadValue<Vector2>();
+            bool lookHeld = look.magnitude > lookThreshold;
+            bool buttonHeld = _fireAction.IsPressed();
             bool mobileHeld = _mobileInput != null && _mobileInput.FireHeld;
 
-            return look.magnitude > lookThreshold ||
-                   _fireAction.IsPressed() ||
+            if (_requireFireNeutralBeforeRearm)
+            {
+                if (!lookHeld && !buttonHeld && !mobileHeld)
+                {
+                    _requireFireNeutralBeforeRearm = false;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+
+            return lookHeld ||
+                   buttonHeld ||
                    mobileHeld;
         }
 
@@ -132,6 +168,22 @@ namespace Game
             bool mobileHeld = _mobileInput != null && _mobileInput.FireHeld;
             bool mobilePressed =
                 _mobileInput != null && _mobileInput.ConsumeFirePressed();
+
+            if (_requireFireNeutralBeforeRearm)
+            {
+                if (!lookHeld && !buttonHeld && !mobileHeld)
+                {
+                    _requireFireNeutralBeforeRearm = false;
+                }
+                else
+                {
+                    _firePressedQueued = false;
+                    _previousLookShootHeld = false;
+                    isHeld = false;
+                    wasPressed = false;
+                    return;
+                }
+            }
 
             isHeld = lookHeld || buttonHeld || mobileHeld;
             wasPressed =
@@ -173,12 +225,23 @@ namespace Game
             return value;
         }
 
+        public bool ConsumeInteractPressed()
+        {
+            bool mobilePressed =
+                _mobileInput != null && _mobileInput.ConsumeInteractPressed();
+
+            bool value = _interactPressedQueued || mobilePressed;
+            _interactPressedQueued = false;
+            return value;
+        }
+
         public void ResetGameplayTransientState()
         {
             _firePressedQueued = false;
             _reloadPressedQueued = false;
             _nextWeaponPressedQueued = false;
             _previousWeaponPressedQueued = false;
+            _interactPressedQueued = false;
             _previousLookShootHeld = false;
 
             if (_mobileInput != null)
@@ -287,6 +350,7 @@ namespace Game
             _reloadAction.Dispose();
             _nextWeaponAction.Dispose();
             _previousWeaponAction.Dispose();
+            _interactAction.Dispose();
             _input.Dispose();
         }
 
@@ -296,6 +360,7 @@ namespace Game
             _reloadAction.performed += HandleReloadPerformed;
             _nextWeaponAction.performed += HandleNextWeaponPerformed;
             _previousWeaponAction.performed += HandlePreviousWeaponPerformed;
+            _interactAction.performed += HandleInteractPerformed;
         }
 
         private void UnsubscribeButtonEvents()
@@ -304,6 +369,7 @@ namespace Game
             _reloadAction.performed -= HandleReloadPerformed;
             _nextWeaponAction.performed -= HandleNextWeaponPerformed;
             _previousWeaponAction.performed -= HandlePreviousWeaponPerformed;
+            _interactAction.performed -= HandleInteractPerformed;
         }
 
         private void HandleFirePerformed(InputAction.CallbackContext context)
@@ -326,6 +392,11 @@ namespace Game
             _previousWeaponPressedQueued = true;
         }
 
+        private void HandleInteractPerformed(InputAction.CallbackContext context)
+        {
+            _interactPressedQueued = true;
+        }
+
         private InputAction FindAction(string actionName)
         {
             switch (actionName)
@@ -338,6 +409,8 @@ namespace Game
                     return _nextWeaponAction;
                 case "PreviousWeapon":
                     return _previousWeaponAction;
+                case "Interact":
+                    return _interactAction;
                 default:
                     return _input.asset.FindAction(actionName, false);
             }
