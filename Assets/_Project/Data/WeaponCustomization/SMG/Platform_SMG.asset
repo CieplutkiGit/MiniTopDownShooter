@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c53dbae3dadc4b3abc9f8cd57f8649a5, type: 3}
+  m_Name: Platform_SMG
+  m_EditorClassIdentifier: Unity::Game.WeaponPlatformDefinition
+  _weaponId: weapon.smg
+  _displayName: Submachine Gun
+  _supportedSlots:
+  - smg.slot.barrel
+  - smg.slot.magazine
+  - smg.slot.grip
+  - smg.slot.action
+  _defaultParts:
+  - _slotId: smg.slot.barrel
+    _partId: smg.barrel.standard
+  - _slotId: smg.slot.magazine
+    _partId: smg.magazine.standard
+  - _slotId: smg.slot.grip
+    _partId: smg.grip.standard
+  - _slotId: smg.slot.action
+    _partId: smg.action.standard
+  _baseDamage: 9
+  _baseFireInterval: 0.065
+  _baseMagazineCapacity: 35
+  _baseStartingReserveAmmo: 140
+  _baseMaxReserveAmmo: 280
+  _baseReloadDuration: 1.35
+  _baseSpreadAngle: 3
+  _maxSpreadAngle: 12
+  _spreadPerShot: 0.9
+  _spreadRecoveryPerSecond: 14
+  _range: 50
+  _projectileSpeed: 25
+  _projectileLifetime: 2.2
+  _basePellets: 1
+  _baseFireMode: 1
+  _burstCount: 3
+  _burstInterval: 0.08
+  _aimTurnSpeed: 180
+  _deliveryMode: 0
+  _infiniteAmmo: 0
+  _autoReloadOnEmpty: 1
+  _cancelReloadOnFire: 1
+  _damageFalloffStart: 0
+  _damageFalloffEnd: 0
+  _minDamageRatio: 1
