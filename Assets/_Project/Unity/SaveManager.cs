@@ -9,6 +9,7 @@ namespace Game
     {
         private const string ProfileFileName = "user_profile.json";
         private const string SettingsFileName = "game_settings.json";
+        private const string WorkshopFileName = "weapon_workshop.json";
 
         public static string CustomSaveDirectory { get; set; }
         public static string SaveDirectory => !string.IsNullOrEmpty(CustomSaveDirectory) ? CustomSaveDirectory : UnityEngine.Application.persistentDataPath;
@@ -45,6 +46,24 @@ namespace Game
             {
                 loaded = new GameSettingsData();
                 SaveSettings(loaded);
+            }
+            return loaded;
+        }
+
+        public static bool SaveWorkshopData(WeaponWorkshopSaveData data)
+        {
+            string path = Path.Combine(SaveDirectory, WorkshopFileName);
+            return AtomicWrite(path, data);
+        }
+
+        public static WeaponWorkshopSaveData LoadWorkshopData()
+        {
+            string path = Path.Combine(SaveDirectory, WorkshopFileName);
+            WeaponWorkshopSaveData loaded = SafeRead<WeaponWorkshopSaveData>(path);
+            if (loaded == null)
+            {
+                loaded = new WeaponWorkshopSaveData();
+                SaveWorkshopData(loaded);
             }
             return loaded;
         }
@@ -346,6 +365,10 @@ namespace Game
             else if (obj is GameSettingsData settings)
             {
                 settings.ValidateAndMigrate();
+            }
+            else if (obj is WeaponWorkshopSaveData workshopData)
+            {
+                workshopData.ValidateAndMigrate();
             }
         }
     }
