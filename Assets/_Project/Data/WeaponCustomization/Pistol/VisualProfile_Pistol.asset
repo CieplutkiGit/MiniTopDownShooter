@@ -1,0 +1,143 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8362b8c1e5184defb6e68334c4cc6472, type: 3}
+  m_Name: VisualProfile_Pistol
+  m_EditorClassIdentifier: Unity::Game.Workshop.Presentation.WeaponVisualProfile
+  _weaponId: weapon.pistol
+  _receiverPrefab: {fileID: 0}
+  _receiverMesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+  _receiverMaterial: {fileID: 2100000, guid: b231d545400db864482a58001abe1831, type: 2}
+  _receiverLocalPosition: {x: 0, y: 0, z: 0.05}
+  _receiverLocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  _receiverLocalScale: {x: 0.12, y: 0.15, z: 0.32}
+  _defaultMuzzleOffset: {x: 0, y: 0.1, z: 0.36}
+  _parts:
+  - _slotId: pistol.slot.barrel
+    _partId: pistol.barrel.standard
+    _prefab: {fileID: 0}
+    _mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+    _material: {fileID: 2100000, guid: b231d545400db864482a58001abe1831, type: 2}
+    _assembledLocalPosition: {x: 0, y: 0.1, z: 0.28}
+    _assembledLocalRotation: {x: 0, y: 0, z: 0, w: 1}
+    _assembledLocalScale: {x: 0.07, y: 0.07, z: 0.12}
+    _explodedLocalOffset: {x: 0, y: 0, z: 0.25}
+    _muzzleOffset: {x: 0, y: 0.1, z: 0.36}
+  - _slotId: pistol.slot.barrel
+    _partId: pistol.barrel.extended
+    _prefab: {fileID: 0}
+    _mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+    _material: {fileID: 2100000, guid: b231d545400db864482a58001abe1831, type: 2}
+    _assembledLocalPosition: {x: 0, y: 0.1, z: 0.32}
+    _assembledLocalRotation: {x: 0, y: 0, z: 0, w: 1}
+    _assembledLocalScale: {x: 0.07, y: 0.07, z: 0.2}
+    _explodedLocalOffset: {x: 0, y: 0, z: 0.35}
+    _muzzleOffset: {x: 0, y: 0.1, z: 0.44}
+  - _slotId: pistol.slot.barrel
+    _partId: pistol.barrel.comp
+    _prefab: {fileID: 0}
+    _mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+    _material: {fileID: 2100000, guid: b231d545400db864482a58001abe1831, type: 2}
+    _assembledLocalPosition: {x: 0, y: 0.1, z: 0.29}
+    _assembledLocalRotation: {x: 0, y: 0, z: 0, w: 1}
+    _assembledLocalScale: {x: 0.09, y: 0.09, z: 0.14}
+    _explodedLocalOffset: {x: 0, y: 0, z: 0.25}
+    _muzzleOffset: {x: 0, y: 0.1, z: 0.38}
+  - _slotId: pistol.slot.magazine
+    _partId: pistol.magazine.standard
+    _prefab: {fileID: 0}
+    _mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+    _material: {fileID: 2100000, guid: ab2296bae96de6f4ab6ace1a6ef68a1e, type: 2}
+    _assembledLocalPosition: {x: 0, y: -0.21, z: -0.075}
+    _assembledLocalRotation: {x: 0.1305262, y: 0, z: 0, w: 0.9914449}
+    _assembledLocalScale: {x: 0.08, y: 0.14, z: 0.1}
+    _explodedLocalOffset: {x: 0, y: -0.25, z: -0.05}
+    _muzzleOffset: {x: 0, y: 0, z: 0}
+  - _slotId: pistol.slot.magazine
+    _partId: pistol.magazine.extended
+    _prefab: {fileID: 0}
+    _mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+    _material: {fileID: 2100000, guid: ab2296bae96de6f4ab6ace1a6ef68a1e, type: 2}
+    _assembledLocalPosition: {x: 0, y: -0.25, z: -0.085}
+    _assembledLocalRotation: {x: 0.1305262, y: 0, z: 0, w: 0.9914449}
+    _assembledLocalScale: {x: 0.08, y: 0.22, z: 0.1}
+    _explodedLocalOffset: {x: 0, y: -0.35, z: -0.05}
+    _muzzleOffset: {x: 0, y: 0, z: 0}
+  - _slotId: pistol.slot.magazine
+    _partId: pistol.magazine.drum
+    _prefab: {fileID: 0}
+    _mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+    _material: {fileID: 2100000, guid: b231d545400db864482a58001abe1831, type: 2}
+    _assembledLocalPosition: {x: 0, y: -0.26, z: -0.085}
+    _assembledLocalRotation: {x: 0.1305262, y: 0, z: 0, w: 0.9914449}
+    _assembledLocalScale: {x: 0.18, y: 0.18, z: 0.18}
+    _explodedLocalOffset: {x: 0, y: -0.4, z: -0.05}
+    _muzzleOffset: {x: 0, y: 0, z: 0}
+  - _slotId: pistol.slot.grip
+    _partId: pistol.grip.standard
+    _prefab: {fileID: 0}
+    _mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+    _material: {fileID: 2100000, guid: ab2296bae96de6f4ab6ace1a6ef68a1e, type: 2}
+    _assembledLocalPosition: {x: 0, y: -0.12, z: -0.05}
+    _assembledLocalRotation: {x: 0.1305262, y: 0, z: 0, w: 0.9914449}
+    _assembledLocalScale: {x: 0.1, y: 0.2, z: 0.12}
+    _explodedLocalOffset: {x: 0, y: -0.15, z: -0.2}
+    _muzzleOffset: {x: 0, y: 0, z: 0}
+  - _slotId: pistol.slot.grip
+    _partId: pistol.grip.tactical
+    _prefab: {fileID: 0}
+    _mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+    _material: {fileID: 2100000, guid: b231d545400db864482a58001abe1831, type: 2}
+    _assembledLocalPosition: {x: 0, y: -0.12, z: -0.05}
+    _assembledLocalRotation: {x: 0.1305262, y: 0, z: 0, w: 0.9914449}
+    _assembledLocalScale: {x: 0.11, y: 0.21, z: 0.13}
+    _explodedLocalOffset: {x: 0, y: -0.15, z: -0.2}
+    _muzzleOffset: {x: 0, y: 0, z: 0}
+  - _slotId: pistol.slot.grip
+    _partId: pistol.grip.match
+    _prefab: {fileID: 0}
+    _mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+    _material: {fileID: 2100000, guid: ab2296bae96de6f4ab6ace1a6ef68a1e, type: 2}
+    _assembledLocalPosition: {x: 0, y: -0.13, z: -0.05}
+    _assembledLocalRotation: {x: 0.1305262, y: 0, z: 0, w: 0.9914449}
+    _assembledLocalScale: {x: 0.12, y: 0.22, z: 0.14}
+    _explodedLocalOffset: {x: 0, y: -0.15, z: -0.2}
+    _muzzleOffset: {x: 0, y: 0, z: 0}
+  - _slotId: pistol.slot.slide
+    _partId: pistol.slide.standard
+    _prefab: {fileID: 0}
+    _mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+    _material: {fileID: 2100000, guid: ab2296bae96de6f4ab6ace1a6ef68a1e, type: 2}
+    _assembledLocalPosition: {x: 0, y: 0.1, z: 0.07}
+    _assembledLocalRotation: {x: 0, y: 0, z: 0, w: 1}
+    _assembledLocalScale: {x: 0.11, y: 0.08, z: 0.36}
+    _explodedLocalOffset: {x: 0, y: 0.2, z: 0}
+    _muzzleOffset: {x: 0, y: 0, z: 0}
+  - _slotId: pistol.slot.slide
+    _partId: pistol.slide.lightweight
+    _prefab: {fileID: 0}
+    _mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+    _material: {fileID: 2100000, guid: b231d545400db864482a58001abe1831, type: 2}
+    _assembledLocalPosition: {x: 0, y: 0.1, z: 0.07}
+    _assembledLocalRotation: {x: 0, y: 0, z: 0, w: 1}
+    _assembledLocalScale: {x: 0.1, y: 0.075, z: 0.34}
+    _explodedLocalOffset: {x: 0, y: 0.25, z: 0}
+    _muzzleOffset: {x: 0, y: 0, z: 0}
+  - _slotId: pistol.slot.slide
+    _partId: pistol.slide.heavy
+    _prefab: {fileID: 0}
+    _mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+    _material: {fileID: 2100000, guid: ab2296bae96de6f4ab6ace1a6ef68a1e, type: 2}
+    _assembledLocalPosition: {x: 0, y: 0.105, z: 0.07}
+    _assembledLocalRotation: {x: 0, y: 0, z: 0, w: 1}
+    _assembledLocalScale: {x: 0.12, y: 0.09, z: 0.38}
+    _explodedLocalOffset: {x: 0, y: 0.25, z: 0}
+    _muzzleOffset: {x: 0, y: 0, z: 0}

@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c53dbae3dadc4b3abc9f8cd57f8649a5, type: 3}
+  m_Name: Platform_Pistol
+  m_EditorClassIdentifier: Unity::Game.WeaponPlatformDefinition
+  _weaponId: weapon.pistol
+  _displayName: Pistol
+  _supportedSlots:
+  - pistol.slot.barrel
+  - pistol.slot.magazine
+  - pistol.slot.grip
+  - pistol.slot.slide
+  _defaultParts:
+  - _slotId: pistol.slot.barrel
+    _partId: pistol.barrel.standard
+  - _slotId: pistol.slot.magazine
+    _partId: pistol.magazine.standard
+  - _slotId: pistol.slot.grip
+    _partId: pistol.grip.standard
+  - _slotId: pistol.slot.slide
+    _partId: pistol.slide.standard
+  _baseDamage: 24
+  _baseFireInterval: 0.28
+  _baseMagazineCapacity: 12
+  _baseStartingReserveAmmo: 48
+  _baseMaxReserveAmmo: 96
+  _baseReloadDuration: 1.1
+  _baseSpreadAngle: 1.5
+  _maxSpreadAngle: 6
+  _spreadPerShot: 0.7
+  _spreadRecoveryPerSecond: 8
+  _range: 45
+  _projectileSpeed: 20
+  _projectileLifetime: 3
+  _basePellets: 1
+  _baseFireMode: 0
+  _burstCount: 3
+  _burstInterval: 0.08
+  _aimTurnSpeed: 180
+  _deliveryMode: 1
+  _infiniteAmmo: 0
+  _autoReloadOnEmpty: 1
+  _cancelReloadOnFire: 1
+  _damageFalloffStart: 0
+  _damageFalloffEnd: 0
+  _minDamageRatio: 1
