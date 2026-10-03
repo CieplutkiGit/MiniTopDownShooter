@@ -8,6 +8,22 @@ namespace Game
 
         public float AimSensitivity { get; set; } = 1.0f;
 
+        public float RotationSpeed
+        {
+            get => _rotationSpeed;
+            set => _rotationSpeed = Mathf.Max(10f, value);
+        }
+
+        public void SetTurnSpeed(float turnSpeed)
+        {
+            RotationSpeed = turnSpeed;
+        }
+
+        public void ApplyAimTurnSpeed(float aimTurnSpeed)
+        {
+            SetTurnSpeed(aimTurnSpeed);
+        }
+
         public void Rotate(Vector2 direction)
         {
             if (direction.magnitude < 0.1f)

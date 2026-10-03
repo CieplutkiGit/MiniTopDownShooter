@@ -8,12 +8,23 @@ namespace Game
     public class ProjectileWeaponDelivery : IWeaponDelivery
     {
         private readonly Projectile _prefab;
-        private readonly int _projectilesPerShot;
-        private readonly float _speedOverride;
-        private readonly float _lifetimeOverride;
+        private int _projectilesPerShot;
+        private float _speedOverride;
+        private float _lifetimeOverride;
         private readonly ObjectPool<Projectile> _pool;
         private readonly List<Projectile> _activeProjectiles = new List<Projectile>();
         private bool _isDisposed;
+
+        public int ProjectilesPerShot => _projectilesPerShot;
+        public float SpeedOverride => _speedOverride;
+        public float LifetimeOverride => _lifetimeOverride;
+
+        public void UpdateParameters(int pelletCount, float speedOverride, float lifetimeOverride)
+        {
+            _projectilesPerShot = Mathf.Max(1, pelletCount);
+            _speedOverride = speedOverride;
+            _lifetimeOverride = lifetimeOverride;
+        }
 
         public ProjectileWeaponDelivery(
             Projectile prefab,

@@ -1,11 +1,12 @@
 using System;
 using Application;
+using Application.Weapons;
 using Core;
 using UnityEngine;
 
 namespace Game
 {
-    public class Gun : MonoBehaviour, IGunEvents, IWeaponReadModel
+    public class Gun : MonoBehaviour, IGunEvents, IWeaponReadModel, IWeaponBuildTarget
     {
         [Header("Configuration")]
         [Tooltip("Optional reusable weapon data. When assigned, it overrides the legacy values below.")]
@@ -45,6 +46,9 @@ namespace Game
         public event Action<int, int> AmmoChanged;
 
         public WeaponDefinition Definition => _definition;
+        public string WeaponId => _definition != null ? _definition.WeaponId : WeaponWorkshopIds.Rifle;
+        public WeaponBuild CurrentBuild { get; private set; }
+        public ResolvedWeaponStats CurrentStats { get; private set; }
         public int AmmoInMagazine => _runtime != null ? _runtime.Ammo.InMagazine : 0;
         public int ReserveAmmo => _runtime != null ? _runtime.Ammo.ReserveAmmo : 0;
         public int MagazineSize => _runtime != null ? _runtime.Ammo.MagazineSize : 0;
@@ -53,9 +57,17 @@ namespace Game
         public float ReloadProgress => _runtime != null ? _runtime.ReloadProgress(Time.time) : 0f;
         public bool IsEquipped => _isEquipped;
         public WeaponRuntime Runtime => _runtime;
+        public IWeaponDelivery Delivery => _delivery;
+        public Transform SpawnPoint => _spawnPoint;
+        public void SetSpawnPoint(Transform spawnPoint) => _spawnPoint = spawnPoint;
 
-        private int Damage => _definition != null ? _definition.Damage : Mathf.Max(1, _damage);
-        private WeaponDeliveryMode DeliveryMode => _definition != null ? _definition.DeliveryMode : WeaponDeliveryMode.Projectile;
+        public int Damage => CurrentStats != null
+            ? (int)Mathf.Round(CurrentStats.Damage)
+            : (_definition != null ? _definition.Damage : Mathf.Max(1, _damage));
+
+        public Application.WeaponDeliveryMode DeliveryMode => CurrentStats != null
+            ? CurrentStats.DeliveryMode
+            : (_definition != null ? (Application.WeaponDeliveryMode)_definition.DeliveryMode : Application.WeaponDeliveryMode.Projectile);
 
         private void Awake()
         {
@@ -282,6 +294,151 @@ namespace Game
             _isEquipped = true;
         }
 
+        public ApplyResult TryApply(WeaponBuild build, ResolvedWeaponStats stats)
+        {
+            if (build == null)
+            {
+                return ApplyResult.Failure("NullBuild", "Build cannot be null.");
+            }
+
+            if (stats == null)
+            {
+                return ApplyResult.Failure("NullStats", "Resolved weapon stats cannot be null.");
+            }
+
+            if (!string.Equals(build.WeaponId, WeaponId, StringComparison.Ordinal))
+            {
+                return ApplyResult.Failure("WeaponMismatch", $"Build weapon ID '{build.WeaponId}' does not match target weapon ID '{WeaponId}'.");
+            }
+
+            if (_runtime != null)
+            {
+                _runtime.CancelBurst();
+                _runtime.CancelReload();
+            }
+
+            var newConfig = new WeaponRuntimeConfig
+            {
+                FireMode = stats.FireMode,
+                FireInterval = stats.FireInterval,
+                BurstCount = stats.BurstCount,
+                BurstInterval = stats.BurstInterval,
+                BaseSpreadAngle = stats.BaseSpreadAngle,
+                MaxSpreadAngle = stats.MaxSpreadAngle,
+                SpreadPerShot = stats.RecoilPerShot,
+                SpreadRecoveryPerSecond = stats.SpreadRecoveryRate,
+                ReloadDuration = stats.ReloadDuration,
+                MagazineSize = stats.MagazineCapacity,
+                MaxReserveAmmo = stats.MaxReserveAmmo,
+                StartingReserveAmmo = stats.StartingReserveAmmo,
+                InfiniteAmmo = stats.InfiniteAmmo,
+                AutoReloadOnEmpty = stats.AutoReloadOnEmpty,
+                CancelReloadOnFire = stats.CancelReloadOnFire
+            };
+
+            if (_runtime == null)
+            {
+                _runtime = new WeaponRuntime(newConfig);
+                _runtime.Fired += () => Fired?.Invoke();
+                _runtime.EmptyFired += () => EmptyFired?.Invoke();
+                _runtime.ReloadStarted += () => ReloadStarted?.Invoke();
+                _runtime.ReloadCompleted += () => ReloadCompleted?.Invoke();
+                _runtime.ReloadCanceled += () => ReloadCanceled?.Invoke();
+                _runtime.AmmoChanged += (mag, res) => AmmoChanged?.Invoke(mag, res);
+            }
+            else
+            {
+                _runtime.ApplyConfig(newConfig);
+            }
+
+            ApplyDeliveryParameters(stats);
+
+            PlayerRotation playerRotation = GetComponentInParent<PlayerRotation>();
+            if (playerRotation == null)
+            {
+                playerRotation = GetComponent<PlayerRotation>();
+            }
+            if (playerRotation != null && stats.AimTurnSpeed > 0f)
+            {
+                playerRotation.SetTurnSpeed(stats.AimTurnSpeed);
+            }
+
+            CurrentBuild = build;
+            CurrentStats = stats;
+
+            RaiseAmmoChanged();
+
+            return ApplyResult.Success();
+        }
+
+        private void ApplyDeliveryParameters(ResolvedWeaponStats stats)
+        {
+            if (stats.DeliveryMode == Application.WeaponDeliveryMode.Hitscan)
+            {
+                if (_delivery is HitscanWeaponDelivery hitscan)
+                {
+                    hitscan.UpdateParameters(stats.PelletCount, stats.Range, CreateFalloffEvaluator(stats));
+                }
+                else if (_delivery == null || _delivery is ProjectileWeaponDelivery)
+                {
+                    _delivery?.Dispose();
+                    LayerMask mask = _definition != null ? _definition.HitscanMask : (LayerMask)(~0);
+                    int penetrations = _definition != null ? _definition.MaxPenetrations : 0;
+                    _delivery = new HitscanWeaponDelivery(
+                        stats.Range,
+                        mask,
+                        penetrations,
+                        stats.PelletCount,
+                        CreateFalloffEvaluator(stats),
+                        null);
+                }
+            }
+            else
+            {
+                if (_delivery is ProjectileWeaponDelivery projectile)
+                {
+                    projectile.UpdateParameters(stats.PelletCount, stats.ProjectileSpeed, stats.ProjectileLifetime);
+                }
+                else if (_delivery == null || _delivery is HitscanWeaponDelivery)
+                {
+                    _delivery?.Dispose();
+                    Projectile prefab = _definition != null && _definition.ProjectilePrefab != null
+                        ? _definition.ProjectilePrefab
+                        : _prefab;
+                    int defaultPool = _definition != null ? _definition.DefaultPoolSize : _defaultPoolSize;
+                    int maxPool = _definition != null ? _definition.MaxPoolSize : _maxPoolSize;
+
+                    _delivery = new ProjectileWeaponDelivery(
+                        prefab,
+                        defaultPool,
+                        maxPool,
+                        stats.PelletCount,
+                        stats.ProjectileSpeed,
+                        stats.ProjectileLifetime);
+                }
+            }
+        }
+
+        public static Func<float, float> CreateFalloffEvaluator(ResolvedWeaponStats stats)
+        {
+            if (stats == null || stats.DamageFalloffEnd <= stats.DamageFalloffStart || stats.DamageFalloffEnd <= 0f)
+            {
+                return _ => 1f;
+            }
+
+            float start = stats.DamageFalloffStart;
+            float end = stats.DamageFalloffEnd;
+            float minRatio = stats.MinDamageRatio;
+
+            return distance =>
+            {
+                if (distance <= start) return 1f;
+                if (distance >= end) return minRatio;
+                float t = Mathf.Clamp01((distance - start) / (end - start));
+                return Mathf.Lerp(1f, minRatio, t);
+            };
+        }
+
         public void ResetRuntimeState()
         {
             _runtime?.CancelBurst();
@@ -324,7 +481,7 @@ namespace Game
         {
             _delivery?.Dispose();
 
-            if (DeliveryMode == WeaponDeliveryMode.Hitscan && _definition != null)
+            if (DeliveryMode == Application.WeaponDeliveryMode.Hitscan && _definition != null)
             {
                 _delivery = new HitscanWeaponDelivery(
                     _definition.HitscanRange,

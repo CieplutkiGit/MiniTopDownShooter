@@ -1,4 +1,5 @@
 using Application;
+using Application.Weapons;
 using UnityEngine;
 
 namespace Game
@@ -20,6 +21,9 @@ namespace Game
     [CreateAssetMenu(fileName = "WeaponDefinition", menuName = "Mini Top Down Shooter/Weapon Definition")]
     public class WeaponDefinition : ScriptableObject
     {
+        [Header("Identity")]
+        [SerializeField] private string _weaponId = WeaponWorkshopIds.Rifle;
+
         [Header("Firing")]
         [SerializeField] private WeaponFireMode _fireMode = WeaponFireMode.Automatic;
         [SerializeField] private WeaponDeliveryMode _deliveryMode = WeaponDeliveryMode.Projectile;
@@ -101,6 +105,12 @@ namespace Game
 
         [Min(1)]
         [SerializeField] private int _maxPoolSize = 20;
+
+        public string WeaponId
+        {
+            get => !string.IsNullOrEmpty(_weaponId) ? _weaponId : WeaponWorkshopIds.Rifle;
+            set => _weaponId = value;
+        }
 
         public WeaponFireMode FireMode => _fireMode;
         public WeaponDeliveryMode DeliveryMode => _deliveryMode;
