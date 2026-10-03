@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c53dbae3dadc4b3abc9f8cd57f8649a5, type: 3}
+  m_Name: Platform_Rifle
+  m_EditorClassIdentifier: Game::WeaponPlatformDefinition
+  _weaponId: weapon.rifle
+  _displayName: Assault Rifle
+  _supportedSlots:
+  - rifle.slot.barrel
+  - rifle.slot.magazine
+  - rifle.slot.grip
+  - rifle.slot.stock
+  _defaultParts:
+  - _slotId: rifle.slot.barrel
+    _partId: rifle.barrel.standard
+  - _slotId: rifle.slot.magazine
+    _partId: rifle.magazine.standard
+  - _slotId: rifle.slot.grip
+    _partId: rifle.grip.standard
+  - _slotId: rifle.slot.stock
+    _partId: rifle.stock.standard
+  _baseDamage: 15
+  _baseFireInterval: 0.11
+  _baseMagazineCapacity: 30
+  _baseStartingReserveAmmo: 120
+  _baseMaxReserveAmmo: 240
+  _baseReloadDuration: 1.55
+  _baseSpreadAngle: 1.2
+  _maxSpreadAngle: 7
+  _spreadPerShot: 0.55
+  _spreadRecoveryPerSecond: 10
+  _range: 50
+  _projectileSpeed: 28
+  _projectileLifetime: 2.5
+  _basePellets: 1
+  _baseFireMode: 1
+  _burstCount: 3
+  _burstInterval: 0.08
+  _aimTurnSpeed: 180
+  _deliveryMode: 0
+  _infiniteAmmo: 0
+  _autoReloadOnEmpty: 1
+  _cancelReloadOnFire: 1
+  _damageFalloffStart: 0
+  _damageFalloffEnd: 0
+  _minDamageRatio: 1
