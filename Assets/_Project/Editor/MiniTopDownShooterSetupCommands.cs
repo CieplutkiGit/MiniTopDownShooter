@@ -1144,6 +1144,89 @@ public static class MiniTopDownShooterSetupCommands
                 EditorUtility.SetDirty(asrc);
             }
         }
+
+        // Clean up stale standalone scene-level GunAudio objects (fixed-gun legacy playback)
+        GunAudio[] sceneGunAudios = Object.FindObjectsByType<GunAudio>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        for (int i = 0; i < sceneGunAudios.Length; i++)
+        {
+            GunAudio ga = sceneGunAudios[i];
+            if (ga != null && ga.GetComponent<Gun>() == null && ga.GetComponentInParent<Gun>() == null)
+            {
+                Object.DestroyImmediate(ga.gameObject);
+            }
+        }
+
+        // Ensure every Gun in the scene has authored audio bindings
+        Gun[] sceneGuns = Object.FindObjectsByType<Gun>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        for (int i = 0; i < sceneGuns.Length; i++)
+        {
+            Gun gun = sceneGuns[i];
+            if (gun == null) continue;
+
+            AudioSource gunSource = gun.GetComponent<AudioSource>();
+            if (gunSource == null)
+            {
+                gunSource = gun.gameObject.AddComponent<AudioSource>();
+                gunSource.playOnAwake = false;
+                gunSource.loop = false;
+                gunSource.spatialBlend = 0f;
+            }
+            if (sfxGroup != null)
+            {
+                gunSource.outputAudioMixerGroup = sfxGroup;
+            }
+            EditorUtility.SetDirty(gunSource);
+
+            GunAudio gunAudio = gun.GetComponent<GunAudio>();
+            if (gunAudio == null)
+            {
+                gunAudio = gun.gameObject.AddComponent<GunAudio>();
+            }
+
+            SerializedObject serializedAudio = new SerializedObject(gunAudio);
+            SerializedProperty gunProp = serializedAudio.FindProperty("_gunRef");
+            if (gunProp != null && gunProp.objectReferenceValue == null)
+            {
+                gunProp.objectReferenceValue = gun;
+            }
+            SerializedProperty srcProp = serializedAudio.FindProperty("_source");
+            if (srcProp != null && srcProp.objectReferenceValue == null)
+            {
+                srcProp.objectReferenceValue = gunSource;
+            }
+            SerializedProperty clipProp = serializedAudio.FindProperty("_shotClip");
+            if (clipProp != null && clipProp.objectReferenceValue == null)
+            {
+                clipProp.objectReferenceValue = ResolveShotClipForGun(gun);
+            }
+            serializedAudio.ApplyModifiedProperties();
+            EditorUtility.SetDirty(gunAudio);
+        }
+    }
+
+    public static AudioClip ResolveShotClipForGun(Gun gun)
+    {
+        string id = gun != null && gun.Definition != null ? gun.Definition.WeaponId : (gun != null ? gun.name : "");
+        id = id.ToLowerInvariant();
+
+        if (id.Contains("pistol"))
+        {
+            return AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/_Project/Audio/shot_pistol.wav");
+        }
+        if (id.Contains("shotgun"))
+        {
+            return AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/_Project/Audio/shot_shotgun.wav");
+        }
+        if (id.Contains("launcher"))
+        {
+            return AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/_Project/Audio/shot_shotgun.wav");
+        }
+        if (id.Contains("smg"))
+        {
+            return AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/_Project/Audio/shot_pistol.wav");
+        }
+
+        return AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/_Project/Audio/shot_rifle.wav");
     }
 
     public static AudioMixer EnsureAudioMixer()

@@ -46,6 +46,7 @@ namespace Game
 
             bool canMove = GameActivityPolicy.CanMove(state);
             bool canFire = GameActivityPolicy.CanFire(state);
+            bool canSwitchWeapon = GameActivityPolicy.CanSwitchWeapon(state);
 
             Vector2 moveDirection = canMove ? _input.MoveDirection : Vector2.zero;
             Vector2 lookDirection = _input.LookDirection;
@@ -55,7 +56,7 @@ namespace Game
 
             if (_input.ConsumePreviousWeaponPressed())
             {
-                if (canFire)
+                if (canSwitchWeapon)
                 {
                     _shoot.PreviousWeapon();
                 }
@@ -63,7 +64,7 @@ namespace Game
 
             if (_input.ConsumeNextWeaponPressed())
             {
-                if (canFire)
+                if (canSwitchWeapon)
                 {
                     _shoot.NextWeapon();
                 }

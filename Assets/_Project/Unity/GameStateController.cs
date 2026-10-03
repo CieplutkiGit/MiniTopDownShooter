@@ -169,6 +169,23 @@ namespace Game
             _manager.EnterWorkshopFiringRange();
         }
 
+        public void EnterDeploymentBriefing()
+        {
+            _manager.EnterDeploymentBriefing();
+        }
+
+        public void EnterLoading()
+        {
+            _manager.EnterLoading();
+        }
+
+        public bool CanEnterState(GameState targetState)
+        {
+            return _manager.CanEnterState(targetState);
+        }
+
+        public bool CanResume => _manager.CanResume;
+
         public void ReturnToMenu()
         {
             _manager.ReturnToMenu();

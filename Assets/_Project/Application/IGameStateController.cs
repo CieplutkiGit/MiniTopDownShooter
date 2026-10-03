@@ -11,5 +11,9 @@ namespace Application
         void EnterWorkshopRoaming();
         void EnterWorkshopEditing();
         void EnterWorkshopFiringRange();
+        void EnterDeploymentBriefing();
+        void EnterLoading();
+        bool CanEnterState(GameState targetState);
+        bool CanResume { get; }
     }
 }

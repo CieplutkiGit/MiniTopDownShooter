@@ -221,7 +221,7 @@ namespace MiniTopDownShooter.Tests.Workshop.A3
             Assert.AreEqual(3, gun.Runtime.BurstShotsRemaining);
 
             gun.Runtime.TryFire(1.0f);
-            gun.Reload();
+            gun.Runtime.StartReload(1.0f);
             Assert.IsTrue(gun.IsReloading);
 
             // Apply new stats mid-burst and mid-reload

@@ -28,6 +28,7 @@ namespace Game
         private ChaseState _chaseState;
         private AttackState _attackState;
         private DeadState _deadState;
+        private bool _behaviorInitialized;
 
         private Transform _target;
         private IDamageable _targetDamageable;
@@ -77,10 +78,11 @@ namespace Game
             _health.OnDead -= HandleDead;
             CancelInvoke();
 
-            if (_behavior != null)
+            if (_behavior != null && _behaviorInitialized)
             {
                 _behavior.OnDespawn();
             }
+            _behaviorInitialized = false;
         }
 
         public void Spawn(Vector3 position, Transform target)
@@ -127,6 +129,7 @@ namespace Game
                     _health,
                     _target,
                     _targetDamageable);
+                _behaviorInitialized = true;
             }
             else
             {

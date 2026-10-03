@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="7" result="Passed" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-03 10:06:00Z" end-time="2026-10-03 10:06:02Z" duration="1,861686">
+  <test-suite type="TestSuite" id="1016" name="MiniTopDownShooter" fullname="MiniTopDownShooter" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-10-03 10:06:00Z" end-time="2026-10-03 10:06:02Z" duration="1.861686" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1010" name="MiniTopDownShooter.PlayModeTests.dll" fullname="C:/Users/jerz/UnityProjects/MiniTopDownShooter/Library/ScriptAssemblies/MiniTopDownShooter.PlayModeTests.dll" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-10-03 10:06:00Z" end-time="2026-10-03 10:06:02Z" duration="1.854809" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="25728" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1011" name="MiniTopDownShooter" fullname="MiniTopDownShooter" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-10-03 10:06:00Z" end-time="2026-10-03 10:06:02Z" duration="1.854242" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1012" name="PlayModeTests" fullname="MiniTopDownShooter.PlayModeTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-10-03 10:06:00Z" end-time="2026-10-03 10:06:02Z" duration="1.853530" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1001" name="DemoSceneSmokeTests" fullname="MiniTopDownShooter.PlayModeTests.DemoSceneSmokeTests" classname="MiniTopDownShooter.PlayModeTests.DemoSceneSmokeTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-10-03 10:06:00Z" end-time="2026-10-03 10:06:02Z" duration="1.531996" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1003" name="ArenaShowcase_UsesAuthoredFrameworkData" fullname="MiniTopDownShooter.PlayModeTests.DemoSceneSmokeTests.ArenaShowcase_UsesAuthoredFrameworkData" methodname="ArenaShowcase_UsesAuthoredFrameworkData" classname="MiniTopDownShooter.PlayModeTests.DemoSceneSmokeTests" runstate="Runnable" seed="811385701" result="Passed" start-time="2026-10-03 10:06:00Z" end-time="2026-10-03 10:06:01Z" duration="0.422633" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1006" name="Boss_DeathDuringShockwaveWindup_PlayerHealthRemainsUnchanged" fullname="MiniTopDownShooter.PlayModeTests.DemoSceneSmokeTests.Boss_DeathDuringShockwaveWindup_PlayerHealthRemainsUnchanged" methodname="Boss_DeathDuringShockwaveWindup_PlayerHealthRemainsUnchanged" classname="MiniTopDownShooter.PlayModeTests.DemoSceneSmokeTests" runstate="Runnable" seed="987031010" result="Passed" start-time="2026-10-03 10:06:01Z" end-time="2026-10-03 10:06:01Z" duration="0.523589" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1004" name="MobileDemo_BuildsTouchInputPath" fullname="MiniTopDownShooter.PlayModeTests.DemoSceneSmokeTests.MobileDemo_BuildsTouchInputPath" methodname="MobileDemo_BuildsTouchInputPath" classname="MiniTopDownShooter.PlayModeTests.DemoSceneSmokeTests" runstate="Runnable" seed="1504542320" result="Passed" start-time="2026-10-03 10:06:01Z" end-time="2026-10-03 10:06:02Z" duration="0.204424" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1005" name="RealScene_FullLifecycle_PlayPauseResumeDeathVictoryRetry" fullname="MiniTopDownShooter.PlayModeTests.DemoSceneSmokeTests.RealScene_FullLifecycle_PlayPauseResumeDeathVictoryRetry" methodname="RealScene_FullLifecycle_PlayPauseResumeDeathVictoryRetry" classname="MiniTopDownShooter.PlayModeTests.DemoSceneSmokeTests" runstate="Runnable" seed="354536909" result="Passed" start-time="2026-10-03 10:06:02Z" end-time="2026-10-03 10:06:02Z" duration="0.216438" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[GameState Menu -> Playing
+GameState Playing -> Paused
+GameState Paused -> Playing
+Player health: 0/100
+GameState Playing -> GameOver
+Player health: 100/100
+GameState GameOver -> Playing
+GameState Playing -> Victory
+Player health: 100/100
+GameState Victory -> Playing
+GameState Playing -> GameOver
+]]></output>
+            </test-case>
+            <test-case id="1002" name="SampleScene_LoadsLegacyLearningPath" fullname="MiniTopDownShooter.PlayModeTests.DemoSceneSmokeTests.SampleScene_LoadsLegacyLearningPath" methodname="SampleScene_LoadsLegacyLearningPath" classname="MiniTopDownShooter.PlayModeTests.DemoSceneSmokeTests" runstate="Runnable" seed="422868879" result="Passed" start-time="2026-10-03 10:06:02Z" end-time="2026-10-03 10:06:02Z" duration="0.155264" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1007" name="GameLifecycleIntegrationTests" fullname="MiniTopDownShooter.PlayModeTests.GameLifecycleIntegrationTests" classname="MiniTopDownShooter.PlayModeTests.GameLifecycleIntegrationTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-03 10:06:02Z" end-time="2026-10-03 10:06:02Z" duration="0.320315" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1008" name="ArenaShowcase_Lifecycle_PauseFreezesTime_AndVictoryFreezesTime" fullname="MiniTopDownShooter.PlayModeTests.GameLifecycleIntegrationTests.ArenaShowcase_Lifecycle_PauseFreezesTime_AndVictoryFreezesTime" methodname="ArenaShowcase_Lifecycle_PauseFreezesTime_AndVictoryFreezesTime" classname="MiniTopDownShooter.PlayModeTests.GameLifecycleIntegrationTests" runstate="Runnable" seed="207401698" result="Passed" start-time="2026-10-03 10:06:02Z" end-time="2026-10-03 10:06:02Z" duration="0.170102" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[GameState Menu -> Playing
+GameState Playing -> Paused
+GameState Paused -> Playing
+GameState Playing -> Victory
+]]></output>
+            </test-case>
+            <test-case id="1009" name="ArenaShowcase_WorldResetManager_RestoresPlayerHealthAndState" fullname="MiniTopDownShooter.PlayModeTests.GameLifecycleIntegrationTests.ArenaShowcase_WorldResetManager_RestoresPlayerHealthAndState" methodname="ArenaShowcase_WorldResetManager_RestoresPlayerHealthAndState" classname="MiniTopDownShooter.PlayModeTests.GameLifecycleIntegrationTests" runstate="Runnable" seed="984751197" result="Passed" start-time="2026-10-03 10:06:02Z" end-time="2026-10-03 10:06:02Z" duration="0.148472" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[GameState Menu -> Playing
+Player health: 75/100
+GameState Playing -> Paused
+Player health: 100/100
+GameState Paused -> Menu
+Player health: 100/100
+GameState Menu -> Playing
+Saving results to: C:/Users/jerz/AppData/LocalLow/DefaultCompany/MiniTopDownShooter\TestResults.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

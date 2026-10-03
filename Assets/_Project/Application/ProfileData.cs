@@ -1,16 +1,32 @@
 using System;
+using System.Collections.Generic;
 
 namespace Application
 {
     [Serializable]
     public class UserProfileData
     {
-        public int Version = 1;
+        public int Version = 2;
         public int HighScore = 0;
         public int TotalKills = 0;
         public int TotalRuns = 0;
         public int TotalWins = 0;
         public int TotalLosses = 0;
+        public List<string> FinalizedRunIds = new List<string>();
+
+        public bool HasFinalizedRun(string runId)
+        {
+            return !string.IsNullOrWhiteSpace(runId) && FinalizedRunIds != null && FinalizedRunIds.Contains(runId);
+        }
+
+        public bool RecordFinalizedRun(string runId)
+        {
+            if (string.IsNullOrWhiteSpace(runId)) return false;
+            if (FinalizedRunIds == null) FinalizedRunIds = new List<string>();
+            if (FinalizedRunIds.Contains(runId)) return false;
+            FinalizedRunIds.Add(runId);
+            return true;
+        }
 
         public void ValidateAndMigrate()
         {
@@ -18,6 +34,9 @@ namespace Application
             {
                 Version = 1;
             }
+            if (Version < 2) Version = 2;
+            if (FinalizedRunIds == null) FinalizedRunIds = new List<string>();
+            FinalizedRunIds.RemoveAll(string.IsNullOrWhiteSpace);
             if (HighScore < 0) HighScore = 0;
             if (TotalKills < 0) TotalKills = 0;
             if (TotalRuns < 0) TotalRuns = 0;

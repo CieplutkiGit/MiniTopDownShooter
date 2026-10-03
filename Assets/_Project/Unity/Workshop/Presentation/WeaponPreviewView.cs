@@ -2,6 +2,7 @@ using System;
 using Application.Weapons;
 using Application.Workshop;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace Game.Workshop.Presentation
 {
@@ -20,6 +21,7 @@ namespace Game.Workshop.Presentation
         [Header("Rig & Camera")]
         [Tooltip("Dedicated camera for rendering preview/inspection.")]
         [SerializeField] private Camera _previewCamera;
+        [SerializeField] private RectTransform _previewSurface;
 
         [Tooltip("Transform root rotated by turntable or user inspection dragging.")]
         [SerializeField] private Transform _inspectionRigRoot;
@@ -326,12 +328,23 @@ namespace Game.Workshop.Presentation
 
         private void HandleInputRaycast()
         {
-            if (Input.GetMouseButtonDown(0))
+            var pointer = Pointer.current;
+            if (pointer != null && pointer.press.wasPressedThisFrame)
             {
                 Camera cam = _previewCamera != null ? _previewCamera : Camera.main;
                 if (cam != null)
                 {
-                    Ray ray = cam.ScreenPointToRay(Input.mousePosition);
+                    Vector2 position = pointer.position.ReadValue();
+                    Ray ray;
+                    if (_previewSurface != null)
+                    {
+                        if (!_previewSurface.gameObject.activeInHierarchy ||
+                            !RectTransformUtility.RectangleContainsScreenPoint(_previewSurface, position)) return;
+                        RectTransformUtility.ScreenPointToLocalPointInRectangle(_previewSurface, position, null, out var local);
+                        var rect = _previewSurface.rect;
+                        ray = cam.ViewportPointToRay(new Vector3((local.x - rect.xMin) / rect.width, (local.y - rect.yMin) / rect.height, 0));
+                    }
+                    else ray = cam.ScreenPointToRay(position);
                     HandleRaycast(ray);
                 }
             }

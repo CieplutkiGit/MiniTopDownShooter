@@ -148,6 +148,13 @@ namespace Game
 
         private void HandlePlayClicked()
         {
+            var hub = FindFirstObjectByType<Flow.HubSceneRoot>();
+            if (hub != null && hub.gameObject.scene == gameObject.scene)
+            {
+                hub.EnterRoaming();
+                return;
+            }
+
             if (_resetManager == null)
             {
                 return;

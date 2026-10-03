@@ -19,7 +19,21 @@ namespace Game
 
         protected void PlayClip(AudioClip clip)
         {
-            if (clip == null || _source == null)
+            if (clip == null)
+            {
+                return;
+            }
+
+            if (_source == null)
+            {
+                _source = GetComponent<AudioSource>();
+                if (_source == null)
+                {
+                    _source = GetComponentInParent<AudioSource>();
+                }
+            }
+
+            if (_source == null || !_source.isActiveAndEnabled)
             {
                 return;
             }

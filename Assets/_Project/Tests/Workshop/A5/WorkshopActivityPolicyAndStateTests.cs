@@ -33,42 +33,63 @@ namespace MiniTopDownShooter.Tests.Workshop.A5
             Assert.IsFalse(GameActivityPolicy.CanMove(GameState.GameOver));
             Assert.IsFalse(GameActivityPolicy.CanFire(GameState.GameOver));
             Assert.IsFalse(GameActivityPolicy.AdvancesRun(GameState.GameOver));
-            Assert.IsFalse(GameActivityPolicy.IsTimeFrozen(GameState.GameOver));
+            Assert.IsTrue(GameActivityPolicy.IsTimeFrozen(GameState.GameOver));
+            Assert.IsFalse(GameActivityPolicy.CanSwitchWeapon(GameState.GameOver));
 
             // Victory
             Assert.IsFalse(GameActivityPolicy.CanMove(GameState.Victory));
             Assert.IsFalse(GameActivityPolicy.CanFire(GameState.Victory));
             Assert.IsFalse(GameActivityPolicy.AdvancesRun(GameState.Victory));
             Assert.IsTrue(GameActivityPolicy.IsTimeFrozen(GameState.Victory));
+            Assert.IsFalse(GameActivityPolicy.CanSwitchWeapon(GameState.Victory));
 
             // WorkshopRoaming
             Assert.IsTrue(GameActivityPolicy.CanMove(GameState.WorkshopRoaming));
             Assert.IsFalse(GameActivityPolicy.CanFire(GameState.WorkshopRoaming));
+            Assert.IsTrue(GameActivityPolicy.CanSwitchWeapon(GameState.WorkshopRoaming));
             Assert.IsFalse(GameActivityPolicy.AdvancesRun(GameState.WorkshopRoaming));
             Assert.IsFalse(GameActivityPolicy.IsTimeFrozen(GameState.WorkshopRoaming));
 
             // WorkshopEditing
             Assert.IsFalse(GameActivityPolicy.CanMove(GameState.WorkshopEditing));
             Assert.IsFalse(GameActivityPolicy.CanFire(GameState.WorkshopEditing));
+            Assert.IsFalse(GameActivityPolicy.CanSwitchWeapon(GameState.WorkshopEditing));
             Assert.IsFalse(GameActivityPolicy.AdvancesRun(GameState.WorkshopEditing));
             Assert.IsTrue(GameActivityPolicy.IsTimeFrozen(GameState.WorkshopEditing));
 
             // WorkshopFiringRange
             Assert.IsTrue(GameActivityPolicy.CanMove(GameState.WorkshopFiringRange));
             Assert.IsTrue(GameActivityPolicy.CanFire(GameState.WorkshopFiringRange));
+            Assert.IsTrue(GameActivityPolicy.CanSwitchWeapon(GameState.WorkshopFiringRange));
             Assert.IsFalse(GameActivityPolicy.AdvancesRun(GameState.WorkshopFiringRange));
             Assert.IsFalse(GameActivityPolicy.IsTimeFrozen(GameState.WorkshopFiringRange));
+
+            // Loading
+            Assert.IsFalse(GameActivityPolicy.CanMove(GameState.Loading));
+            Assert.IsFalse(GameActivityPolicy.CanFire(GameState.Loading));
+            Assert.IsFalse(GameActivityPolicy.CanSwitchWeapon(GameState.Loading));
+            Assert.IsFalse(GameActivityPolicy.AdvancesRun(GameState.Loading));
+            Assert.IsTrue(GameActivityPolicy.IsTimeFrozen(GameState.Loading));
+
+            // DeploymentBriefing
+            Assert.IsFalse(GameActivityPolicy.CanMove(GameState.DeploymentBriefing));
+            Assert.IsFalse(GameActivityPolicy.CanFire(GameState.DeploymentBriefing));
+            Assert.IsFalse(GameActivityPolicy.CanSwitchWeapon(GameState.DeploymentBriefing));
+            Assert.IsFalse(GameActivityPolicy.AdvancesRun(GameState.DeploymentBriefing));
+            Assert.IsTrue(GameActivityPolicy.IsTimeFrozen(GameState.DeploymentBriefing));
         }
 
         [Test]
         [TestCase(GameState.Menu, 0f)]
         [TestCase(GameState.Playing, 1f)]
         [TestCase(GameState.Paused, 0f)]
-        [TestCase(GameState.GameOver, 1f)]
+        [TestCase(GameState.GameOver, 0f)]
         [TestCase(GameState.Victory, 0f)]
         [TestCase(GameState.WorkshopRoaming, 1f)]
         [TestCase(GameState.WorkshopEditing, 0f)]
         [TestCase(GameState.WorkshopFiringRange, 1f)]
+        [TestCase(GameState.Loading, 0f)]
+        [TestCase(GameState.DeploymentBriefing, 0f)]
         public void TimeController_AppliesTimeScale_BasedOnActivityPolicy(GameState state, float expectedTimeScale)
         {
             var go = new GameObject("TimeControllerTest");
@@ -110,6 +131,13 @@ namespace MiniTopDownShooter.Tests.Workshop.A5
                         stateController.EnterWorkshopRoaming();
                         stateController.EnterWorkshopFiringRange();
                         break;
+                    case GameState.Loading:
+                        stateController.EnterLoading();
+                        break;
+                    case GameState.DeploymentBriefing:
+                        stateController.EnterWorkshopRoaming();
+                        stateController.EnterDeploymentBriefing();
+                        break;
                 }
 
                 Assert.AreEqual(expectedTimeScale, Time.timeScale, 0.001f);
@@ -126,6 +154,7 @@ namespace MiniTopDownShooter.Tests.Workshop.A5
         [TestCase(GameState.WorkshopRoaming)]
         [TestCase(GameState.WorkshopEditing)]
         [TestCase(GameState.WorkshopFiringRange)]
+        [TestCase(GameState.DeploymentBriefing)]
         public void PauseAndResume_PreservesExactOriginState(GameState originState)
         {
             var manager = new GameStateManager();
@@ -139,10 +168,16 @@ namespace MiniTopDownShooter.Tests.Workshop.A5
                     manager.EnterWorkshopRoaming();
                     break;
                 case GameState.WorkshopEditing:
+                    manager.EnterWorkshopRoaming();
                     manager.EnterWorkshopEditing();
                     break;
                 case GameState.WorkshopFiringRange:
+                    manager.EnterWorkshopRoaming();
                     manager.EnterWorkshopFiringRange();
+                    break;
+                case GameState.DeploymentBriefing:
+                    manager.EnterWorkshopRoaming();
+                    manager.EnterDeploymentBriefing();
                     break;
             }
 
@@ -187,6 +222,20 @@ namespace MiniTopDownShooter.Tests.Workshop.A5
 
                 controller.Resume();
                 Assert.AreEqual(GameState.WorkshopFiringRange, controller.CurrentState);
+
+                controller.EnterWorkshopRoaming();
+                controller.EnterDeploymentBriefing();
+                Assert.AreEqual(GameState.DeploymentBriefing, controller.CurrentState);
+
+                controller.Pause();
+                Assert.AreEqual(GameState.Paused, controller.CurrentState);
+                Assert.AreEqual(GameState.DeploymentBriefing, controller.PreviousStateBeforePause);
+
+                controller.Resume();
+                Assert.AreEqual(GameState.DeploymentBriefing, controller.CurrentState);
+
+                controller.EnterLoading();
+                Assert.AreEqual(GameState.Loading, controller.CurrentState);
             }
             finally
             {

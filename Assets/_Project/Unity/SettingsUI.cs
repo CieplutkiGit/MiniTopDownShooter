@@ -40,6 +40,9 @@ namespace Game
         [SerializeField] private PlayerController _player;
 
         private GameSettingsData _currentSettings;
+        private GameStateController _modalGameState;
+        private bool _pausedForSettings;
+        public bool IsOpen { get; private set; }
 
         public void Initialize(PlayerController player)
         {
@@ -87,6 +90,9 @@ namespace Game
 
         private void OnDisable()
         {
+            IsOpen = false;
+            _pausedForSettings = false;
+            ClearGameplayInput();
             if (_saveButton != null)
             {
                 _saveButton.onClick.RemoveListener(SaveAndApply);
@@ -129,10 +135,17 @@ namespace Game
 
         public void Open()
         {
+            if (IsOpen) return;
+            IsOpen = true;
+            _modalGameState = Game.Flow.SceneComponents.Find<GameStateController>(gameObject.scene);
+            _pausedForSettings = _modalGameState != null && _modalGameState.CanEnterState(GameState.Paused);
+            if (_pausedForSettings) _modalGameState.Pause();
+            ClearGameplayInput();
             _currentSettings = SaveManager.LoadSettings();
             ApplySettingsToUI(_currentSettings);
 
             SetPanelActive(true);
+            transform.SetAsLastSibling();
 
             if (_firstSelected != null && EventSystem.current != null)
             {
@@ -142,7 +155,20 @@ namespace Game
 
         public void Close()
         {
+            IsOpen = false;
             SetPanelActive(false);
+            ClearGameplayInput();
+            if (_pausedForSettings && _modalGameState != null && _modalGameState.CurrentState == GameState.Paused)
+                _modalGameState.Resume();
+            _pausedForSettings = false;
+        }
+
+        private void ClearGameplayInput()
+        {
+            var player = _player != null ? _player : Game.Flow.SceneComponents.Find<PlayerController>(gameObject.scene);
+            player?.Input?.ResetGameplayTransientState();
+            player?.Input?.RequireNeutralToRearm();
+            Game.Flow.SceneComponents.Find<MobileInputState>(gameObject.scene)?.ResetAll();
         }
 
         public void SaveAndApply()

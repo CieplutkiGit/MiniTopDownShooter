@@ -636,6 +636,44 @@ public class MiniTopDownShooterWindow : EditorWindow
             AddError(report, $"Gun '{gun.name}' has no spawn point.", ref errors);
         }
 
+        GunAudio gunAudio = gun.GetComponent<GunAudio>();
+        if (gunAudio == null)
+        {
+            AddError(report, $"Gun '{gun.name}' has no GunAudio component.", ref errors);
+        }
+        else
+        {
+            SerializedObject serializedAudio = new SerializedObject(gunAudio);
+            SerializedProperty clipProp = serializedAudio.FindProperty("_shotClip");
+            SerializedProperty sourceProp = serializedAudio.FindProperty("_source");
+            SerializedProperty gunRefProp = serializedAudio.FindProperty("_gunRef");
+
+            if (clipProp == null || clipProp.objectReferenceValue == null)
+            {
+                AddError(report, $"GunAudio on '{gun.name}' has no shot AudioClip.", ref errors);
+            }
+
+            AudioSource audioSource = sourceProp != null ? sourceProp.objectReferenceValue as AudioSource : null;
+            if (audioSource == null)
+            {
+                audioSource = gun.GetComponent<AudioSource>();
+            }
+
+            if (audioSource == null)
+            {
+                AddError(report, $"GunAudio on '{gun.name}' has no AudioSource.", ref errors);
+            }
+            else if (audioSource.outputAudioMixerGroup == null)
+            {
+                AddWarning(report, $"AudioSource on Gun '{gun.name}' has no AudioMixerGroup assigned.", ref warnings);
+            }
+
+            if (gunRefProp != null && gunRefProp.objectReferenceValue == null)
+            {
+                AddWarning(report, $"GunAudio on '{gun.name}' has unassigned _gunRef (will fallback to GetComponent).", ref warnings);
+            }
+        }
+
         if (gun.Definition == null)
         {
             if (legacyPrefab == null || legacyPrefab.objectReferenceValue == null)

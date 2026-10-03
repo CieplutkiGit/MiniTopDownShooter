@@ -62,6 +62,7 @@ namespace Game
         public event System.Action<int> WaveStarted;
         public event System.Action<int> WaveCompleted;
         public event System.Action AllWavesCompleted;
+        public event System.Action<string> TechnicalFailure;
 
         public WaveSet WaveSet => _waveSet;
         public string SpawnErrorReason { get; private set; }
@@ -468,6 +469,7 @@ namespace Game
         private void TerminateWithSpawnError(string reason)
         {
             SpawnErrorReason = reason;
+            TechnicalFailure?.Invoke(reason);
             _activePlan = null;
             _pendingSpawnEntry = null;
             _pendingSpawnDelay = 0f;

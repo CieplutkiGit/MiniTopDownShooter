@@ -113,7 +113,8 @@ namespace Game
             if (player != null)
             {
                 NavMeshPath path = new NavMeshPath();
-                if (!NavMesh.CalculatePath(hit.position, player.position, NavMesh.AllAreas, path) ||
+                if (!NavMesh.SamplePosition(player.position, out NavMeshHit playerHit, sampleRadius, NavMesh.AllAreas) ||
+                    !NavMesh.CalculatePath(hit.position, playerHit.position, NavMesh.AllAreas, path) ||
                     path.status != NavMeshPathStatus.PathComplete)
                 {
                     return false;

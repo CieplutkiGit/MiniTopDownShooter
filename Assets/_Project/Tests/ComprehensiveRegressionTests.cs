@@ -1,10 +1,12 @@
 using System.Collections.Generic;
 using System.IO;
+using System;
 using Application;
 using Core;
 using Game;
 using NUnit.Framework;
 using UnityEngine;
+using Object = UnityEngine.Object;
 using UnityEngine.Audio;
 
 namespace MiniTopDownShooter.Tests
@@ -220,6 +222,71 @@ namespace MiniTopDownShooter.Tests
             gun.Shoot(Vector3.forward);
 
             Assert.AreEqual(29, gun.AmmoInMagazine, "Calling gun.Shoot on automatic weapon must consume 1 round");
+        }
+
+        [Test]
+        public void Gun_SaturatedDelivery_DoesNotConsumeAmmoOrRaiseFired()
+        {
+            GameObject gunGo = new GameObject("SaturatedGun");
+            _spawnedObjects.Add(gunGo);
+            Gun gun = gunGo.AddComponent<Gun>();
+            WeaponRuntime runtime = new WeaponRuntime(new WeaponRuntimeConfig
+            {
+                FireMode = Application.WeaponFireMode.SemiAutomatic,
+                FireInterval = 0.1f,
+                MagazineSize = 3,
+                StartingReserveAmmo = 3,
+                MaxReserveAmmo = 3,
+                InfiniteAmmo = false
+            });
+            var delivery = new SaturatedWeaponDelivery();
+            gun.ConfigureForTesting(runtime, delivery, gunGo.transform);
+            int fired = 0;
+            gun.Fired += () => fired++;
+
+            gun.Shoot(Vector3.forward);
+
+            Assert.AreEqual(3, gun.AmmoInMagazine);
+            Assert.AreEqual(0, fired);
+            Assert.AreEqual(1, delivery.AdmissionAttempts);
+        }
+
+        [Test]
+        public void Gun_CanShootAndReloadInWorkshopFiringRange()
+        {
+            GameObject stateGo = new GameObject("StateController");
+            _spawnedObjects.Add(stateGo);
+            GameStateController state = stateGo.AddComponent<GameStateController>();
+            state.EnterWorkshopRoaming();
+            state.EnterWorkshopFiringRange();
+
+            GameObject gunGo = new GameObject("RangeGun");
+            _spawnedObjects.Add(gunGo);
+            Gun gun = gunGo.AddComponent<Gun>();
+            gun.ConfigureForTesting(new WeaponRuntime(new WeaponRuntimeConfig
+            {
+                FireMode = Application.WeaponFireMode.SemiAutomatic,
+                FireInterval = 0.1f,
+                ReloadDuration = 1f,
+                MagazineSize = 2,
+                StartingReserveAmmo = 2,
+                MaxReserveAmmo = 2,
+                InfiniteAmmo = false
+            }), null, gunGo.transform);
+
+            gun.Shoot(Vector3.forward);
+            Assert.AreEqual(1, gun.AmmoInMagazine);
+            Assert.IsTrue(gun.Reload());
+        }
+
+        private sealed class SaturatedWeaponDelivery : IWeaponDelivery, IWeaponDeliveryAdmission
+        {
+            public int AdmissionAttempts { get; private set; }
+            public bool TryReserveShot(Transform spawnPoint) { AdmissionAttempts++; return false; }
+            public void CancelReservedShot() { }
+            public void Deliver(Transform spawnPoint, Vector3 direction, int damage, DamageAffiliation sourceAffiliation, Transform sourceRoot, EffectPool effectPool, float spreadAngle = 0f) { }
+            public void ClearActiveProjectiles() { }
+            public void Dispose() { }
         }
 
         [Test]
@@ -748,7 +815,9 @@ namespace MiniTopDownShooter.Tests
             gameState.Initialize(null, waveController);
 
             bool victoryTriggered = false;
+            bool technicalFailureReported = false;
             waveController.AllWavesCompleted += () => victoryTriggered = true;
+            waveController.TechnicalFailure += _ => technicalFailureReported = true;
 
             UnityEngine.TestTools.LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex(@"\[WaveController\] Wave 1 configuration invalid: .*"));
             gameState.StartGame();
@@ -760,6 +829,7 @@ namespace MiniTopDownShooter.Tests
             }
 
             Assert.IsFalse(victoryTriggered, "Unspawned boss must NEVER grant victory");
+            Assert.IsTrue(technicalFailureReported, "Invalid wave configuration must report a technical failure");
             Assert.AreNotEqual(GameState.Victory, gameState.CurrentState, "State must not be Victory");
             Assert.AreEqual(GameState.GameOver, gameState.CurrentState, "Missing boss zone must terminate into GameOver/retry flow");
         }

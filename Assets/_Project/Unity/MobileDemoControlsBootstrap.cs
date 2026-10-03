@@ -8,6 +8,7 @@ namespace Game
     public class MobileDemoControlsBootstrap : MonoBehaviour
     {
         [SerializeField] private bool _showOnDesktop = true;
+        [SerializeField] private GameStateController _gameStateRef;
         [SerializeField] private Vector2 _referenceResolution = new Vector2(1920f, 1080f);
         [Range(0f, 0.95f)]
         [SerializeField] private float _moveDeadZone = 0.12f;
@@ -19,10 +20,35 @@ namespace Game
         private MobileInputState _input;
         private GameObject _canvasObject;
         private RectTransform _safeArea;
+        private bool _controlsRequested;
 
         public MobileInputState Input => _input;
         public GameObject CanvasObject => _canvasObject;
         public RectTransform SafeArea => _safeArea;
+
+        private void OnEnable()
+        {
+            if (_gameStateRef == null) _gameStateRef = Game.Flow.SceneComponents.Find<GameStateController>(gameObject.scene);
+            if (_gameStateRef != null) _gameStateRef.OnStateChanged += HandleStateChanged;
+            ApplyVisibility();
+        }
+
+        private void OnDisable()
+        {
+            if (_gameStateRef != null) _gameStateRef.OnStateChanged -= HandleStateChanged;
+            if (_input != null) _input.ResetAll();
+        }
+
+        private void HandleStateChanged(Application.GameState oldState, Application.GameState newState) => ApplyVisibility();
+
+        private void ApplyVisibility()
+        {
+            if (_canvasObject == null) return;
+            var state = _gameStateRef != null ? _gameStateRef.CurrentState : Application.GameState.Playing;
+            bool active = _controlsRequested && (state == Application.GameState.Playing || state == Application.GameState.WorkshopRoaming || state == Application.GameState.WorkshopFiringRange);
+            _canvasObject.SetActive(active);
+            if (!active && _input != null) _input.ResetAll();
+        }
 
         private void Awake()
         {
@@ -56,8 +82,8 @@ namespace Game
 
             if (_canvasObject != null)
             {
-                bool shouldBeActive = settings.MobileTouchControls || UnityEngine.Application.isMobilePlatform || _showOnDesktop;
-                _canvasObject.SetActive(shouldBeActive);
+                _controlsRequested = settings.MobileTouchControls || UnityEngine.Application.isMobilePlatform || _showOnDesktop;
+                ApplyVisibility();
             }
 
             if (_safeArea != null)

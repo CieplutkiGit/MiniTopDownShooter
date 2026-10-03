@@ -4,6 +4,8 @@ using Application;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Pool;
+using UnityEngine.SceneManagement;
+using Game.Flow;
 
 namespace Game
 {
@@ -46,6 +48,8 @@ namespace Game
         private List<EnemyController> _alive = new List<EnemyController>();
         private int _aliveCount;
         private int _totalWeight;
+        private SceneObjectBudget _objectBudget;
+        private readonly Dictionary<EnemyController, SceneObjectBudget> _enemyBudgets = new Dictionary<EnemyController, SceneObjectBudget>();
 
         public event Action<int> EnemyKilled;
 
@@ -138,6 +142,7 @@ namespace Game
 
         private void Awake()
         {
+            _objectBudget = SceneObjectBudget.FindForScene(gameObject.scene);
             EnsureCollections();
             if (_player == null)
             {
@@ -248,6 +253,8 @@ namespace Game
                 return SpawnResult.NoAvailablePosition;
             }
 
+            if (_objectBudget != null && !_objectBudget.TryReserveEnemy()) return SpawnResult.CapacityReached;
+
             VariantPool pool = EnsurePool(prefab);
             EnemyController enemy = pool.Get();
             _instanceToPool[enemy] = pool;
@@ -255,6 +262,7 @@ namespace Game
             enemy.Spawn(position, _player);
             _alive.Add(enemy);
             _aliveCount++;
+            if (_objectBudget != null) _enemyBudgets[enemy] = _objectBudget;
             spawnedEnemy = enemy;
             return SpawnResult.Success;
         }
@@ -306,6 +314,8 @@ namespace Game
                 return false;
             }
 
+            if (_objectBudget != null && !_objectBudget.TryReserveEnemy()) return false;
+
             VariantPool pool = EnsurePool(prefab);
             EnemyController enemy = pool.Get();
             _instanceToPool[enemy] = pool;
@@ -313,6 +323,7 @@ namespace Game
             enemy.Spawn(position, _player);
             _alive.Add(enemy);
             _aliveCount++;
+            if (_objectBudget != null) _enemyBudgets[enemy] = _objectBudget;
             spawnedEnemy = enemy;
             return true;
         }
@@ -326,6 +337,8 @@ namespace Game
 
                 if (enemy == null)
                 {
+                    ReleaseEnemyBudget(enemy);
+                    _instanceToPool.Remove(enemy);
                     continue;
                 }
 
@@ -342,10 +355,31 @@ namespace Game
                     pool.Release(enemy);
                     _instanceToPool.Remove(enemy);
                 }
+                ReleaseEnemyBudget(enemy);
             }
 
             _alive.Clear();
             _aliveCount = 0;
+        }
+
+        public void Prewarm(int count)
+        {
+            if (_prefabs == null || count <= 0) return;
+            for (int i = 0; i < _prefabs.Length; i++)
+            {
+                EnemyController prefab = _prefabs[i].Prefab;
+                if (prefab != null)
+                {
+                    PrewarmVariant(prefab, count);
+                }
+            }
+        }
+
+        public void PrewarmVariant(EnemyController prefab, int count)
+        {
+            if (prefab == null || count <= 0) return;
+            VariantPool pool = EnsurePool(prefab);
+            pool.Prewarm(count);
         }
 
         private VariantPool EnsurePool(EnemyController prefab)
@@ -357,7 +391,8 @@ namespace Game
                     prefab,
                     Mathf.Max(1, _defaultPoolSize),
                     Mathf.Max(_defaultPoolSize, _maxPoolSize),
-                    _effectPool);
+                    _effectPool,
+                    gameObject.scene);
 
                 _pools[prefab] = pool;
             }
@@ -537,8 +572,25 @@ namespace Game
                 pool.Release(enemy);
                 _instanceToPool.Remove(enemy);
             }
+            ReleaseEnemyBudget(enemy);
 
             EnemyKilled?.Invoke(scoreValue);
+        }
+
+        private void ReleaseEnemyBudget(EnemyController enemy)
+        {
+            if (!ReferenceEquals(enemy, null) && _enemyBudgets.TryGetValue(enemy, out SceneObjectBudget budget))
+            {
+                _enemyBudgets.Remove(enemy);
+                if (budget != null) budget.ReleaseEnemy();
+            }
+        }
+
+        private void OnDestroy()
+        {
+            ClearAllAlive();
+            foreach (VariantPool pool in _pools.Values) pool.Dispose();
+            _pools.Clear();
         }
 
         public void NotifyEnemyKilled(int scoreValue)
@@ -558,16 +610,21 @@ namespace Game
         {
             private readonly EnemyController _prefab;
             private readonly EffectPool _effectPool;
+            private readonly Scene _scene;
             private readonly ObjectPool<EnemyController> _pool;
+            private readonly int _maxSize;
 
             public VariantPool(
                 EnemyController prefab,
                 int defaultSize,
                 int maxSize,
-                EffectPool effectPool)
+                EffectPool effectPool,
+                Scene scene)
             {
                 _prefab = prefab;
                 _effectPool = effectPool;
+                _scene = scene;
+                _maxSize = maxSize;
                 _pool = new ObjectPool<EnemyController>(
                     Create,
                     OnGet,
@@ -578,6 +635,24 @@ namespace Game
                     maxSize);
             }
 
+            public void Prewarm(int count)
+            {
+                int target = Mathf.Clamp(count, 0, _maxSize);
+                if (target <= 0) return;
+                List<EnemyController> spawned = new List<EnemyController>(target);
+                for (int i = 0; i < target; i++)
+                {
+                    spawned.Add(Get());
+                }
+                for (int i = 0; i < spawned.Count; i++)
+                {
+                    if (spawned[i] != null)
+                    {
+                        Release(spawned[i]);
+                    }
+                }
+            }
+
             public EnemyController Get()
             {
                 return _pool.Get();
@@ -585,19 +660,27 @@ namespace Game
 
             public void Release(EnemyController enemy)
             {
+                if (enemy == null) return;
                 _pool.Release(enemy);
             }
+
+            public void Dispose() => _pool.Dispose();
 
             private EnemyController Create()
             {
                 EnemyController enemy = UnityEngine.Object.Instantiate(_prefab);
-                InjectEffectPool(enemy);
+                if (enemy != null)
+                {
+                    if (_scene.IsValid() && _scene.isLoaded && enemy.gameObject.scene != _scene)
+                        UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(enemy.gameObject, _scene);
+                    InjectEffectPool(enemy);
+                }
                 return enemy;
             }
 
             private void InjectEffectPool(EnemyController enemy)
             {
-                if (_effectPool == null)
+                if (_effectPool == null || enemy == null)
                 {
                     return;
                 }
@@ -612,19 +695,30 @@ namespace Game
 
             private void OnGet(EnemyController enemy)
             {
+                if (enemy == null) return;
                 enemy.GetComponent<EnemyAttack>()?.ResetCooldown();
-                enemy.gameObject.SetActive(true);
+                if (enemy.gameObject != null)
+                {
+                    enemy.gameObject.SetActive(true);
+                }
             }
 
             private void OnRelease(EnemyController enemy)
             {
+                if (enemy == null) return;
                 enemy.GetComponent<EnemyAttack>()?.ResetCooldown();
-                enemy.gameObject.SetActive(false);
+                if (enemy.gameObject != null)
+                {
+                    enemy.gameObject.SetActive(false);
+                }
             }
 
             private void OnDestroyEnemy(EnemyController enemy)
             {
-                UnityEngine.Object.Destroy(enemy.gameObject);
+                if (enemy != null && enemy.gameObject != null)
+                {
+                    UnityEngine.Object.Destroy(enemy.gameObject);
+                }
             }
         }
     }

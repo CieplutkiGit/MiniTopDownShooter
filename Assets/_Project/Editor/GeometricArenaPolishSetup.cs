@@ -1872,6 +1872,23 @@ public static class GeometricArenaPolishSetup
 
         Debug.Log("[GeometricArenaPolish] Baking NavMesh...");
         surface.BuildNavMesh();
+
+        if (surface.navMeshData != null)
+        {
+            string navMeshFolder = "Assets/Scenes/ArenaShowcase";
+            if (!Directory.Exists(navMeshFolder))
+            {
+                Directory.CreateDirectory(navMeshFolder);
+            }
+            string navMeshAssetPath = "Assets/Scenes/ArenaShowcase/NavMesh-Plane.asset";
+            if (File.Exists(navMeshAssetPath))
+            {
+                AssetDatabase.DeleteAsset(navMeshAssetPath);
+            }
+            AssetDatabase.CreateAsset(surface.navMeshData, navMeshAssetPath);
+            AssetDatabase.SaveAssets();
+        }
+
         EditorUtility.SetDirty(surface);
         Debug.Log("[GeometricArenaPolish] NavMesh baking completed successfully!");
     }

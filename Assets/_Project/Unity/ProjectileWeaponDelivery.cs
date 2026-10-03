@@ -2,10 +2,12 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
+using UnityEngine.SceneManagement;
+using Game.Flow;
 
 namespace Game
 {
-    public class ProjectileWeaponDelivery : IWeaponDelivery
+    public class ProjectileWeaponDelivery : IWeaponDelivery, IWeaponDeliveryAdmission
     {
         private readonly Projectile _prefab;
         private int _projectilesPerShot;
@@ -14,6 +16,10 @@ namespace Game
         private readonly ObjectPool<Projectile> _pool;
         private readonly List<Projectile> _activeProjectiles = new List<Projectile>();
         private bool _isDisposed;
+        private readonly Scene _scene;
+        private readonly List<SceneObjectBudget> _reservedBudgets = new List<SceneObjectBudget>();
+        private readonly Dictionary<Projectile, SceneObjectBudget> _activeBudgets = new Dictionary<Projectile, SceneObjectBudget>();
+        private int _reservedShotPelletCount;
 
         public int ProjectilesPerShot => _projectilesPerShot;
         public float SpeedOverride => _speedOverride;
@@ -32,12 +38,14 @@ namespace Game
             int maxPoolSize,
             int projectilesPerShot = 1,
             float speedOverride = -1f,
-            float lifetimeOverride = -1f)
+            float lifetimeOverride = -1f,
+            Scene scene = default)
         {
             _prefab = prefab;
             _projectilesPerShot = Mathf.Max(1, projectilesPerShot);
             _speedOverride = speedOverride;
             _lifetimeOverride = lifetimeOverride;
+            _scene = scene.IsValid() ? scene : SceneManager.GetActiveScene();
 
             int minSize = Mathf.Max(1, defaultPoolSize);
             int maxSize = Mathf.Max(minSize, maxPoolSize);
@@ -68,12 +76,23 @@ namespace Game
         {
             if (_pool == null || spawnPoint == null || _isDisposed)
             {
+                CancelReservedShot();
                 return;
             }
 
-            for (int i = 0; i < _projectilesPerShot; i++)
+            int pelletCount = _reservedShotPelletCount > 0 ? _reservedShotPelletCount : _projectilesPerShot;
+            while (_reservedBudgets.Count < pelletCount) {
+                SceneObjectBudget budget = SceneObjectBudget.FindForScene(spawnPoint.gameObject.scene);
+                if (budget != null && !budget.TryReserveProjectile()) { CancelReservedShot(); return; }
+                _reservedBudgets.Add(budget);
+            }
+
+            for (int i = 0; i < pelletCount; i++)
             {
+                SceneObjectBudget budget = _reservedBudgets[0];
+                _reservedBudgets.RemoveAt(0);
                 Projectile projectile = _pool.Get();
+                if (budget != null) _activeBudgets[projectile] = budget;
                 projectile.transform.position = spawnPoint.position;
 
                 Vector3 pelletDir = spreadAngle > 0.001f
@@ -92,6 +111,29 @@ namespace Game
                     sourceAffiliation,
                     sourceRoot);
             }
+            _reservedShotPelletCount = 0;
+        }
+
+        public bool TryReserveShot(Transform spawnPoint)
+        {
+            CancelReservedShot();
+            if (_pool == null || spawnPoint == null || _isDisposed) return false;
+            SceneObjectBudget budget = spawnPoint != null ? SceneObjectBudget.FindForScene(spawnPoint.gameObject.scene) : null;
+            _reservedShotPelletCount = _projectilesPerShot;
+            for (int i = 0; i < _projectilesPerShot; i++)
+            {
+                if (budget != null && !budget.TryReserveProjectile()) { CancelReservedShot(); return false; }
+                _reservedBudgets.Add(budget);
+            }
+            return true;
+        }
+
+        public void CancelReservedShot()
+        {
+            for (int i = 0; i < _reservedBudgets.Count; i++)
+                if (_reservedBudgets[i] != null) _reservedBudgets[i].ReleaseProjectile();
+            _reservedBudgets.Clear();
+            _reservedShotPelletCount = 0;
         }
 
         public void ClearActiveProjectiles()
@@ -106,6 +148,7 @@ namespace Game
             }
 
             _activeProjectiles.Clear();
+            CancelReservedShot();
         }
 
         public void Dispose()
@@ -173,6 +216,8 @@ namespace Game
         private Projectile CreateProjectile()
         {
             Projectile instance = UnityEngine.Object.Instantiate(_prefab);
+            if (_scene.IsValid() && _scene.isLoaded && instance.gameObject.scene != _scene)
+                SceneManager.MoveGameObjectToScene(instance.gameObject, _scene);
             instance.gameObject.SetActive(false);
             return instance;
         }
@@ -186,12 +231,14 @@ namespace Game
         private void OnReleaseProjectile(Projectile projectile)
         {
             _activeProjectiles.Remove(projectile);
+            ReleaseBudget(projectile);
             projectile.gameObject.SetActive(false);
         }
 
         private void OnDestroyProjectile(Projectile projectile)
         {
             _activeProjectiles.Remove(projectile);
+            ReleaseBudget(projectile);
             if (projectile != null)
             {
                 SafeDestroy(projectile.gameObject);
@@ -211,6 +258,15 @@ namespace Game
                 {
                     SafeDestroy(projectile.gameObject);
                 }
+            }
+        }
+
+        private void ReleaseBudget(Projectile projectile)
+        {
+            if (projectile != null && _activeBudgets.TryGetValue(projectile, out SceneObjectBudget budget))
+            {
+                _activeBudgets.Remove(projectile);
+                if (budget != null) budget.ReleaseProjectile();
             }
         }
     }

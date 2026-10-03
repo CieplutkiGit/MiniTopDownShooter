@@ -9,6 +9,8 @@ namespace Application
         Victory,
         WorkshopRoaming = 5,
         WorkshopEditing = 6,
-        WorkshopFiringRange = 7
+        WorkshopFiringRange = 7,
+        Loading = 8,
+        DeploymentBriefing = 9
     }
 }

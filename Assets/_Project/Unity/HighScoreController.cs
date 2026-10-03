@@ -99,6 +99,13 @@ namespace Game
 
         private void HandleStateChanged(GameState oldState, GameState newState)
         {
+            // The managed mission flow records the full RunResult through RunFinalizer.
+            // Keep the legacy accounting below for standalone/demo scenes.
+            if (Game.Flow.RunFinalizer.ManagedFinalizationEnabled)
+            {
+                return;
+            }
+
             if (oldState != GameState.Playing || (newState != GameState.GameOver && newState != GameState.Victory))
             {
                 return;

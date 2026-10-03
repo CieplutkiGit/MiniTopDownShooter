@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Application.Flow;
+using Application.Weapons;
 using UnityEngine;
 
 namespace Game
@@ -26,6 +28,8 @@ namespace Game
         public IReadOnlyList<Gun> Weapons => _weapons;
 
         private List<Gun> _defaultWeapons;
+        private List<Gun> _deploymentWeapons;
+        private DeploymentLoadoutSnapshot _deploymentSnapshot;
 
         private void Awake()
         {
@@ -39,7 +43,8 @@ namespace Game
                 _defaultWeapons = new List<Gun>(_weapons);
             }
 
-            ApplySavedBuildsToAll();
+            if (_deploymentSnapshot == null)
+                ApplySavedBuildsToAll();
 
             for (int i = 0; i < _weapons.Count; i++)
             {
@@ -51,7 +56,10 @@ namespace Game
 
             if (_weapons.Count > 0)
             {
-                EquipSlot(Mathf.Clamp(_startingSlot, 0, _weapons.Count - 1));
+                if (_deploymentSnapshot != null)
+                    EquipDeploymentWeapon();
+                else
+                    EquipSlot(Mathf.Clamp(_startingSlot, 0, _weapons.Count - 1));
             }
         }
 
@@ -62,10 +70,13 @@ namespace Game
                 _defaultWeapons = new List<Gun>(_weapons);
             }
 
+            List<Gun> restoreWeapons = _deploymentSnapshot != null && _deploymentWeapons != null
+                ? _deploymentWeapons
+                : _defaultWeapons;
             for (int i = _weapons.Count - 1; i >= 0; i--)
             {
                 Gun gun = _weapons[i];
-                if (gun != null && !_defaultWeapons.Contains(gun))
+                if (gun != null && !restoreWeapons.Contains(gun))
                 {
                     gun.SetEquipped(false);
                     Destroy(gun.gameObject);
@@ -73,9 +84,12 @@ namespace Game
             }
 
             _weapons.Clear();
-            _weapons.AddRange(_defaultWeapons);
+            _weapons.AddRange(restoreWeapons);
 
-            ApplySavedBuildsToAll();
+            if (_deploymentSnapshot != null)
+                ApplyDeploymentBuilds(_deploymentSnapshot, Game.Workshop.WeaponBuildApplier.DefaultCatalog);
+            else
+                ApplySavedBuildsToAll();
 
             for (int i = 0; i < _weapons.Count; i++)
             {
@@ -89,7 +103,10 @@ namespace Game
             _activeIndex = -1;
             if (_weapons.Count > 0)
             {
-                EquipSlot(Mathf.Clamp(_startingSlot, 0, _weapons.Count - 1));
+                if (_deploymentSnapshot != null)
+                    EquipDeploymentWeapon();
+                else
+                    EquipSlot(Mathf.Clamp(_startingSlot, 0, _weapons.Count - 1));
             }
         }
 
@@ -151,6 +168,8 @@ namespace Game
 
         public void ApplySavedBuildsToAll()
         {
+            if (_deploymentSnapshot != null) return;
+
             for (int i = 0; i < _weapons.Count; i++)
             {
                 if (_weapons[i] != null)
@@ -158,6 +177,91 @@ namespace Game
                     ApplySavedBuildToGun(_weapons[i]);
                 }
             }
+        }
+
+        public bool ApplyDeploymentSnapshot(DeploymentLoadoutSnapshot snapshot, IWeaponCatalog catalog)
+        {
+            if (snapshot == null || catalog == null) return false;
+
+            var availableById = new Dictionary<string, Gun>(StringComparer.Ordinal);
+            for (int i = 0; i < _weapons.Count; i++)
+            {
+                Gun gun = _weapons[i];
+                if (gun != null && !string.IsNullOrEmpty(gun.WeaponId) && !availableById.ContainsKey(gun.WeaponId))
+                    availableById.Add(gun.WeaponId, gun);
+            }
+
+            var ordered = new List<Gun>();
+            var deployedIds = new HashSet<string>(StringComparer.Ordinal);
+            foreach (string weaponId in snapshot.OrderedWeaponIds)
+            {
+                if (string.IsNullOrWhiteSpace(weaponId) || !deployedIds.Add(weaponId) ||
+                    !availableById.TryGetValue(weaponId, out Gun gun) ||
+                    !snapshot.CommittedBuilds.TryGetValue(weaponId, out WeaponBuild build) ||
+                    build == null || build.WeaponId != weaponId)
+                    return false;
+                ordered.Add(gun);
+            }
+
+            if (ordered.Count == 0 || !deployedIds.Contains(snapshot.EquippedWeaponId)) return false;
+
+            foreach (Gun gun in _weapons)
+            {
+                if (gun != null) gun.SetEquipped(false);
+            }
+
+            _deploymentSnapshot = snapshot;
+            _deploymentWeapons = new List<Gun>(ordered);
+            _weapons.Clear();
+            _weapons.AddRange(ordered);
+
+            bool buildsApplied = ApplyDeploymentBuilds(snapshot, catalog);
+            for (int i = 0; i < _weapons.Count; i++)
+            {
+                if (_weapons[i] != null)
+                {
+                    _weapons[i].ResetRuntimeState();
+                    _weapons[i].SetEquipped(false);
+                }
+            }
+            EquipDeploymentWeapon();
+            return buildsApplied;
+        }
+
+        private bool ApplyDeploymentBuilds(DeploymentLoadoutSnapshot snapshot, IWeaponCatalog catalog)
+        {
+            if (snapshot == null || catalog == null) return false;
+            bool allApplied = true;
+            IWeaponBuildResolver resolver = Game.Workshop.WeaponBuildApplier.DefaultResolver;
+            foreach (Gun gun in _weapons)
+            {
+                if (gun == null || !snapshot.CommittedBuilds.TryGetValue(gun.WeaponId, out WeaponBuild build) || build == null)
+                {
+                    allApplied = false;
+                    continue;
+                }
+                WeaponBuild normalized = resolver.Normalize(build, catalog, out _);
+                if (normalized == null || !Game.Workshop.WeaponBuildApplier.ApplyBuild(gun, normalized, catalog, resolver))
+                {
+                    allApplied = false;
+                    Debug.LogWarning($"Could not apply deployed build for weapon '{gun.WeaponId}'.", gun);
+                }
+            }
+            return allApplied;
+        }
+
+        private void EquipDeploymentWeapon()
+        {
+            if (_deploymentSnapshot == null) return;
+            for (int i = 0; i < _weapons.Count; i++)
+            {
+                if (_weapons[i] != null && _weapons[i].WeaponId == _deploymentSnapshot.EquippedWeaponId)
+                {
+                    EquipSlot(i);
+                    return;
+                }
+            }
+            if (_weapons.Count > 0) EquipSlot(0);
         }
 
         private void ApplySavedBuildToGun(Gun gun)

@@ -1,6 +1,7 @@
 using System;
 using Application;
 using Application.Weapons;
+using Application.Workshop;
 using Core;
 using UnityEngine;
 
@@ -155,17 +156,19 @@ namespace Game
                 }
             }
 
-            if (_gameState != null && _gameState.CurrentState != GameState.Playing)
+            if (_gameState != null && !GameActivityPolicy.CanFire(_gameState.CurrentState))
             {
                 return;
             }
 
             _runtime.TickReload(Time.time);
 
-            if (_runtime.TickBurst(Time.time))
+            bool reserved = TryReserveDeliveryShot();
+            if (reserved && _runtime.TickBurst(Time.time))
             {
                 DeliverRound(_aimDirection);
             }
+            else if (reserved) CancelReservedDeliveryShot();
 
             _runtime.RecoverSpread(Time.deltaTime);
         }
@@ -192,7 +195,7 @@ namespace Game
                 _gameState = _gameStateRef;
             }
 
-            if (_gameState != null && _gameState.CurrentState != GameState.Playing)
+            if (_gameState != null && !GameActivityPolicy.CanFire(_gameState.CurrentState))
             {
                 return;
             }
@@ -213,26 +216,30 @@ namespace Game
             {
                 case Application.WeaponFireMode.SemiAutomatic:
                 case Application.WeaponFireMode.Shotgun:
-                    if (wasPressed && _runtime.TryFire(Time.time))
+                    if (wasPressed && TryReserveDeliveryShot())
                     {
-                        DeliverRound(_aimDirection);
+                        if (_runtime.TryFire(Time.time)) DeliverRound(_aimDirection);
+                        else CancelReservedDeliveryShot();
                     }
                     break;
 
                 case Application.WeaponFireMode.Burst:
                     if (wasPressed && _runtime.StartBurst(Time.time))
                     {
-                        if (_runtime.TickBurst(Time.time))
+                        bool reserved = TryReserveDeliveryShot();
+                        if (reserved && _runtime.TickBurst(Time.time))
                         {
                             DeliverRound(_aimDirection);
                         }
+                        else if (reserved) CancelReservedDeliveryShot();
                     }
                     break;
 
                 default: // Automatic
-                    if ((isHeld || wasPressed) && _runtime.TryFire(Time.time))
+                    if ((isHeld || wasPressed) && TryReserveDeliveryShot())
                     {
-                        DeliverRound(_aimDirection);
+                        if (_runtime.TryFire(Time.time)) DeliverRound(_aimDirection);
+                        else CancelReservedDeliveryShot();
                     }
                     break;
             }
@@ -250,7 +257,13 @@ namespace Game
 
         public bool Reload()
         {
-            if (_runtime == null)
+            if (_gameState == null && _gameStateRef == null)
+            {
+                _gameStateRef = FindFirstObjectByType<GameStateController>();
+                _gameState = _gameStateRef;
+            }
+
+            if (_runtime == null || (_gameState != null && !GameActivityPolicy.CanFire(_gameState.CurrentState)))
             {
                 return false;
             }
@@ -305,6 +318,15 @@ namespace Game
         public void ConfigureForTesting(WeaponRuntime runtime, IWeaponDelivery delivery, Transform spawnPoint)
         {
             _runtime = runtime;
+            if (_runtime != null)
+            {
+                _runtime.Fired += () => Fired?.Invoke();
+                _runtime.EmptyFired += () => EmptyFired?.Invoke();
+                _runtime.ReloadStarted += () => ReloadStarted?.Invoke();
+                _runtime.ReloadCompleted += () => ReloadCompleted?.Invoke();
+                _runtime.ReloadCanceled += () => ReloadCanceled?.Invoke();
+                _runtime.AmmoChanged += (mag, res) => AmmoChanged?.Invoke(mag, res);
+            }
             _delivery = delivery;
             _spawnPoint = spawnPoint;
             _isEquipped = true;
@@ -430,7 +452,8 @@ namespace Game
                         maxPool,
                         stats.PelletCount,
                         stats.ProjectileSpeed,
-                        stats.ProjectileLifetime);
+                        stats.ProjectileLifetime,
+                        gameObject.scene);
                 }
             }
         }
@@ -525,7 +548,8 @@ namespace Game
                     maxPool,
                     count,
                     speed,
-                    lifetime);
+                    lifetime,
+                    gameObject.scene);
             }
         }
 
@@ -544,6 +568,16 @@ namespace Game
                 _damageSourceRoot,
                 _effectPool,
                 _runtime != null ? _runtime.CurrentSpreadAngle : 0f);
+        }
+
+        private bool TryReserveDeliveryShot()
+        {
+            return !(_delivery is IWeaponDeliveryAdmission admission) || admission.TryReserveShot(_spawnPoint);
+        }
+
+        private void CancelReservedDeliveryShot()
+        {
+            if (_delivery is IWeaponDeliveryAdmission admission) admission.CancelReservedShot();
         }
 
         private void RaiseAmmoChanged()

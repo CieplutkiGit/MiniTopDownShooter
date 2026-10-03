@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b4f5f36e8fc92147bcb46a21b38db06, type: 3}
+  m_Name: Mission_ArenaSweep
+  m_EditorClassIdentifier: MiniTopDownShooter.Unity::Game.Flow.MissionDefinition
+  _missionId: Mission_ArenaSweep
+  _displayName: Arena Sweep
+  _briefingText: Clear four enemy waves and defeat the arena commander. Your committed
+    weapon build deploys with you.
+  _sceneName: ArenaShowcase
+  _waveSet: {fileID: 11400000, guid: 429b8b24c64a4a2aa798466e9b90da5b, type: 2}

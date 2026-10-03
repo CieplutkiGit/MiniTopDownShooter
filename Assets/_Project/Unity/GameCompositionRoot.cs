@@ -1,4 +1,7 @@
 using UnityEngine;
+using Application.Flow;
+using Game.Flow;
+using Game.Workshop.Presentation;
 
 namespace Game
 {
@@ -41,6 +44,7 @@ namespace Game
 
         [Header("Weapon Workshop")]
         [SerializeField] private WeaponCatalog _weaponCatalog;
+        [SerializeField] private WeaponVisualProfile[] _weaponVisualProfiles;
         [SerializeField] private Game.Workshop.WorkshopUIController _workshopUIController;
         [SerializeField] private Game.Workshop.WorkshopBenchTrigger _workshopBenchTrigger;
         [SerializeField] private Game.Workshop.WorkshopFiringRangeTrigger _workshopFiringRangeTrigger;
@@ -56,12 +60,16 @@ namespace Game
         public WorldResetManager WorldResetManager => _worldResetManager;
         public EffectPool EffectPool => _effectPool;
         public WeaponCatalog WeaponCatalog => _weaponCatalog;
+        public WeaponVisualProfile[] WeaponVisualProfiles => _weaponVisualProfiles;
+        public PlayerSession PlayerSession { get; private set; }
+        public SessionWeaponBuildStore BuildStore { get; private set; }
         public Game.Workshop.WorkshopUIController WorkshopUIController => _workshopUIController;
         public Game.Workshop.WorkshopBenchTrigger WorkshopBenchTrigger => _workshopBenchTrigger;
         public Game.Workshop.WorkshopFiringRangeTrigger WorkshopFiringRangeTrigger => _workshopFiringRangeTrigger;
 
         private void Awake()
         {
+            SceneObjectBudget.EnsureForScene(gameObject.scene, gameObject);
             ComposeDependencies();
         }
 
@@ -71,112 +79,118 @@ namespace Game
             WireDependencies();
         }
 
+        public void BindAppContext(PlayerSession playerSession, SessionWeaponBuildStore buildStore)
+        {
+            PlayerSession = playerSession;
+            BuildStore = buildStore;
+        }
+
         private void ResolveMissingReferences()
         {
             if (_player == null)
             {
-                _player = FindFirstObjectByType<PlayerController>();
+                _player = SceneComponents.Find<PlayerController>(gameObject.scene);
             }
 
             if (_gameStateController == null)
             {
-                _gameStateController = FindFirstObjectByType<GameStateController>();
+                _gameStateController = SceneComponents.Find<GameStateController>(gameObject.scene);
             }
 
             if (_timeController == null)
             {
-                _timeController = FindFirstObjectByType<TimeController>();
+                _timeController = SceneComponents.Find<TimeController>(gameObject.scene);
             }
 
             if (_scoreController == null)
             {
-                _scoreController = FindFirstObjectByType<ScoreController>();
+                _scoreController = SceneComponents.Find<ScoreController>(gameObject.scene);
             }
 
             if (_highScoreController == null)
             {
-                _highScoreController = FindFirstObjectByType<HighScoreController>();
+                _highScoreController = SceneComponents.Find<HighScoreController>(gameObject.scene);
             }
 
             if (_waveController == null)
             {
-                _waveController = FindFirstObjectByType<WaveController>();
+                _waveController = SceneComponents.Find<WaveController>(gameObject.scene);
             }
 
             if (_enemySpawner == null)
             {
-                _enemySpawner = FindFirstObjectByType<EnemySpawner>();
+                _enemySpawner = SceneComponents.Find<EnemySpawner>(gameObject.scene);
             }
 
             if (_worldResetManager == null)
             {
-                _worldResetManager = FindFirstObjectByType<WorldResetManager>();
+                _worldResetManager = SceneComponents.Find<WorldResetManager>(gameObject.scene);
             }
 
             if (_effectPool == null)
             {
-                _effectPool = FindFirstObjectByType<EffectPool>();
+                _effectPool = SceneComponents.Find<EffectPool>(gameObject.scene);
             }
 
             if (_mobileInput == null)
             {
-                _mobileInput = FindFirstObjectByType<MobileInputState>(FindObjectsInactive.Include);
+                _mobileInput = SceneComponents.Find<MobileInputState>(gameObject.scene);
             }
 
             // UI Elements
             if (_mainMenuUI == null)
             {
-                _mainMenuUI = FindFirstObjectByType<MainMenuUI>(FindObjectsInactive.Include);
+                _mainMenuUI = SceneComponents.Find<MainMenuUI>(gameObject.scene);
             }
 
             if (_pauseUI == null)
             {
-                _pauseUI = FindFirstObjectByType<PauseUI>(FindObjectsInactive.Include);
+                _pauseUI = SceneComponents.Find<PauseUI>(gameObject.scene);
             }
 
             if (_gameOverUI == null)
             {
-                _gameOverUI = FindFirstObjectByType<GameOverUI>(FindObjectsInactive.Include);
+                _gameOverUI = SceneComponents.Find<GameOverUI>(gameObject.scene);
             }
 
             if (_victoryUI == null)
             {
-                _victoryUI = FindFirstObjectByType<VictoryUI>(FindObjectsInactive.Include);
+                _victoryUI = SceneComponents.Find<VictoryUI>(gameObject.scene);
             }
 
             if (_scoreUI == null)
             {
-                _scoreUI = FindFirstObjectByType<ScoreUI>(FindObjectsInactive.Include);
+                _scoreUI = SceneComponents.Find<ScoreUI>(gameObject.scene);
             }
 
             if (_waveUI == null)
             {
-                _waveUI = FindFirstObjectByType<WaveUI>(FindObjectsInactive.Include);
+                _waveUI = SceneComponents.Find<WaveUI>(gameObject.scene);
             }
 
             if (_weaponHUD == null)
             {
-                _weaponHUD = FindFirstObjectByType<WeaponHUD>(FindObjectsInactive.Include);
+                _weaponHUD = SceneComponents.Find<WeaponHUD>(gameObject.scene);
             }
 
             if (_highScoreUI == null)
             {
-                _highScoreUI = FindFirstObjectByType<HighScoreUI>(FindObjectsInactive.Include);
+                _highScoreUI = SceneComponents.Find<HighScoreUI>(gameObject.scene);
             }
 
             if (_healthBarUI == null)
             {
-                _healthBarUI = FindFirstObjectByType<HealthBarUI>(FindObjectsInactive.Include);
+                _healthBarUI = SceneComponents.Find<HealthBarUI>(gameObject.scene);
             }
 
             if (_bossHealthBarUI == null)
             {
-                _bossHealthBarUI = FindFirstObjectByType<BossHealthBarUI>(FindObjectsInactive.Include);
+                _bossHealthBarUI = SceneComponents.Find<BossHealthBarUI>(gameObject.scene);
             }
 
             if (_settingsUI == null)
             {
-                _settingsUI = FindFirstObjectByType<SettingsUI>(FindObjectsInactive.Include);
+                _settingsUI = SceneComponents.Find<SettingsUI>(gameObject.scene);
             }
 
             if (_weaponCatalog == null)
@@ -196,17 +210,17 @@ namespace Game
 
             if (_workshopUIController == null)
             {
-                _workshopUIController = FindFirstObjectByType<Game.Workshop.WorkshopUIController>(FindObjectsInactive.Include);
+                _workshopUIController = SceneComponents.Find<Game.Workshop.WorkshopUIController>(gameObject.scene);
             }
 
             if (_workshopBenchTrigger == null)
             {
-                _workshopBenchTrigger = FindFirstObjectByType<Game.Workshop.WorkshopBenchTrigger>(FindObjectsInactive.Include);
+                _workshopBenchTrigger = SceneComponents.Find<Game.Workshop.WorkshopBenchTrigger>(gameObject.scene);
             }
 
             if (_workshopFiringRangeTrigger == null)
             {
-                _workshopFiringRangeTrigger = FindFirstObjectByType<Game.Workshop.WorkshopFiringRangeTrigger>(FindObjectsInactive.Include);
+                _workshopFiringRangeTrigger = SceneComponents.Find<Game.Workshop.WorkshopFiringRangeTrigger>(gameObject.scene);
             }
         }
 
@@ -326,7 +340,7 @@ namespace Game
                 }
             }
 
-            ScreenShake shake = FindFirstObjectByType<ScreenShake>();
+            ScreenShake shake = SceneComponents.Find<ScreenShake>(gameObject.scene);
             if (shake != null && _player != null)
             {
                 HealthComponent playerHealth = _player.GetComponent<HealthComponent>();
@@ -336,25 +350,25 @@ namespace Game
                 }
             }
 
-            PlayerAudio playerAudio = FindFirstObjectByType<PlayerAudio>();
+            PlayerAudio playerAudio = SceneComponents.Find<PlayerAudio>(gameObject.scene);
             if (playerAudio != null && _player != null)
             {
                 playerAudio.Initialize(_player);
             }
 
-            GameStateAudio gameStateAudio = FindFirstObjectByType<GameStateAudio>();
+            GameStateAudio gameStateAudio = SceneComponents.Find<GameStateAudio>(gameObject.scene);
             if (gameStateAudio != null && _gameStateController != null)
             {
                 gameStateAudio.Initialize(_gameStateController);
             }
 
-            WaveAudio waveAudio = FindFirstObjectByType<WaveAudio>();
+            WaveAudio waveAudio = SceneComponents.Find<WaveAudio>(gameObject.scene);
             if (waveAudio != null && _waveController != null)
             {
                 waveAudio.Initialize(_waveController);
             }
 
-            EnemyAudio enemyAudio = FindFirstObjectByType<EnemyAudio>();
+            EnemyAudio enemyAudio = SceneComponents.Find<EnemyAudio>(gameObject.scene);
             if (enemyAudio != null && _enemySpawner != null)
             {
                 enemyAudio.Initialize(_enemySpawner);
@@ -363,6 +377,60 @@ namespace Game
             if (_settingsUI != null && _player != null)
             {
                 _settingsUI.Initialize(_player);
+            }
+
+            // Gun Audio Wiring & Stale Guard
+            if (_player != null)
+            {
+                WeaponLoadout loadout = _player.GetComponent<WeaponLoadout>();
+                if (loadout != null)
+                {
+                    for (int i = 0; i < loadout.Count; i++)
+                    {
+                        Gun gun = loadout.Weapons[i];
+                        if (gun != null)
+                        {
+                            GunAudio gunAudio = gun.GetComponent<GunAudio>();
+                            if (gunAudio != null)
+                            {
+                                gunAudio.Initialize(gun);
+                            }
+                        }
+                    }
+
+                    loadout.WeaponAdded -= HandleWeaponAddedToLoadout;
+                    loadout.WeaponAdded += HandleWeaponAddedToLoadout;
+                }
+                else
+                {
+                    PlayerShoot shoot = _player.GetComponent<PlayerShoot>();
+                    if (shoot != null && shoot.ActiveGun != null)
+                    {
+                        GunAudio gunAudio = shoot.ActiveGun.GetComponent<GunAudio>();
+                        if (gunAudio != null)
+                        {
+                            gunAudio.Initialize(shoot.ActiveGun);
+                        }
+                    }
+                }
+            }
+
+            GunAudio[] allGunAudios = FindObjectsByType<GunAudio>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            for (int i = 0; i < allGunAudios.Length; i++)
+            {
+                if (allGunAudios[i] != null && allGunAudios[i].GetComponent<Gun>() == null && allGunAudios[i].GetComponentInParent<Gun>() == null)
+                {
+                    // Stale/duplicate fixed-gun playback object in scene
+                    allGunAudios[i].gameObject.SetActive(false);
+                    if (UnityEngine.Application.isPlaying)
+                    {
+                        Destroy(allGunAudios[i].gameObject);
+                    }
+                    else
+                    {
+                        DestroyImmediate(allGunAudios[i].gameObject);
+                    }
+                }
             }
 
             // Weapon Workshop Wiring
@@ -384,6 +452,30 @@ namespace Game
             if (_workshopFiringRangeTrigger != null && _gameStateController != null)
             {
                 _workshopFiringRangeTrigger.Initialize(_gameStateController);
+            }
+        }
+
+        private void HandleWeaponAddedToLoadout(Gun gun, int index)
+        {
+            if (gun != null)
+            {
+                GunAudio gunAudio = gun.GetComponent<GunAudio>();
+                if (gunAudio != null)
+                {
+                    gunAudio.Initialize(gun);
+                }
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (_player != null)
+            {
+                WeaponLoadout loadout = _player.GetComponent<WeaponLoadout>();
+                if (loadout != null)
+                {
+                    loadout.WeaponAdded -= HandleWeaponAddedToLoadout;
+                }
             }
         }
     }

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Application;
+using Application.Flow;
 using Application.Weapons;
 using Game;
 using Game.Workshop;
@@ -15,10 +16,16 @@ namespace MiniTopDownShooter.Tests.Workshop
         private WeaponBuildResolver _resolver;
         private FakeWeaponBuildStore _store;
         private List<GameObject> _spawnedObjects;
+        private IWeaponCatalog _previousCatalog;
+        private IWeaponBuildResolver _previousResolver;
+        private IWeaponBuildStore _previousStore;
 
         [SetUp]
         public void SetUp()
         {
+            _previousCatalog = WeaponBuildApplier.DefaultCatalog;
+            _previousResolver = WeaponBuildApplier.DefaultResolver;
+            _previousStore = WeaponBuildApplier.DefaultStore;
             _catalog = WeaponWorkshopTestFixtures.CreateCatalogWithRifle();
             _resolver = new WeaponBuildResolver();
             _store = new FakeWeaponBuildStore();
@@ -40,6 +47,9 @@ namespace MiniTopDownShooter.Tests.Workshop
                 }
             }
             _spawnedObjects.Clear();
+            WeaponBuildApplier.SetCatalog(_previousCatalog);
+            WeaponBuildApplier.SetResolver(_previousResolver);
+            WeaponBuildApplier.SetStore(_previousStore);
         }
 
         private Gun CreateTestGun(string weaponId)
@@ -140,6 +150,63 @@ namespace MiniTopDownShooter.Tests.Workshop
             loadout.ResetToDefault();
             Assert.AreEqual(45, loadout.ActiveGun.CurrentStats.MagazineCapacity);
             Assert.AreEqual(18f, loadout.ActiveGun.CurrentStats.Damage);
+        }
+
+        [Test]
+        public void WeaponLoadout_DeploymentSnapshotAppliesResolvedBuildAndSurvivesReset()
+        {
+            var player = new GameObject("Player_Deployment");
+            _spawnedObjects.Add(player);
+            var loadout = player.AddComponent<WeaponLoadout>();
+            Gun rifle = CreateTestGun(WeaponWorkshopIds.Rifle);
+            Gun pistol = CreateTestGun(WeaponWorkshopIds.Pistol);
+            _catalog.AddPlatform(new WeaponPlatformSpec(
+                WeaponWorkshopIds.Pistol, "Pistol", new string[0], new Dictionary<string, string>(),
+                10f, 0.2f, 12, 60, 120, 1f, 0f, 0f, 0f, 0f,
+                30f, 20f, 2f, 1, WeaponFireMode.SemiAutomatic, 1, 0.08f, 180f,
+                WeaponDeliveryMode.Projectile));
+            rifle.transform.SetParent(player.transform);
+            pistol.transform.SetParent(player.transform);
+            loadout.AddWeapon(rifle, equipImmediately: false);
+            loadout.AddWeapon(pistol, equipImmediately: false);
+
+            var selections = new Dictionary<string, string>
+            {
+                { WeaponWorkshopIds.RifleSlots.Barrel, "rifle.barrel.long" },
+                { WeaponWorkshopIds.RifleSlots.Magazine, "rifle.magazine.extended" },
+                { WeaponWorkshopIds.RifleSlots.Grip, "rifle.grip.vertical" },
+                { WeaponWorkshopIds.RifleSlots.Stock, "rifle.stock.cqb" }
+            };
+            var committed = new Dictionary<string, WeaponBuild>
+            {
+                { WeaponWorkshopIds.Rifle, new WeaponBuild(WeaponWorkshopIds.Rifle, selections) }
+            };
+            var incompleteSnapshot = new DeploymentLoadoutSnapshot(
+                new[] { WeaponWorkshopIds.Pistol, WeaponWorkshopIds.Rifle },
+                WeaponWorkshopIds.Rifle, committed);
+            Assert.IsFalse(loadout.ApplyDeploymentSnapshot(incompleteSnapshot, _catalog));
+            Assert.IsTrue(_catalog.TryGetPlatform(WeaponWorkshopIds.Pistol, out var pistolPlatform));
+            committed.Add(WeaponWorkshopIds.Pistol, pistolPlatform.CreateDefaultBuild());
+            var snapshot = new DeploymentLoadoutSnapshot(
+                new[] { WeaponWorkshopIds.Pistol, WeaponWorkshopIds.Rifle },
+                WeaponWorkshopIds.Rifle,
+                committed);
+
+            Assert.IsTrue(loadout.ApplyDeploymentSnapshot(snapshot, _catalog));
+            Assert.AreSame(pistol, loadout.Weapons[0]);
+            Assert.AreSame(rifle, loadout.Weapons[1]);
+            Assert.AreSame(rifle, loadout.ActiveGun);
+            Assert.AreEqual(18f, rifle.CurrentStats.Damage);
+            Assert.AreEqual(45, rifle.CurrentStats.MagazineCapacity);
+
+            loadout.ResetToDefault();
+
+            Assert.AreEqual(2, loadout.Count);
+            Assert.AreSame(pistol, loadout.Weapons[0]);
+            Assert.AreSame(rifle, loadout.Weapons[1]);
+            Assert.AreSame(rifle, loadout.ActiveGun);
+            Assert.AreEqual(18f, rifle.CurrentStats.Damage);
+            Assert.AreEqual(45, rifle.CurrentStats.MagazineCapacity);
         }
 
         [Test]

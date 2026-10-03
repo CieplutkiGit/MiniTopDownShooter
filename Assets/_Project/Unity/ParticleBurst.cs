@@ -73,6 +73,7 @@ namespace Game
 
         private void Configure()
         {
+            _system.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
             ParticleSystem.MainModule main = _system.main;
             main.duration = 1f;
             main.loop = false;

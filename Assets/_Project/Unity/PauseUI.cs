@@ -161,6 +161,21 @@ namespace Game
 
         private void HandleMenuClicked()
         {
+            if (Game.Flow.AppCompositionRoot.Instance != null)
+            {
+                var mission = Game.Flow.SceneComponents.Find<Game.Flow.MissionRunController>(gameObject.scene);
+                if (mission != null)
+                {
+                    mission.AbandonMission();
+                }
+                else
+                {
+                    _gameState?.Resume();
+                    _gameStateRef?.EnterWorkshopRoaming();
+                }
+                return;
+            }
+
             if (_gameState == null)
             {
                 return;

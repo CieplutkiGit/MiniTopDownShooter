@@ -3,6 +3,12 @@ using UnityEngine;
 
 namespace Game
 {
+    public interface IWeaponDeliveryAdmission
+    {
+        bool TryReserveShot(Transform spawnPoint);
+        void CancelReservedShot();
+    }
+
     public interface IWeaponDelivery : IDisposable
     {
         void Deliver(
