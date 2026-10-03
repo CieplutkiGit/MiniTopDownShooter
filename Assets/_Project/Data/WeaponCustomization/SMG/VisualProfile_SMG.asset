@@ -1,0 +1,143 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8362b8c1e5184defb6e68334c4cc6472, type: 3}
+  m_Name: VisualProfile_SMG
+  m_EditorClassIdentifier: Unity::Game.Workshop.Presentation.WeaponVisualProfile
+  _weaponId: weapon.smg
+  _receiverPrefab: {fileID: 0}
+  _receiverMesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+  _receiverMaterial: {fileID: 2100000, guid: b231d545400db864482a58001abe1831, type: 2}
+  _receiverLocalPosition: {x: 0, y: 0.04, z: 0.02}
+  _receiverLocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  _receiverLocalScale: {x: 0.13, y: 0.17, z: 0.32}
+  _defaultMuzzleOffset: {x: 0, y: 0.06, z: 0.36}
+  _parts:
+  - _slotId: smg.slot.barrel
+    _partId: smg.barrel.standard
+    _prefab: {fileID: 0}
+    _mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+    _material: {fileID: 2100000, guid: ab2296bae96de6f4ab6ace1a6ef68a1e, type: 2}
+    _assembledLocalPosition: {x: 0, y: 0.06, z: 0.24}
+    _assembledLocalRotation: {x: 0, y: 0, z: 0, w: 1}
+    _assembledLocalScale: {x: 0.11, y: 0.11, z: 0.2}
+    _explodedLocalOffset: {x: 0, y: 0.15, z: 0.35}
+    _muzzleOffset: {x: 0, y: 0.06, z: 0.36}
+  - _slotId: smg.slot.barrel
+    _partId: smg.barrel.long
+    _prefab: {fileID: 0}
+    _mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+    _material: {fileID: 2100000, guid: b231d545400db864482a58001abe1831, type: 2}
+    _assembledLocalPosition: {x: 0, y: 0.06, z: 0.28}
+    _assembledLocalRotation: {x: 0, y: 0, z: 0, w: 1}
+    _assembledLocalScale: {x: 0.1, y: 0.1, z: 0.32}
+    _explodedLocalOffset: {x: 0, y: 0.2, z: 0.5}
+    _muzzleOffset: {x: 0, y: 0.06, z: 0.46}
+  - _slotId: smg.slot.barrel
+    _partId: smg.barrel.suppressed
+    _prefab: {fileID: 0}
+    _mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+    _material: {fileID: 2100000, guid: ab2296bae96de6f4ab6ace1a6ef68a1e, type: 2}
+    _assembledLocalPosition: {x: 0, y: 0.06, z: 0.3}
+    _assembledLocalRotation: {x: 0, y: 0, z: 0, w: 1}
+    _assembledLocalScale: {x: 0.13, y: 0.13, z: 0.28}
+    _explodedLocalOffset: {x: 0, y: 0.18, z: 0.48}
+    _muzzleOffset: {x: 0, y: 0.06, z: 0.44}
+  - _slotId: smg.slot.magazine
+    _partId: smg.magazine.standard
+    _prefab: {fileID: 0}
+    _mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+    _material: {fileID: 2100000, guid: ab2296bae96de6f4ab6ace1a6ef68a1e, type: 2}
+    _assembledLocalPosition: {x: 0, y: -0.18, z: 0.06}
+    _assembledLocalRotation: {x: -0.08715574, y: 0, z: 0, w: 0.9961947}
+    _assembledLocalScale: {x: 0.07, y: 0.32, z: 0.08}
+    _explodedLocalOffset: {x: 0, y: -0.35, z: 0.04}
+    _muzzleOffset: {x: 0, y: 0, z: 0}
+  - _slotId: smg.slot.magazine
+    _partId: smg.magazine.extended
+    _prefab: {fileID: 0}
+    _mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+    _material: {fileID: 2100000, guid: ab2296bae96de6f4ab6ace1a6ef68a1e, type: 2}
+    _assembledLocalPosition: {x: 0, y: -0.22, z: 0.06}
+    _assembledLocalRotation: {x: -0.08715574, y: 0, z: 0, w: 0.9961947}
+    _assembledLocalScale: {x: 0.07, y: 0.42, z: 0.08}
+    _explodedLocalOffset: {x: 0, y: -0.42, z: 0.04}
+    _muzzleOffset: {x: 0, y: 0, z: 0}
+  - _slotId: smg.slot.magazine
+    _partId: smg.magazine.drum
+    _prefab: {fileID: 0}
+    _mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+    _material: {fileID: 2100000, guid: b231d545400db864482a58001abe1831, type: 2}
+    _assembledLocalPosition: {x: 0, y: -0.16, z: 0.06}
+    _assembledLocalRotation: {x: 0, y: 0, z: 0, w: 1}
+    _assembledLocalScale: {x: 0.2, y: 0.2, z: 0.16}
+    _explodedLocalOffset: {x: 0, y: -0.38, z: 0.06}
+    _muzzleOffset: {x: 0, y: 0, z: 0}
+  - _slotId: smg.slot.grip
+    _partId: smg.grip.standard
+    _prefab: {fileID: 0}
+    _mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+    _material: {fileID: 2100000, guid: b231d545400db864482a58001abe1831, type: 2}
+    _assembledLocalPosition: {x: 0, y: -0.1, z: -0.08}
+    _assembledLocalRotation: {x: 0.1305262, y: 0, z: 0, w: 0.9914449}
+    _assembledLocalScale: {x: 0.09, y: 0.18, z: 0.09}
+    _explodedLocalOffset: {x: 0, y: -0.25, z: -0.18}
+    _muzzleOffset: {x: 0, y: 0, z: 0}
+  - _slotId: smg.slot.grip
+    _partId: smg.grip.ergonomic
+    _prefab: {fileID: 0}
+    _mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+    _material: {fileID: 2100000, guid: ab2296bae96de6f4ab6ace1a6ef68a1e, type: 2}
+    _assembledLocalPosition: {x: 0, y: -0.1, z: -0.08}
+    _assembledLocalRotation: {x: 0.2164396, y: 0, z: 0, w: 0.976296}
+    _assembledLocalScale: {x: 0.09, y: 0.16, z: 0.1}
+    _explodedLocalOffset: {x: 0, y: -0.25, z: -0.2}
+    _muzzleOffset: {x: 0, y: 0, z: 0}
+  - _slotId: smg.slot.grip
+    _partId: smg.grip.vertical
+    _prefab: {fileID: 0}
+    _mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+    _material: {fileID: 2100000, guid: b231d545400db864482a58001abe1831, type: 2}
+    _assembledLocalPosition: {x: 0, y: -0.1, z: 0.22}
+    _assembledLocalRotation: {x: 0, y: 0, z: 0, w: 1}
+    _assembledLocalScale: {x: 0.07, y: 0.18, z: 0.07}
+    _explodedLocalOffset: {x: 0, y: -0.3, z: 0.15}
+    _muzzleOffset: {x: 0, y: 0, z: 0}
+  - _slotId: smg.slot.action
+    _partId: smg.action.standard
+    _prefab: {fileID: 0}
+    _mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+    _material: {fileID: 2100000, guid: b231d545400db864482a58001abe1831, type: 2}
+    _assembledLocalPosition: {x: 0, y: 0.08, z: 0.02}
+    _assembledLocalRotation: {x: 0, y: 0, z: 0, w: 1}
+    _assembledLocalScale: {x: 0.1, y: 0.06, z: 0.14}
+    _explodedLocalOffset: {x: 0, y: 0.22, z: 0.02}
+    _muzzleOffset: {x: 0, y: 0, z: 0}
+  - _slotId: smg.slot.action
+    _partId: smg.action.rapid
+    _prefab: {fileID: 0}
+    _mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+    _material: {fileID: 2100000, guid: ab2296bae96de6f4ab6ace1a6ef68a1e, type: 2}
+    _assembledLocalPosition: {x: 0, y: 0.09, z: 0.02}
+    _assembledLocalRotation: {x: 0, y: 0, z: 0, w: 1}
+    _assembledLocalScale: {x: 0.09, y: 0.05, z: 0.12}
+    _explodedLocalOffset: {x: 0, y: 0.25, z: 0.02}
+    _muzzleOffset: {x: 0, y: 0, z: 0}
+  - _slotId: smg.slot.action
+    _partId: smg.action.burst
+    _prefab: {fileID: 0}
+    _mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+    _material: {fileID: 2100000, guid: 942810a80c1157646bdbdbbc76ee5bb8, type: 2}
+    _assembledLocalPosition: {x: 0, y: 0.08, z: -0.02}
+    _assembledLocalRotation: {x: 0, y: 0, z: 0, w: 1}
+    _assembledLocalScale: {x: 0.1, y: 0.06, z: 0.1}
+    _explodedLocalOffset: {x: 0, y: 0.22, z: -0.02}
+    _muzzleOffset: {x: 0, y: 0, z: 0}

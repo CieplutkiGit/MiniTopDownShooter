@@ -1,0 +1,51 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc6781397be34b859bc8010319671485, type: 3}
+  m_Name: smg.magazine.drum
+  m_EditorClassIdentifier: Unity::Game.WeaponPartDefinition
+  _partId: smg.magazine.drum
+  _slotId: smg.slot.magazine
+  _displayName: High-Capacity Drum (75)
+  _description: Massive 75-round drum magazine for maximum sustained suppression at the cost of slow reload and heavy handling penalty.
+  _damageDelta: 0
+  _fireIntervalDelta: 0
+  _magazineCapacityDelta: 40
+  _maxReserveAmmoDelta: 80
+  _reloadDurationDelta: 0.75
+  _baseSpreadAngleDelta: 0
+  _maxSpreadAngleDelta: 0
+  _spreadPerShotDelta: 0.15
+  _spreadRecoveryDelta: 0
+  _rangeDelta: 0
+  _projectileSpeedDelta: 0
+  _projectileLifetimeDelta: 0
+  _pelletsDelta: 0
+  _aimTurnSpeedDelta: -35
+  _damageMultiplier: 1
+  _fireIntervalMultiplier: 1
+  _reloadDurationMultiplier: 1
+  _spreadMultiplier: 1
+  _rangeMultiplier: 1
+  _projectileSpeedMultiplier: 1
+  _aimTurnSpeedMultiplier: 1
+  _overrideFireMode: 0
+  _fireModeOverride: 0
+  _overrideBurstCount: 0
+  _burstCountOverride: 3
+  _overrideBurstInterval: 0
+  _burstIntervalOverride: 0.08
+  _overrideDeliveryMode: 0
+  _deliveryModeOverride: 0
+  _incompatiblePartIds:
+  - smg.magazine.extended
+  _requiredMountTags: []
+  _providedMountTags: []
