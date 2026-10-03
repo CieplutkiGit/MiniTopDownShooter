@@ -53,10 +53,17 @@ namespace Game
                 _mobileInput = mobileInput;
             }
 
-            if (_input != null)
+            if (_movement == null) _movement = GetComponent<PlayerMovement>();
+            if (_rotation == null) _rotation = GetComponent<PlayerRotation>();
+            if (_shoot == null) _shoot = GetComponent<PlayerShoot>();
+            if (_health == null) _health = GetComponent<HealthComponent>();
+
+            if (_input == null)
             {
-                _aliveState = new AlivePlayerState(_input, _movement, _rotation, _shoot, _shootThreshold, _gameState);
+                _input = new InputReader(_aimCamera != null ? _aimCamera : Camera.main, transform, _mobileInput);
             }
+
+            _aliveState = new AlivePlayerState(_input, _movement, _rotation, _shoot, _shootThreshold, _gameState);
 
             if (_gameState != null && enabled)
             {
@@ -83,14 +90,20 @@ namespace Game
             }
 
             _gameState = _gameStateRef;
-            _input = new InputReader(_aimCamera, transform, _mobileInput);
-            _movement = GetComponent<PlayerMovement>();
-            _rotation = GetComponent<PlayerRotation>();
-            _shoot = GetComponent<PlayerShoot>();
-            _health = GetComponent<HealthComponent>();
+            if (_movement == null) _movement = GetComponent<PlayerMovement>();
+            if (_rotation == null) _rotation = GetComponent<PlayerRotation>();
+            if (_shoot == null) _shoot = GetComponent<PlayerShoot>();
+            if (_health == null) _health = GetComponent<HealthComponent>();
+            if (_input == null) _input = new InputReader(_aimCamera, transform, _mobileInput);
 
-            _aliveState = new AlivePlayerState(_input, _movement, _rotation, _shoot, _shootThreshold, _gameState);
-            _deadState = new DeadPlayerState(_movement);
+            if (_aliveState == null)
+            {
+                _aliveState = new AlivePlayerState(_input, _movement, _rotation, _shoot, _shootThreshold, _gameState);
+            }
+            if (_deadState == null)
+            {
+                _deadState = new DeadPlayerState(_movement);
+            }
         }
 
         private void Start()

@@ -47,7 +47,7 @@ namespace MiniTopDownShooter.Tests.Workshop.A5
 
             // Simulate player entering zone
             var collider = _playerGo.GetComponent<BoxCollider>();
-            benchGo.SendMessage("OnTriggerEnter", collider, SendMessageOptions.DontRequireReceiver);
+            trigger.OnTriggerEnter(collider);
 
             Assert.IsTrue(trigger.IsPlayerInside);
             Assert.IsTrue(trigger.IsPromptVisible);
@@ -55,7 +55,7 @@ namespace MiniTopDownShooter.Tests.Workshop.A5
             Assert.AreEqual("Press E / Tap to Customize", trigger.PromptText);
 
             // Simulate player leaving zone
-            benchGo.SendMessage("OnTriggerExit", collider, SendMessageOptions.DontRequireReceiver);
+            trigger.OnTriggerExit(collider);
 
             Assert.IsFalse(trigger.IsPlayerInside);
             Assert.IsFalse(trigger.IsPromptVisible);
@@ -75,7 +75,7 @@ namespace MiniTopDownShooter.Tests.Workshop.A5
             _stateController.EnterWorkshopRoaming();
 
             var collider = _playerGo.GetComponent<BoxCollider>();
-            benchGo.SendMessage("OnTriggerEnter", collider, SendMessageOptions.DontRequireReceiver);
+            trigger.OnTriggerEnter(collider);
 
             Assert.AreEqual(GameState.WorkshopRoaming, _stateController.CurrentState);
             Assert.IsTrue(trigger.IsPromptVisible);
@@ -128,6 +128,7 @@ namespace MiniTopDownShooter.Tests.Workshop.A5
             var pauseGo = new GameObject("PauseInputTest");
             pauseGo.transform.SetParent(_root.transform);
             var pauseController = pauseGo.AddComponent<PauseInputController>();
+            pauseController.Initialize(_stateController);
 
             switch (originState)
             {

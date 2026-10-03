@@ -25,10 +25,14 @@ namespace Application.Weapons
             return new BuildResolution(true, stats, null, null);
         }
 
+        public static BuildResolution Valid(ResolvedWeaponStats stats) => Success(stats);
+
         public static BuildResolution Failure(IEnumerable<string> errors, IEnumerable<string> affectedIds = null)
         {
             return new BuildResolution(false, null, errors, affectedIds);
         }
+
+        public static BuildResolution Invalid(IEnumerable<string> errors, IEnumerable<string> affectedIds = null) => Failure(errors, affectedIds);
 
         public static BuildResolution Failure(string error, string affectedId = null)
         {
@@ -36,6 +40,8 @@ namespace Application.Weapons
             var ids = affectedId != null ? new[] { affectedId } : null;
             return new BuildResolution(false, null, errors, ids);
         }
+
+        public static BuildResolution Invalid(string error, string affectedId = null) => Failure(error, affectedId);
     }
 
     public sealed class BuildLoadResult

@@ -14,6 +14,16 @@ namespace Game
         private GameInput _input;
         private IGameStateController _gameState;
 
+        public void Initialize(GameStateController gameState, MobileInputState mobileInput = null)
+        {
+            _gameStateRef = gameState;
+            _gameState = gameState;
+            if (mobileInput != null)
+            {
+                _mobileInput = mobileInput;
+            }
+        }
+
         private void Awake()
         {
             _input = new GameInput();
@@ -100,6 +110,18 @@ namespace Game
 
         public void TogglePause()
         {
+            if (_gameState == null)
+            {
+                if (_gameStateRef != null)
+                {
+                    _gameState = _gameStateRef;
+                }
+                else
+                {
+                    _gameState = FindFirstObjectByType<GameStateController>(FindObjectsInactive.Include);
+                }
+            }
+
             if (_gameState == null)
             {
                 return;

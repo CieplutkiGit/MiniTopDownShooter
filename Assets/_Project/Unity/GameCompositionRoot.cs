@@ -39,6 +39,12 @@ namespace Game
         [SerializeField] private BossHealthBarUI _bossHealthBarUI;
         [SerializeField] private SettingsUI _settingsUI;
 
+        [Header("Weapon Workshop")]
+        [SerializeField] private WeaponCatalog _weaponCatalog;
+        [SerializeField] private Game.Workshop.WorkshopUIController _workshopUIController;
+        [SerializeField] private Game.Workshop.WorkshopBenchTrigger _workshopBenchTrigger;
+        [SerializeField] private Game.Workshop.WorkshopFiringRangeTrigger _workshopFiringRangeTrigger;
+
         // Public accessors for testing and architectural inspection
         public PlayerController Player => _player;
         public GameStateController GameStateController => _gameStateController;
@@ -49,6 +55,10 @@ namespace Game
         public EnemySpawner EnemySpawner => _enemySpawner;
         public WorldResetManager WorldResetManager => _worldResetManager;
         public EffectPool EffectPool => _effectPool;
+        public WeaponCatalog WeaponCatalog => _weaponCatalog;
+        public Game.Workshop.WorkshopUIController WorkshopUIController => _workshopUIController;
+        public Game.Workshop.WorkshopBenchTrigger WorkshopBenchTrigger => _workshopBenchTrigger;
+        public Game.Workshop.WorkshopFiringRangeTrigger WorkshopFiringRangeTrigger => _workshopFiringRangeTrigger;
 
         private void Awake()
         {
@@ -167,6 +177,36 @@ namespace Game
             if (_settingsUI == null)
             {
                 _settingsUI = FindFirstObjectByType<SettingsUI>(FindObjectsInactive.Include);
+            }
+
+            if (_weaponCatalog == null)
+            {
+#if UNITY_EDITOR
+                _weaponCatalog = UnityEditor.AssetDatabase.LoadAssetAtPath<WeaponCatalog>("Assets/_Project/Data/WeaponCustomization/MasterWeaponCatalog.asset");
+#endif
+                if (_weaponCatalog == null)
+                {
+                    var found = Resources.FindObjectsOfTypeAll<WeaponCatalog>();
+                    if (found != null && found.Length > 0)
+                    {
+                        _weaponCatalog = found[0];
+                    }
+                }
+            }
+
+            if (_workshopUIController == null)
+            {
+                _workshopUIController = FindFirstObjectByType<Game.Workshop.WorkshopUIController>(FindObjectsInactive.Include);
+            }
+
+            if (_workshopBenchTrigger == null)
+            {
+                _workshopBenchTrigger = FindFirstObjectByType<Game.Workshop.WorkshopBenchTrigger>(FindObjectsInactive.Include);
+            }
+
+            if (_workshopFiringRangeTrigger == null)
+            {
+                _workshopFiringRangeTrigger = FindFirstObjectByType<Game.Workshop.WorkshopFiringRangeTrigger>(FindObjectsInactive.Include);
             }
         }
 
@@ -323,6 +363,27 @@ namespace Game
             if (_settingsUI != null && _player != null)
             {
                 _settingsUI.Initialize(_player);
+            }
+
+            // Weapon Workshop Wiring
+            if (_weaponCatalog != null)
+            {
+                Game.Workshop.WeaponBuildApplier.DefaultCatalog = _weaponCatalog;
+            }
+
+            if (_workshopUIController != null && _gameStateController != null)
+            {
+                _workshopUIController.Initialize(_gameStateController);
+            }
+
+            if (_workshopBenchTrigger != null && _gameStateController != null)
+            {
+                _workshopBenchTrigger.Initialize(_gameStateController, mobileInput: _mobileInput);
+            }
+
+            if (_workshopFiringRangeTrigger != null && _gameStateController != null)
+            {
+                _workshopFiringRangeTrigger.Initialize(_gameStateController);
             }
         }
     }

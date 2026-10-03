@@ -39,6 +39,8 @@ namespace Game
                 _defaultWeapons = new List<Gun>(_weapons);
             }
 
+            ApplySavedBuildsToAll();
+
             for (int i = 0; i < _weapons.Count; i++)
             {
                 if (_weapons[i] != null)
@@ -72,6 +74,8 @@ namespace Game
 
             _weapons.Clear();
             _weapons.AddRange(_defaultWeapons);
+
+            ApplySavedBuildsToAll();
 
             for (int i = 0; i < _weapons.Count; i++)
             {
@@ -130,6 +134,8 @@ namespace Game
                 return false;
             }
 
+            ApplySavedBuildToGun(gun);
+
             _weapons.Add(gun);
             int index = _weapons.Count - 1;
             gun.SetEquipped(false);
@@ -141,6 +147,25 @@ namespace Game
             }
 
             return true;
+        }
+
+        public void ApplySavedBuildsToAll()
+        {
+            for (int i = 0; i < _weapons.Count; i++)
+            {
+                if (_weapons[i] != null)
+                {
+                    ApplySavedBuildToGun(_weapons[i]);
+                }
+            }
+        }
+
+        private void ApplySavedBuildToGun(Gun gun)
+        {
+            if (gun != null && gun.Definition != null)
+            {
+                Game.Workshop.WeaponBuildApplier.ApplySavedBuild(gun);
+            }
         }
 
         public bool ContainsDefinition(WeaponDefinition definition)

@@ -8,5 +8,8 @@ namespace Application
         void ReturnToMenu();
         void TriggerVictory();
         void EndGame();
+        void EnterWorkshopRoaming();
+        void EnterWorkshopEditing();
+        void EnterWorkshopFiringRange();
     }
 }

@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using Application;
 using Application.Weapons;
-using Application.Weapons.Rules;
 using Game;
 using Game.Workshop.Presentation;
 using NUnit.Framework;

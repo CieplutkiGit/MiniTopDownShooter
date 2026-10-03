@@ -49,14 +49,24 @@ namespace Game
         public string WeaponId => _definition != null ? _definition.WeaponId : WeaponWorkshopIds.Rifle;
         public WeaponBuild CurrentBuild { get; private set; }
         public ResolvedWeaponStats CurrentStats { get; private set; }
-        public int AmmoInMagazine => _runtime != null ? _runtime.Ammo.InMagazine : 0;
-        public int ReserveAmmo => _runtime != null ? _runtime.Ammo.ReserveAmmo : 0;
-        public int MagazineSize => _runtime != null ? _runtime.Ammo.MagazineSize : 0;
-        public bool InfiniteAmmo => _runtime == null || _runtime.Ammo.InfiniteAmmo;
-        public bool IsReloading => _runtime != null && _runtime.IsReloading;
-        public float ReloadProgress => _runtime != null ? _runtime.ReloadProgress(Time.time) : 0f;
+        public WeaponRuntime Runtime
+        {
+            get
+            {
+                if (_runtime == null)
+                {
+                    InitializeRuntime();
+                }
+                return _runtime;
+            }
+        }
+        public int AmmoInMagazine => Runtime != null ? Runtime.Ammo.InMagazine : 0;
+        public int ReserveAmmo => Runtime != null ? Runtime.Ammo.ReserveAmmo : 0;
+        public int MagazineSize => Runtime != null ? Runtime.Ammo.MagazineSize : 0;
+        public bool InfiniteAmmo => Runtime == null || Runtime.Ammo.InfiniteAmmo;
+        public bool IsReloading => Runtime != null && Runtime.IsReloading;
+        public float ReloadProgress => Runtime != null ? Runtime.ReloadProgress(Time.time) : 0f;
         public bool IsEquipped => _isEquipped;
-        public WeaponRuntime Runtime => _runtime;
         public IWeaponDelivery Delivery => _delivery;
         public Transform SpawnPoint => _spawnPoint;
         public void SetSpawnPoint(Transform spawnPoint) => _spawnPoint = spawnPoint;
@@ -80,8 +90,14 @@ namespace Game
             _gameStateRef = FindFirstObjectByType<GameStateController>();
             _gameState = _gameStateRef;
 
-            InitializeRuntime();
-            InitializeDelivery();
+            if (_runtime == null)
+            {
+                InitializeRuntime();
+            }
+            if (_delivery == null)
+            {
+                InitializeDelivery();
+            }
         }
 
         private void Start()
@@ -183,7 +199,7 @@ namespace Game
 
             _aimDirection = direction.normalized;
 
-            if (_runtime == null)
+            if (Runtime == null)
             {
                 return;
             }

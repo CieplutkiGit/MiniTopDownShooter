@@ -194,13 +194,22 @@ namespace Game
             }
 
             // 7. Restore player health, ammo, starting weapons, rotation, and input BEFORE entering Playing
-            if (_player != null && _spawnPoint != null)
+            if (_player != null)
             {
-                _player.ResetToSpawn(_spawnPoint.position, _spawnPoint.rotation);
-            }
-            else if (_player != null)
-            {
-                _player.ResetToSpawn(_player.transform.position, _player.transform.rotation);
+                var loadout = _player.GetComponent<WeaponLoadout>();
+                if (loadout != null)
+                {
+                    loadout.ApplySavedBuildsToAll();
+                }
+
+                if (_spawnPoint != null)
+                {
+                    _player.ResetToSpawn(_spawnPoint.position, _spawnPoint.rotation);
+                }
+                else
+                {
+                    _player.ResetToSpawn(_player.transform.position, _player.transform.rotation);
+                }
             }
 
             // 8. Restore camera and screen shake state AFTER player reset to spawn

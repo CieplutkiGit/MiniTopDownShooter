@@ -12,6 +12,10 @@ namespace Application.Weapons
         public string WeaponId { get; }
         public IReadOnlyDictionary<string, string> Selections => _selections;
 
+        public WeaponBuild(string weaponId) : this(weaponId, null)
+        {
+        }
+
         public WeaponBuild(string weaponId, IDictionary<string, string> selections)
         {
             if (string.IsNullOrWhiteSpace(weaponId))

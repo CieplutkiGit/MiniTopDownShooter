@@ -1,9 +1,7 @@
 using System.Collections.Generic;
 using Application;
 using Application.Weapons;
-using Application.Weapons.Rules;
 using Application.Workshop;
-using Application.Workshop.Sessions;
 using NUnit.Framework;
 
 namespace MiniTopDownShooter.Tests.Workshop

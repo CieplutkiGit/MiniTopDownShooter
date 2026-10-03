@@ -78,7 +78,7 @@ namespace Game.Workshop
             SetPromptActive(false);
         }
 
-        private void OnTriggerEnter(Collider other)
+        public void OnTriggerEnter(Collider other)
         {
             if (IsPlayer(other))
             {
@@ -87,7 +87,7 @@ namespace Game.Workshop
             }
         }
 
-        private void OnTriggerExit(Collider other)
+        public void OnTriggerExit(Collider other)
         {
             if (IsPlayer(other))
             {

@@ -361,9 +361,9 @@ namespace Game.Workshop
             {
                 _availableSlots = platform.SupportedSlots;
             }
-            else if (_session.DraftBuild != null)
+            else if (_session.DraftBuild != null && _session.DraftBuild.Selections != null)
             {
-                _availableSlots = _session.DraftBuild.Slots.ToList().AsReadOnly();
+                _availableSlots = _session.DraftBuild.Selections.Keys.ToList().AsReadOnly();
             }
             else
             {

@@ -45,6 +45,8 @@ namespace Game
             weapon.transform.localPosition = Vector3.zero;
             weapon.transform.localRotation = Quaternion.identity;
 
+            Game.Workshop.WeaponBuildApplier.ApplySavedBuild(weapon);
+
             if (!loadout.AddWeapon(weapon, _equipImmediately))
             {
                 if (UnityEngine.Application.isPlaying)

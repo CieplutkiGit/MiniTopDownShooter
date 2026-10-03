@@ -397,6 +397,7 @@ public static class GeometricArenaPolishSetup
                     CreateVisualPrimitive("Slide", PrimitiveType.Cube, visualObj.transform, new Vector3(0f, 0.10f, 0.07f), new Vector3(0.11f, 0.08f, 0.36f), p.WeaponAccent);
                     CreateVisualPrimitive("Barrel", PrimitiveType.Cube, visualObj.transform, new Vector3(0f, 0.10f, 0.28f), new Vector3(0.07f, 0.07f, 0.12f), p.WeaponMetal);
                     CreateVisualPrimitive("Grip", PrimitiveType.Cube, visualObj.transform, new Vector3(0f, -0.12f, -0.05f), new Vector3(0.10f, 0.20f, 0.12f), p.WeaponAccent, Quaternion.Euler(15f, 0f, 0f));
+                    CreateVisualPrimitive("Magazine", PrimitiveType.Cube, visualObj.transform, new Vector3(0f, -0.21f, -0.075f), new Vector3(0.08f, 0.14f, 0.10f), p.WeaponAccent, Quaternion.Euler(15f, 0f, 0f));
                     CreateVisualPrimitive("SightDot", PrimitiveType.Cube, visualObj.transform, new Vector3(0f, 0.15f, 0.24f), new Vector3(0.03f, 0.03f, 0.03f), p.WeaponGlow);
                     muzzlePos = new Vector3(0f, 0.10f, 0.36f);
                     break;
@@ -427,6 +428,7 @@ public static class GeometricArenaPolishSetup
                     CreateVisualPrimitive("TwinBarrel", PrimitiveType.Cube, visualObj.transform, new Vector3(0f, 0.08f, 0.35f), new Vector3(0.18f, 0.10f, 0.50f), p.WeaponMetal);
                     CreateVisualPrimitive("PumpSlide", PrimitiveType.Cube, visualObj.transform, new Vector3(0f, -0.01f, 0.25f), new Vector3(0.16f, 0.11f, 0.22f), p.WeaponAccent);
                     CreateVisualPrimitive("SolidStock", PrimitiveType.Cube, visualObj.transform, new Vector3(0f, 0.02f, -0.32f), new Vector3(0.13f, 0.18f, 0.34f), p.WeaponAccent);
+                    CreateVisualPrimitive("FeedTube", PrimitiveType.Cube, visualObj.transform, new Vector3(0f, -0.01f, 0.30f), new Vector3(0.11f, 0.10f, 0.42f), p.WeaponMetal);
                     CreateVisualPrimitive("Grip", PrimitiveType.Cube, visualObj.transform, new Vector3(0f, -0.12f, -0.10f), new Vector3(0.10f, 0.18f, 0.11f), p.WeaponMetal, Quaternion.Euler(20f, 0f, 0f));
                     muzzlePos = new Vector3(0f, 0.08f, 0.62f);
                     break;
@@ -461,6 +463,14 @@ public static class GeometricArenaPolishSetup
             serFlash.FindProperty("_gunRef").objectReferenceValue = gun;
             serFlash.FindProperty("_muzzleEffect").objectReferenceValue = muzzlePS;
             serFlash.ApplyModifiedPropertiesWithoutUndo();
+
+            // Preserve and wire modular weapon assembler metadata
+            var assembler = root.GetComponent<Game.Workshop.Presentation.WeaponModelAssembler>();
+            if (assembler != null)
+            {
+                assembler.VisualRoot = visualObj.transform;
+                assembler.LiveMuzzleAnchor = muzzleObj.transform;
+            }
 
             PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
             Debug.Log($"[GeometricArenaPolish] Successfully styled weapon prefab: {prefabPath}");

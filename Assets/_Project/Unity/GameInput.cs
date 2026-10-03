@@ -329,7 +329,14 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
     /// </summary>
     public void Dispose()
     {
-        UnityEngine.Object.Destroy(asset);
+        if (UnityEngine.Application.isPlaying)
+        {
+            UnityEngine.Object.Destroy(asset);
+        }
+        else
+        {
+            UnityEngine.Object.DestroyImmediate(asset);
+        }
     }
 
     /// <inheritdoc cref="UnityEngine.InputSystem.InputActionAsset.bindingMask" />
