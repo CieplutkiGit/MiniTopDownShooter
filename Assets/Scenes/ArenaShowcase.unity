@@ -7530,7 +7530,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &725488184
 RectTransform:
   m_ObjectHideFlags: 0
@@ -7560,7 +7560,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 725488183}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7a7dc12738164404dba298e7ad16fb48, type: 3}
   m_Name: 
@@ -7585,7 +7585,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 0.87058824}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -17962,7 +17962,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity::Game.GameStateController
   _playerRef: {fileID: 646322113}
   _waveRef: {fileID: 1013629112}
-  _autoStart: 0
+  _autoStart: 1
   _debugLog: 1
 --- !u!4 &1702298051
 Transform:

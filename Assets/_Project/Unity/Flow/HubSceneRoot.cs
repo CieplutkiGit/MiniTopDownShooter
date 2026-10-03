@@ -21,6 +21,7 @@ namespace Game.Flow
         [SerializeField] private GameCompositionRoot _gameCompositionRoot;
         [SerializeField] private WorkshopRuntimeController _workshopRuntimeController;
         [SerializeField] private DeploymentTerminal _deploymentTerminal;
+        [SerializeField] private Game.Lobby.LobbyUI _lobbyUI;
 
         [Header("Entry")]
         [Tooltip("If true, show the title menu overlay on entry. Otherwise go directly to roaming.")]
@@ -79,12 +80,22 @@ namespace Game.Flow
             if (_deploymentTerminal != null && _app != null)
                 _deploymentTerminal.Initialize(_app.FlowCoordinator, _app.PlayerSession);
 
+            if (_lobbyUI == null)
+                _lobbyUI = SceneComponents.Find<Game.Lobby.LobbyUI>(gameObject.scene);
+
+            if (_lobbyUI != null)
+                _lobbyUI.Initialize(_app, _gameStateController, loadout, _deploymentTerminal);
+
             // If returning to hub from a run, skip title and go straight to roaming
             if (_app != null)
             {
                 if (!_showTitleOnEntry || returningFromRun)
                     EnterRoaming();
                 // else: GameStateManager starts in Menu — title overlay shows automatically
+            }
+            else
+            {
+                EnterRoaming();
             }
             IsInitialized = true;
         }

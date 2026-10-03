@@ -14,6 +14,7 @@ namespace Game.Flow
     {
         [SerializeField] private string _hubSceneName = "BaseHub";
         [SerializeField] private string _arenaSceneName = "ArenaShowcase";
+        [SerializeField] private string _weaponEditSceneName = "WeaponEdit";
         [SerializeField, Min(1)] private int _missionStartupFrameLimit = 600;
 
         private AppCompositionRoot _app;
@@ -24,6 +25,9 @@ namespace Game.Flow
         public event Action OnTransitionCompleted;
         public event Action<string> OnTransitionFailed;
         public bool IsTransitioning => _isTransitioning;
+        public string HubSceneName => _hubSceneName;
+        public string ArenaSceneName => _arenaSceneName;
+        public string WeaponEditSceneName => _weaponEditSceneName;
 
         private void Awake()
         {
@@ -37,6 +41,12 @@ namespace Game.Flow
         {
             if (!_isTransitioning && !IsTargetAlreadyActive(_hubSceneName))
                 StartCoroutine(TransitionTo(_hubSceneName, false));
+        }
+
+        public void GoToWeaponEdit()
+        {
+            if (!_isTransitioning && !IsTargetAlreadyActive(_weaponEditSceneName))
+                StartCoroutine(TransitionTo(_weaponEditSceneName, false));
         }
 
         public void GoToArena(string sceneName = null)
@@ -113,8 +123,16 @@ namespace Game.Flow
                 }
                 else if (failure == null && !mission)
                 {
-                    yield return WaitForHubStartup(loaded);
-                    failure = _missionStartupFailure;
+                    if (string.Equals(sceneName, _weaponEditSceneName, StringComparison.Ordinal))
+                    {
+                        yield return WaitForWeaponEditStartup(loaded);
+                        failure = _missionStartupFailure;
+                    }
+                    else
+                    {
+                        yield return WaitForHubStartup(loaded);
+                        failure = _missionStartupFailure;
+                    }
                 }
             }
 
@@ -214,6 +232,35 @@ namespace Game.Flow
                 yield return null;
             if (!hub.IsInitialized)
                 _missionStartupFailure = "Hub startup did not complete.";
+        }
+
+        private IEnumerator WaitForWeaponEditStartup(Scene loaded)
+        {
+            _missionStartupFailure = null;
+            Game.Workshop.WeaponEditSceneRoot editRoot = null;
+            foreach (GameObject go in loaded.GetRootGameObjects())
+            {
+                editRoot = go.GetComponentInChildren<Game.Workshop.WeaponEditSceneRoot>(true);
+                if (editRoot != null) break;
+            }
+
+            if (editRoot == null)
+            {
+                GameCompositionRoot root = FindRootInScene(loaded);
+                if (root == null)
+                {
+                    _missionStartupFailure = "WeaponEdit scene has neither WeaponEditSceneRoot nor GameCompositionRoot.";
+                    yield break;
+                }
+            }
+            else
+            {
+                int frames = 0;
+                while (!editRoot.IsInitialized && frames++ < Mathf.Max(1, _missionStartupFrameLimit))
+                    yield return null;
+                if (!editRoot.IsInitialized)
+                    _missionStartupFailure = "WeaponEdit startup did not complete.";
+            }
         }
 
         private string _missionStartupFailure;

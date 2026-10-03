@@ -246,8 +246,13 @@ namespace MiniTopDownShooter.PlayModeTests
                 operation,
                 $"Scene '{sceneName}' is not in build settings.");
 
+            float timeout = Time.realtimeSinceStartup + 15f;
             while (!operation.isDone)
             {
+                if (Time.realtimeSinceStartup > timeout)
+                {
+                    Assert.Fail($"Timed out waiting for scene '{sceneName}' to load.");
+                }
                 yield return null;
             }
 

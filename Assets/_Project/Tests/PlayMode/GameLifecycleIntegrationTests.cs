@@ -97,8 +97,13 @@ namespace MiniTopDownShooter.PlayModeTests
         {
             AsyncOperation op = SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Single);
             Assert.IsNotNull(op, $"Scene '{sceneName}' could not be loaded.");
+            float timeout = Time.realtimeSinceStartup + 15f;
             while (!op.isDone)
             {
+                if (Time.realtimeSinceStartup > timeout)
+                {
+                    Assert.Fail($"Timed out waiting for scene '{sceneName}' to load.");
+                }
                 yield return null;
             }
             yield return null;

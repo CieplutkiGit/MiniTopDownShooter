@@ -75,7 +75,7 @@ namespace Game.Flow
                 _briefingPanel.SetActive(false);
         }
 
-        private void HandleDeploy()
+        public void HandleDeploy()
         {
             if (_flowCoordinator == null) return;
             SceneFlowController sceneFlow = AppCompositionRoot.Instance?.SceneFlow;
