@@ -6,6 +6,9 @@ namespace Application
         Playing,
         Paused,
         GameOver,
-        Victory
+        Victory,
+        WorkshopRoaming = 5,
+        WorkshopEditing = 6,
+        WorkshopFiringRange = 7
     }
 }
