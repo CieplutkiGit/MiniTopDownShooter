@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c53dbae3dadc4b3abc9f8cd57f8649a5, type: 3}
+  m_Name: Platform_Launcher
+  m_EditorClassIdentifier:
+  _weaponId: weapon.launcher
+  _displayName: Rotary Grenade Launcher
+  _supportedSlots:
+  - launcher.slot.tube
+  - launcher.slot.drum
+  - launcher.slot.handles
+  - launcher.slot.action
+  _defaultParts:
+  - _slotId: launcher.slot.tube
+    _partId: launcher.tube.standard
+  - _slotId: launcher.slot.drum
+    _partId: launcher.drum.standard
+  - _slotId: launcher.slot.handles
+    _partId: launcher.handles.standard
+  - _slotId: launcher.slot.action
+    _partId: launcher.action.standard
+  _baseDamage: 60
+  _baseFireInterval: 0.85
+  _baseMagazineCapacity: 4
+  _baseStartingReserveAmmo: 12
+  _baseMaxReserveAmmo: 24
+  _baseReloadDuration: 2.1
+  _baseSpreadAngle: 0.5
+  _maxSpreadAngle: 2
+  _spreadPerShot: 0
+  _spreadRecoveryPerSecond: 6
+  _range: 50
+  _projectileSpeed: 14
+  _projectileLifetime: 4
+  _basePellets: 1
+  _baseFireMode: 0
+  _burstCount: 3
+  _burstInterval: 0.08
+  _aimTurnSpeed: 180
+  _deliveryMode: 0
+  _infiniteAmmo: 0
+  _autoReloadOnEmpty: 1
+  _cancelReloadOnFire: 1
+  _damageFalloffStart: 0
+  _damageFalloffEnd: 0
+  _minDamageRatio: 1

@@ -1,0 +1,143 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8362b8c1e5184defb6e68334c4cc6472, type: 3}
+  m_Name: VisualProfile_Launcher
+  m_EditorClassIdentifier:
+  _weaponId: weapon.launcher
+  _receiverPrefab: {fileID: 0}
+  _receiverMesh: {fileID: 0}
+  _receiverMaterial: {fileID: 0}
+  _receiverLocalPosition: {x: 0, y: 0, z: 0}
+  _receiverLocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  _receiverLocalScale: {x: 1, y: 1, z: 1}
+  _defaultMuzzleOffset: {x: 0, y: 0.06, z: 0.44}
+  _parts:
+  - _slotId: launcher.slot.tube
+    _partId: launcher.tube.standard
+    _prefab: {fileID: 0}
+    _mesh: {fileID: 0}
+    _material: {fileID: 0}
+    _assembledLocalPosition: {x: 0, y: 0.06, z: 0.15}
+    _assembledLocalRotation: {x: 0, y: 0, z: 0, w: 1}
+    _assembledLocalScale: {x: 1, y: 1, z: 1}
+    _explodedLocalOffset: {x: 0, y: 0, z: 0.4}
+    _muzzleOffset: {x: 0, y: 0.06, z: 0.44}
+  - _slotId: launcher.slot.tube
+    _partId: launcher.tube.rifled
+    _prefab: {fileID: 0}
+    _mesh: {fileID: 0}
+    _material: {fileID: 0}
+    _assembledLocalPosition: {x: 0, y: 0.06, z: 0.22}
+    _assembledLocalRotation: {x: 0, y: 0, z: 0, w: 1}
+    _assembledLocalScale: {x: 1, y: 1, z: 1.4}
+    _explodedLocalOffset: {x: 0, y: 0, z: 0.5}
+    _muzzleOffset: {x: 0, y: 0.06, z: 0.58}
+  - _slotId: launcher.slot.tube
+    _partId: launcher.tube.short
+    _prefab: {fileID: 0}
+    _mesh: {fileID: 0}
+    _material: {fileID: 0}
+    _assembledLocalPosition: {x: 0, y: 0.06, z: 0.09}
+    _assembledLocalRotation: {x: 0, y: 0, z: 0, w: 1}
+    _assembledLocalScale: {x: 1, y: 1, z: 0.7}
+    _explodedLocalOffset: {x: 0, y: 0, z: 0.3}
+    _muzzleOffset: {x: 0, y: 0.06, z: 0.32}
+  - _slotId: launcher.slot.drum
+    _partId: launcher.drum.standard
+    _prefab: {fileID: 0}
+    _mesh: {fileID: 0}
+    _material: {fileID: 0}
+    _assembledLocalPosition: {x: 0, y: 0.04, z: -0.1}
+    _assembledLocalRotation: {x: 0, y: 0, z: 0, w: 1}
+    _assembledLocalScale: {x: 1, y: 1, z: 1}
+    _explodedLocalOffset: {x: -0.3, y: 0, z: 0}
+    _muzzleOffset: {x: 0, y: 0, z: 0}
+  - _slotId: launcher.slot.drum
+    _partId: launcher.drum.highcap
+    _prefab: {fileID: 0}
+    _mesh: {fileID: 0}
+    _material: {fileID: 0}
+    _assembledLocalPosition: {x: 0, y: 0.04, z: -0.1}
+    _assembledLocalRotation: {x: 0, y: 0, z: 0, w: 1}
+    _assembledLocalScale: {x: 1.25, y: 1.25, z: 1.1}
+    _explodedLocalOffset: {x: -0.35, y: 0, z: 0}
+    _muzzleOffset: {x: 0, y: 0, z: 0}
+  - _slotId: launcher.slot.drum
+    _partId: launcher.drum.lightweight
+    _prefab: {fileID: 0}
+    _mesh: {fileID: 0}
+    _material: {fileID: 0}
+    _assembledLocalPosition: {x: 0, y: 0.04, z: -0.1}
+    _assembledLocalRotation: {x: 0, y: 0, z: 0, w: 1}
+    _assembledLocalScale: {x: 0.85, y: 0.85, z: 0.9}
+    _explodedLocalOffset: {x: -0.25, y: 0, z: 0}
+    _muzzleOffset: {x: 0, y: 0, z: 0}
+  - _slotId: launcher.slot.handles
+    _partId: launcher.handles.standard
+    _prefab: {fileID: 0}
+    _mesh: {fileID: 0}
+    _material: {fileID: 0}
+    _assembledLocalPosition: {x: 0, y: -0.16, z: -0.18}
+    _assembledLocalRotation: {x: 0, y: 0, z: 0, w: 1}
+    _assembledLocalScale: {x: 1, y: 1, z: 1}
+    _explodedLocalOffset: {x: 0, y: -0.35, z: 0}
+    _muzzleOffset: {x: 0, y: 0, z: 0}
+  - _slotId: launcher.slot.handles
+    _partId: launcher.handles.dual
+    _prefab: {fileID: 0}
+    _mesh: {fileID: 0}
+    _material: {fileID: 0}
+    _assembledLocalPosition: {x: 0, y: -0.16, z: -0.15}
+    _assembledLocalRotation: {x: 0, y: 0, z: 0, w: 1}
+    _assembledLocalScale: {x: 1.1, y: 1, z: 1.2}
+    _explodedLocalOffset: {x: 0, y: -0.4, z: 0}
+    _muzzleOffset: {x: 0, y: 0, z: 0}
+  - _slotId: launcher.slot.handles
+    _partId: launcher.handles.ergonomic
+    _prefab: {fileID: 0}
+    _mesh: {fileID: 0}
+    _material: {fileID: 0}
+    _assembledLocalPosition: {x: 0, y: -0.16, z: -0.18}
+    _assembledLocalRotation: {x: 0, y: 0, z: 0, w: 1}
+    _assembledLocalScale: {x: 0.95, y: 0.95, z: 0.95}
+    _explodedLocalOffset: {x: 0, y: -0.35, z: 0}
+    _muzzleOffset: {x: 0, y: 0, z: 0}
+  - _slotId: launcher.slot.action
+    _partId: launcher.action.standard
+    _prefab: {fileID: 0}
+    _mesh: {fileID: 0}
+    _material: {fileID: 0}
+    _assembledLocalPosition: {x: 0, y: 0.12, z: -0.12}
+    _assembledLocalRotation: {x: 0, y: 0, z: 0, w: 1}
+    _assembledLocalScale: {x: 1, y: 1, z: 1}
+    _explodedLocalOffset: {x: 0, y: 0.3, z: -0.1}
+    _muzzleOffset: {x: 0, y: 0, z: 0}
+  - _slotId: launcher.slot.action
+    _partId: launcher.action.hairtrigger
+    _prefab: {fileID: 0}
+    _mesh: {fileID: 0}
+    _material: {fileID: 0}
+    _assembledLocalPosition: {x: 0, y: 0.12, z: -0.12}
+    _assembledLocalRotation: {x: 0, y: 0, z: 0, w: 1}
+    _assembledLocalScale: {x: 0.9, y: 1, z: 0.9}
+    _explodedLocalOffset: {x: 0, y: 0.35, z: -0.1}
+    _muzzleOffset: {x: 0, y: 0, z: 0}
+  - _slotId: launcher.slot.action
+    _partId: launcher.action.heavy
+    _prefab: {fileID: 0}
+    _mesh: {fileID: 0}
+    _material: {fileID: 0}
+    _assembledLocalPosition: {x: 0, y: 0.12, z: -0.12}
+    _assembledLocalRotation: {x: 0, y: 0, z: 0, w: 1}
+    _assembledLocalScale: {x: 1.15, y: 1.15, z: 1.15}
+    _explodedLocalOffset: {x: 0, y: 0.3, z: -0.15}
+    _muzzleOffset: {x: 0, y: 0, z: 0}
