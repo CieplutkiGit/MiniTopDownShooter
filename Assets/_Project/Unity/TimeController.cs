@@ -1,4 +1,5 @@
 using Application;
+using Application.Workshop;
 using UnityEngine;
 
 namespace Game
@@ -85,7 +86,7 @@ namespace Game
 
         private void ApplyTimeScale(GameState state)
         {
-            if (state == GameState.Paused || state == GameState.Menu || state == GameState.Victory)
+            if (GameActivityPolicy.IsTimeFrozen(state))
             {
                 Time.timeScale = 0f;
             }

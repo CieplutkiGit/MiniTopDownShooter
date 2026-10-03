@@ -8,7 +8,8 @@ namespace Game
         Reload,
         NextWeapon,
         PreviousWeapon,
-        Pause
+        Pause,
+        Interact
     }
 
     public class MobileInputState : MonoBehaviour
@@ -22,6 +23,7 @@ namespace Game
         private bool _nextWeaponPressed;
         private bool _previousWeaponPressed;
         private bool _pausePressed;
+        private bool _interactPressed;
 
         public Vector2 MoveDirection => _move;
         public Vector2 LookDirection => _look;
@@ -77,6 +79,10 @@ namespace Game
                 case MobileInputAction.Pause:
                     _pausePressed = true;
                     break;
+
+                case MobileInputAction.Interact:
+                    _interactPressed = true;
+                    break;
             }
         }
 
@@ -123,6 +129,13 @@ namespace Game
             return value;
         }
 
+        public bool ConsumeInteractPressed()
+        {
+            bool value = _interactPressed;
+            _interactPressed = false;
+            return value;
+        }
+
         public void ResetGameplayState()
         {
             _move = Vector2.zero;
@@ -133,6 +146,7 @@ namespace Game
             _reloadPressed = false;
             _nextWeaponPressed = false;
             _previousWeaponPressed = false;
+            _interactPressed = false;
         }
 
         public void ResetAll()
